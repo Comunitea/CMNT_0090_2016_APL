@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_task_form2_add_equipment" model="ir.ui.view">
+            <field name="name">project.task.with.equipment.form</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_form2"/>
+            <field name="arch" type="xml">
+                <field name="user_id" position="after">
+                    <field name="user_ids" widget="many2many_tags"/>
+                </field>
+
+
+                <field name="tag_ids" position="after">
+                    <field name="equipment_id"/>
+                    <field name="allowed_user_ids" widget="many2many_tags"/>
+                    <field name="ok_calendar" invisible="1"/>
+                    <button type="object" string="Resolver" icon="fa-list" attrs="{'invisible': [('ok_calendar', '=', False)]}"/>
+                </field>
+                <!--<xpath expr="//field[@name='user_id']" position="attributes">
+                    <attribute name="domain">[('id', 'in', get_user_id_domain)]</attribute>
+                </xpath>
+
+-->
+            </field>
+        </record>
+        <!-- SOBRE ESCRIBO LA ORIGINAL-->
+        <record id="view_task_calendar" model="ir.ui.view">
+            <field name="name">view.task.equipment.calendar</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_calendar"/>
+            <field name="arch" type="xml">
+                <xpath expr="//calendar" position="attributes">
+                    <attribute name="date_start">date_start</attribute>
+                    <attribute name="date_stop">date_end</attribute>
+                    <attribute name="color">equipment_id</attribute>
+                    <attribute name="display">[name]</attribute>
+                    <attribute name="mode">month</attribute>
+
+                </xpath>
+
+            </field>
+        </record>
+
+
+        <menuitem
+        id="menu_equipment_form_in_project"
+        name="Equipments"
+        parent="project.menu_project_management"
+        action="maintenance.hr_equipment_action"
+        groups="maintenance.group_equipment_manager,base.group_user"
+        sequence="20"/>
+
+
+    </data>
+</openerp>

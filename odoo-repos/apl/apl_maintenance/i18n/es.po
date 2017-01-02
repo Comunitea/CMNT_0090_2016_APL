@@ -1,0 +1,101 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#	* apl_maintenance
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 10.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-12-30 10:15+0000\n"
+"PO-Revision-Date: 2016-12-30 10:15+0000\n"
+"Last-Translator: <>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_maintenance_equipment_allowed_user_ids
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_allowed_user_ids
+msgid "Allowed Users"
+msgstr "Usuarios Autorizados"
+
+#. module: apl_maintenance
+#: model:ir.model,name:apl_maintenance.model_maintenance_equipment
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_equipment_id
+#: model:ir.model.fields,field_description:apl_maintenance.field_report_project_task_user_equipment_id
+#: model:ir.ui.view,arch_db:apl_maintenance.view_task_search_form_with_equipment
+msgid "Equipment"
+msgstr "Equipamiento"
+
+#. module: apl_maintenance
+#: model:ir.ui.menu,name:apl_maintenance.menu_equipment_form_in_project
+msgid "Equipments"
+msgstr "Equipos"
+
+#. module: apl_maintenance
+#: model:ir.actions.act_window,help:apl_maintenance.filter_task_from_maintenance
+msgid "Here, you can create new tasks"
+msgstr "Aquí, puedes crear nuevas tareas"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_maintenance_equipment_ok_calendar
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_ok_calendar
+msgid "Ok Calendar"
+msgstr "Calendario OK"
+
+#. module: apl_maintenance
+#: model:ir.ui.view,arch_db:apl_maintenance.view_task_form2_add_equipment
+msgid "Resolver"
+msgstr "Resolver"
+
+#. module: apl_maintenance
+#: model:ir.model,name:apl_maintenance.model_project_task
+msgid "Task"
+msgstr "Tarea"
+
+#. module: apl_maintenance
+#: model:ir.actions.act_window,name:apl_maintenance.filter_task_from_maintenance
+#: model:ir.ui.view,arch_db:apl_maintenance.hr_equipment_view_form_apl
+msgid "Tasks"
+msgstr "Tareas"
+
+#. module: apl_maintenance
+#: model:ir.model,name:apl_maintenance.model_report_project_task_user
+msgid "Tasks by user and project"
+msgstr "Tareas por usuario y proyecto"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_maintenance_equipment_active_tasks
+msgid "Tasks no finished"
+msgstr "Tarea no finalizada"
+
+#. module: apl_maintenance
+#: model:ir.ui.view,arch_db:apl_maintenance.hr_equipment_view_kanban_apl
+msgid "Tasks:"
+msgstr "Tareas:"
+
+#. module: apl_maintenance
+#: model:ir.actions.act_window,help:apl_maintenance.filter_task_from_maintenance
+msgid "You can now manage your tasks in order to get things done efficiently. Track progress, discuss, attach documents, etc."
+msgstr "Puede gestionar sus tareas para realizar las cosas de forma eficiente. Seguir el progreso, discusiones, adjuntar documentos, etc."
+
+#. module: apl_maintenance
+#: code:addons/apl_maintenance/models/project_activity.py:163
+#, python-format
+msgid "You cannot chane the state because task is blocked"
+msgstr "No puedes cambiar la etapa de la tarea porque esta bloqueada"
+
+#. module: apl_maintenance
+#: code:addons/apl_maintenance/models/project_activity.py:137
+#, python-format
+msgid "You cannot open new sheet because you have one"
+msgstr "You cannot open new sheet because you have one"
+
+#. module: apl_maintenance
+#: code:addons/apl_maintenance/models/project_activity.py:130
+#, python-format
+msgid "You cannot start the task while is blocked kanban state"
+msgstr "You cannot start the task while is blocked kanban state"
+

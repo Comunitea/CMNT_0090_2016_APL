@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+<!--
+        <record model="ir.ui.view" id="view_project_activity_kanban">
+            <field name="name">project.project.kanban</field>
+            <field name="model">project.project</field>
+            <field name="arch" type="xml">
+                <kanban class="oe_background_grey o_kanban_dashboard o_project_kanban" on_create="project.open_create_project">
+                    <field name="name"/>
+                    <field name="use_tasks"/>
+                    <field name="user_id"/>
+                    <field name="color"/>
+                    <field name="task_count"/>
+                    <field name="task_needaction_count"/>
+                    <field name="label_tasks"/>
+                    <field name="task_ids"/>
+                    <field name="alias_id"/>
+                    <field name="alias_name"/>
+                    <field name="alias_domain"/>
+                    <field name="doc_count"/>
+                    <field name="is_favorite"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="#{kanban_color(record.color.raw_value)} oe_kanban_global_click">
+                                <div class="o_project_kanban_main">
+                                    <div class="o_kanban_card_content o_visible">
+                                        <div class="o_kanban_primary_left">
+                                            <div class="o_primary">
+                                                <span><t t-esc="record.name.value"/></span>
+                                            </div>
+                                            <div t-if="record.alias_name.value and record.alias_domain.value">
+                                                <span><i class="fa fa-envelope"></i> <t t-esc="record.alias_id.value"/></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="o_kanban_card_manage_pane o_invisible">
+                                        <div class="o_kanban_card_manage_section o_kanban_manage_reports">
+                                            <div groups="project.group_project_manager">
+                                                <a type="edit">Settings</a>
+                                            </div>
+                                            <div attrs="{'invisible': [('activity', '=', False)]}">
+                                                <a name="%(project.action_project_task_user_tree_filtered)d" type="action">Activities</a>
+                                            </div>
+                                            <div attrs="{'invisible': [('use_tasks', '=', False)]}">
+                                                <a name="%(project.action_project_task_user_tree_filtered)d" type="action">Tasks</a>
+                                            </div>
+                                        </div>
+                                        <div t-if="widget.editable" class="o_project_kanban_colorpicker">
+                                            <ul class="oe_kanban_colorpicker" data-field="color"/>
+                                        </div>
+                                    </div>
+                                    <div class="o_project_kanban_manage">
+                                        <a class="o_kanban_manage_toggle_button o_left" href="#">More <i class="fa fa-caret-down"/></a>
+                                        <a type="object" name="toggle_favorite" class="o_right"><i t-attf-class="oe_inline fa o_dashboard_star #{record.is_favorite.raw_value ? 'fa-star' : 'fa-star-o'}" title="Add/remove from favorite"/></a>
+                                    </div>
+                                </div>
+
+                                <div class="o_project_kanban_boxes">
+                                    <div t-if="record.use_tasks.raw_value" class="o_project_kanban_box">
+                                        <a name="%(act_project_project_2_project_task_all)d" type="action">
+                                            <span class="o_value"><t t-esc="record.task_count.value"/></span>
+                                            <span class="o_label"><t t-esc="record.label_tasks.value"/></span>
+                                        </a>
+                                        <a t-if="record.task_needaction_count.raw_value" class="o_needaction" name="%(act_project_project_2_project_task_all)d" type="action" context="{'search_default_message_needaction': 1}">
+                                            <t t-esc="record.task_needaction_count.raw_value"/>
+                                        </a>
+                                    </div>
+                                    <div t-if="record.doc_count.raw_value" class="o_project_kanban_box">
+                                        <a name="attachment_tree_view" type="object">
+                                            <span class="o_value"><t t-esc="record.doc_count.value"/></span>
+                                            <span class="o_label">Documents</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+-->
+
+        <!--vista TREE para proyject/Activity-->
+        <record id="view_project_activity_tree" model="ir.ui.view">
+            <field name="name">view.project.activity.tree</field>
+            <field name="model">project.project</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="parent_id"/>
+                    <field name="task_count"/>
+                </tree>
+            </field>
+        </record>
+         <record id="action_view_project_activity" model="ir.actions.act_window">
+            <field name="name">Projects</field>
+            <field name="res_model">project.project</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot,graph</field>
+            <field name="context">{
+                'search_default_parent_id': [active_id],
+            }</field>
+            <field name="search_view_id" ref="project.view_task_search_form"/>
+            <field name="view_id" ref="view_project_activity_tree"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Here, you can create new tasks
+                </p>
+                <p>
+                    You can now manage your tasks in order to get things done efficiently. Track progress, discuss, attach documents, etc.
+                </p>
+            </field>
+        </record>
+
+        <!-- TASK: Heredo vista search y le añado el campo parent_id-->
+        <record id="view_task_search_form_with_activity" model="ir.ui.view">
+            <field name="name">project.activity.task.search.form</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_search_form"/>
+            <field name="arch" type="xml">
+                <field name="project_id" position="after">
+                    <field name="project_id" string="Activity"/>
+                </field>
+                <field name="project_id" position="after">
+                    <field name="parent_id" string="Project"/>
+                </field>
+                <xpath expr="//filter[@name='project']" position="replace">
+                    <filter string="Activity" name="activity" context="{'group_by':'project_id'}"/>
+                    <filter string="Project" name="project" context="{'group_by':'parent_id'}"/>
+                </xpath>
+            </field>
+        </record>
+         <!-- PROJECT: Heredo vista search y le añado el campo parent_id-->
+        <record id="view_project_project_filter_with_activity" model="ir.ui.view">
+            <field name="name">project.project.activity.select</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.view_project_project_filter"/>
+            <field name="arch" type="xml">
+                <field name="name" position="replace">
+                    <field name="name" string="Name" domain="[('activity', '=',True)]"/>
+                    <!--<field name="project_id" string="Activity" domain="[('activity', '=',True)]"/>-->
+                    <field name="parent_id" string="Project" domain="[('activity', '=',False)]"/>
+                </field>
+
+                <xpath expr="//filter[@name='Partner']" position="after">
+                    <filter string="Project" name="project" context="{'group_by':'parent_id'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="action_project_activity_tree_filtered" model="ir.actions.act_window">
+            <field name="name">Activity</field>
+            <field name="res_model">project.project</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="project.view_project_project_filter"/>
+            <field name="context">{
+                'group_by_no_leaf':1,
+                'group_by':[],
+                'search_default_parent_id': [active_id],
+                'default_parent_id': active_id,
+            }
+            </field>
+            <field name="help">This report allows you to analyse the performance of your projects and users. You can analyse the quantities of tasks, the hours spent compared to the planned hours, the average number of days to open or close a task, etc.</field>
+        </record>
+
+         <record id="act_activity_from_kanban" model="ir.actions.act_window">
+            <field name="name">Activity</field>
+            <field name="res_model">project.project</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot,graph</field>
+            <field name="view_id" ref=""/>
+
+             <field name="context">{
+                'search_default_parent_id': [active_id],
+                'default_parent_id': active_id,
+            }</field>
+            <field name="search_view_id" ref="project.view_task_search_form"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Here, you can create new activities
+                </p>
+            </field>
+        </record>
+
+
+        <record id="action_view_activity" model="ir.actions.act_window">
+            <field name="name">Activity</field>
+            <field name="res_model">project.project</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot,graph</field>
+            <field name="domain">[('activity','=',True)]</field>
+            <field name="search_view_id" ref="view_project_activity_filter"/>
+            <field name="help" type="html">
+                <p>
+                    Odoo's project management allows you to manage project and activitties.
+                </p>
+            </field>
+        </record>
+
+
+        <record id="view_project_activity_kanban" model="ir.ui.view">
+            <field name="name">Project Kanban With Activity</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.view_project_kanban"/>
+            <field name="arch" type="xml">
+                <field name="name" position="after">
+                    <field name="activity"/>
+                    <field naem="activity_count"/>
+                    <field name="parent_id"/>
+                </field>
+                <!-- Despoues de MAS > Settings añado Activities -->
+                <xpath expr="//div[@class='o_kanban_card_manage_section o_kanban_manage_reports']/div[1]" position="after">
+                     <div attrs="{'invisible': [('activity', '=', True)]}">
+                        <a name="%(action_project_activity_tree_filtered)d" type="action">Activities</a>
+                    </div>
+                </xpath>
+                 <!-- Antes de TAREAS> añado Activities -->
+                <xpath expr="//div[@class='o_project_kanban_boxes']" position="after">
+
+                    <div t-if="record.activity" class="o_project_kanban_box">
+                        <a name="%(action_view_project_activity)d" type="action">
+                            <span class="o_value"><t t-esc="record.activity_count.value"/></span>
+                            <span class="o_label">Activity</span>
+                        </a>
+                    </div>
+
+
+                </xpath>
+
+            </field>
+        </record>
+        <record id="project_form_form_add_activity" model="ir.ui.view">
+            <field name="name">Project Form With Activity</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+
+            <field name="arch" type="xml">
+
+                <field name="analytic_account_id" position="replace">
+                </field>
+                <xpath expr="//div[@name='options_active']" position="before">
+                     <div name="div_activity">
+                        <div>
+                            <field name="activity" class="oe_inline"/>
+                            <label for="activity" class="oe_inline" string="Is Activity?"/>
+                        </div>
+                     </div>
+                </xpath>
+
+                <field name="user_id" position="before">
+                    <field name="parent_id"/>
+                    <field name="analytic_account_id"/>
+                </field>
+
+                 <xpath expr="//notebook/page[1]" position="after">
+                    <page string="Activities" attrs="{'invisible': [('activity','=', True)]}" >
+                        <field name="activity_ids" context="{'default_parent_id': id}">
+                            <tree string="Activities" default_order="date">
+                                <field name="name"/>
+                                <field name="user_id"/>
+                                <field name="task_count"/>
+                                <field name="date_start"/>
+                            </tree>
+                        </field>
+                    </page>
+                    <page string="Project Tasks" attrs="{'invisible': [('activity','=', False)]}">
+                        <field name="task_ids" >
+                            <tree string="Tasks">
+                                <field name="name"/>
+                                <field name="user_id"/>
+                                <field name="planned_hours"/>
+                                <field name="remaining_hours"/>
+                            </tree>
+                        </field>
+                    </page>
+                    <page string="Activity Tasks" attrs="{'invisible': [('activity','=', True)]}">
+                        <field name="task_ids" >
+                            <tree string="Tasks">
+                                <field name="name"/>
+                                <field name="user_id"/>
+                                <field name="planned_hours"/>
+                                <field name="remaining_hours"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+
+
+
+            </field>
+        </record>
+
+
+        <record id="view_task_activity_user_pivot" model="ir.ui.view">
+            <field name="name">report.project.activity.task.user.pivot</field>
+            <field name="model">report.project.activity.task.user</field>
+            <field name="arch" type="xml">
+                <pivot string="Activity Analysis" display_quantity="true" disable_linking="True">
+                    <field name="project_id" type="row"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="view_task_activity_project_user_graph" model="ir.ui.view">
+            <field name="name">report.project.activity.task.user.graph</field>
+            <field name="model">report.project.activity.task.user</field>
+            <field name="arch" type="xml">
+                <graph string="Activity Analysis" type="bar">
+                     <field name="project_id" type="row"/>
+                     <field name="user_id" type="col"/>
+                     <field name="nbr" type="measure"/>
+                 </graph>
+             </field>
+        </record>
+
+        <!-- Custom reports (aka filters) -->
+        <record id="filter_activity_task_activity_report_task_pipe" model="ir.filters">
+            <field name="name">Task Pipe</field>
+            <field name="model_id">report.project.activity.task.user</field>
+            <field name="user_id" eval="False"/>
+            <field name="context">{'group_by': ['project_id', 'activity_id], 'col_group_by': ['stage_id'], 'measures': ['nbr']}</field>
+        </record>
+        <record id="filter_activity_task_report_workload" model="ir.filters">
+            <field name="name">Workload</field>
+            <field name="model_id">report.project.activity.task.user</field>
+            <field name="user_id" eval="False"/>
+            <field name="context">{'group_by': ['project_id', 'activity_id'], 'measures': ['total_hours','planned_hours','remaining_hours']}</field>
+        </record>
+        <record id="filter_activity_task_report_responsible" model="ir.filters">
+            <field name="name">By Responsible</field>
+            <field name="model_id">report.project.activity.task.user</field>
+            <field name="user_id" eval="False"/>
+            <field name="context">{'group_by': ['project_id', 'activity_id', 'user_id']}</field>
+        </record>
+        <record id="filter_activity_task_report_cumulative_flow" model="ir.filters">
+            <field name="name">Cumulative Flow</field>
+            <field name="model_id">report.project.activity.task.user</field>
+            <field name="user_id" eval="False"/>
+            <field name="context">{'group_by': ['stage_id', 'state'], 'measures': ['nbr','planned_hours','remaining_hours']}</field>
+        </record>
+
+
+
+       <record id="action_project_activity_task_user_tree" model="ir.actions.act_window">
+            <field name="name">Tasks Analysis</field>
+            <field name="res_model">report.project.activity.task.user</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">pivot,graph</field>
+            <field name="search_view_id" ref="view_task_activity_project_user_search"/>
+            <field name="context">{'group_by_no_leaf':1,'group_by':[]}</field>
+            <field name="help">This report allows you to analyse the performance of your projects and users. You can analyse the quantities of tasks, the hours spent compared to the planned hours, the average number of days to open or close a task, etc.</field>
+        </record>
+
+       <record id="action_project_activity_task_user_tree_filtered" model="ir.actions.act_window">
+            <field name="name">Tasks Analysis</field>
+            <field name="res_model">report.project.activity.task.user</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">pivot,graph</field>
+            <field name="search_view_id" ref="view_task_activity_project_user_search"/>
+            <field name="context">{
+                'group_by_no_leaf':1,
+                'group_by':[],
+                'search_default_project_id': [active_id],
+                'default_project_id': active_id,
+            }
+            </field>
+            <field name="help">This report allows you to analyse the performance of your projects and users. You can analyse the quantities of tasks, the hours spent compared to the planned hours, the average number of days to open or close a task, etc.</field>
+        </record>
+
+        <record id="action_project_activity_task_user_tree" model="ir.actions.act_window">
+            <field name="name">Activity Analysis</field>
+            <field name="res_model">report.project.activity.task.user</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">pivot,graph</field>
+            <field name="search_view_id" ref="view_task_activity_project_user_search"/>
+            <field name="context">{'group_by_no_leaf':1,'group_by':[]}</field>
+            <field name="help">This report allows you to analyse the performance of your projects and users. You can analyse the quantities of tasks and activities, the hours spent compared to the planned hours, the average number of days to open or close a task, etc.</field>
+        </record>
+        <menuitem id="menu_project_report_activity_task_analysis"
+            name="Activity Analysis"
+            action="action_project_activity_task_user_tree"
+            parent="project.menu_project_report"
+            sequence="5"/>
+
+        <record id="view_project_activity_filter" model="ir.ui.view">
+            <field name="name">project.project.select</field>
+            <field name="model">project.project</field>
+            <field name="arch" type="xml">
+                <search string="Search Project/Activity">
+
+                    <field name="parent_id" strint="Project"/>
+                    <field name="name" strint="Activity"/>
+                    <filter name="activities" string="Activities" domain="[('activity','=',True)]"/>
+                    <filter name="projects" string="Projects" domain="[('activity','=',False)]"/>
+                    <filter string="My Favorites" name="my_projects" domain="[('favorite_user_ids', 'in', uid)]"/>
+                    <separator/>
+                    <filter string="Followed by Me" domain="[('message_is_follower','=',True)]"/>
+                    <separator/>
+                    <filter string="Archived" name="inactive" domain="[('active','=',False)]"/>
+                    <field name="user_id" string="Project Manager"/>
+                    <field name="partner_id" string="Contact" filter_domain="[('partner_id', 'child_of', self)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Manager" name="Manager" context="{'group_by':'user_id'}"/>
+                        <filter string="Contact" name="Partner" context="{'group_by':'partner_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+
+
+       <record id="action_view_activity" model="ir.actions.act_window">
+            <field name="name">Activity</field>
+            <field name="res_model">project.project</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot,graph</field>
+            <field name="domain">[('activity','=',True)]</field>
+            <field name="search_view_id" ref="view_project_activity_filter"/>
+            <field name="help" type="html">
+                <p>
+                    Odoo's project management allows you to manage project and activitties.
+                </p>
+            </field>
+       </record>
+       <record id="open_view_activity_list_kanban" model="ir.actions.act_window.view">
+            <field name="sequence" eval="0"/>
+            <field name="view_mode">kanban</field>
+            <field name="act_window_id" ref="action_view_activity"/>
+       </record>
+        <record id="open_view_activity_list_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="act_window_id" ref="action_view_activity"/>
+        </record>
+
+
+
+
+        <record id="action_view_project" model="ir.actions.act_window">
+            <field name="name">Project</field>
+            <field name="res_model">project.project</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot,graph</field>
+            <field name="domain">[('activity','!=',True)]</field>
+            <field name="search_view_id" ref="view_project_activity_filter"/>
+            <field name="help" type="html">
+                <p>
+                    Odoo's project management allows you to manage project and activitties.
+                </p>
+            </field>
+        </record>
+        <record id="open_view_project_list_kanban" model="ir.actions.act_window.view">
+            <field name="sequence" eval="0"/>
+            <field name="view_mode">kanban</field>
+            <field name="act_window_id" ref="action_view_project"/>
+        </record>
+        <record id="open_view_project_list_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="act_window_id" ref="action_view_project"/>
+        </record>
+
+       <menuitem action="action_view_project" id="menu_action_view_project" parent="project.menu_project_management" sequence="20"/>
+       <menuitem action="action_view_activity" id="menu_action_view_activity" parent="project.menu_project_management" sequence="30"/>
+    </data>
+</openerp>

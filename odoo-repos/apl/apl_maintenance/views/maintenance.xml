@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="hr_equipment_view_kanban_apl" model="ir.ui.view">
+            <field name="name">equipment.kanban.apl</field>
+            <field name="model">maintenance.equipment</field>
+            <field name="inherit_id" ref="maintenance.hr_equipment_view_kanban"/>
+            <field name="arch" type="xml">
+                <field name="technician_user_id" position="after">
+                    <field name="active_tasks"/>
+                </field>
+
+                <xpath expr="//div[@class='mt4']" position="inside">
+                    <div t-if="record.active_tasks.raw_value">Tasks: <field name="active_tasks"/></div>
+                </xpath>
+            </field>
+        </record>
+
+         <record id="view_task_search_form_with_equipment" model="ir.ui.view">
+            <field name="name">project.task.search.form.with.equipment</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_search_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='project_id']" position="after">
+                    <field name="equipment_id"/>
+                </xpath>
+
+                <xpath expr="//filter[@name='project']" position="after">
+                    <filter string="Equipment" name="equipment" context="{'group_by':'equipment_id'}"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <record id="filter_task_from_maintenance" model="ir.actions.act_window">
+            <field name="name">Tasks</field>
+            <field name="res_model">project.task</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot,graph</field>
+            <field name="context">{
+                'group_by': 'stage_id',
+                'search_default_equipment_id': [active_id],
+                'default_equipment_id': active_id,
+            }</field>
+            <field name="search_view_id" ref="project.view_task_search_form"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Here, you can create new tasks
+                </p>
+                <p>
+                    You can now manage your tasks in order to get things done efficiently. Track progress, discuss, attach documents, etc.
+                </p>
+            </field>
+        </record>
+
+
+        <record id="hr_equipment_view_form_apl" model="ir.ui.view">
+            <field name="name">equipment.form.apl</field>
+            <field name="model">maintenance.equipment</field>
+            <field name="inherit_id" ref="maintenance.hr_equipment_view_form"/>
+            <field name="arch" type="xml">
+                <field name="owner_user_id" position="after">
+                    <field name="allowed_user_ids" widget="many2many_tags"/>
+                </field>
+
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button class="oe_stat_button" type="action" attrs="{'invisible':[('active_tasks','=', 0)]}"
+                            name="%(filter_task_from_maintenance)d" icon="fa-tasks">
+                        <field string="Tasks" name="active_tasks" widget="statinfo"/>
+                    </button>
+                </xpath>
+            </field>
+        </record>
+
+
+
+
+    </data>
+</openerp>

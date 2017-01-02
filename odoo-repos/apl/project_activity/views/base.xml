@@ -1,0 +1,46 @@
+<record id="id_vista" model="ir.actions.act_window">
+    <field name="name">A test action </field>
+
+    <field name="res_model">model.model</field>
+    <field name="res_id">id del model para el form</field>
+
+
+    <field name="search_view_id" ref ="Nombre de la xml ir.ui.view search"/>
+    <field name="search_view_id" ref="view_activity_filter"/>
+
+
+
+    <field name="view_mode">view_mode</field>
+    <field name="view_id" ref="my_specific_view"/>
+
+
+    <field name="view_mode">form</field>
+    <field name="view_mode">tree,form,calendar,pivot,kanban,graph</field>
+
+    <field name="target">current, main or fullscreen</field>
+
+
+    <!-- VISTA FILTRO -->
+    <record id="id_search_view" model="ir.ui.view">
+        <field name="name">id.view.search</field>
+        <field name="model">model</field>
+        <field name="arch" type="xml">
+            <search string="label.model.names">
+                <field name="campo" string="campo"/>
+                <field name="campo2" string="campo2"/>
+                <separator/>
+                <filter string="Nombre Filtro" name="filter_name" domain="[('field', 'expresion', True)]" />
+                <separator/>
+                <filter string="Nombre Filtro2" name="filter_name2" domain="[('field', 'expresion', True)]" />
+                <separator/>
+                <group expand="0" string="Group by">
+                    <filter string="Name" name="name" context="{'group_by':'field'}"/>
+                    <separator/>
+                    <filter string="Last Message" name="group_message_last_post" context="{'group_by':'message_last_post:week'}"/>
+                </group>
+            </search>
+
+        </field>
+    </record>
+
+</record>

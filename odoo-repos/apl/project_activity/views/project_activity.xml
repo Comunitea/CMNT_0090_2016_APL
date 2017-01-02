@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="task_type_edit" model="ir.ui.view">
+        <field name="name">project.task.type.form.inherit</field>
+        <field name="model">project.task.type</field>
+        <field name="inherit_id" ref="project.task_type_edit"/>
+        <field name="arch" type="xml">
+
+            <field name="fold" position="before">
+                <field name="case_default"/>
+                <field name="default_error"/>
+                <field name="default_running"/>
+            </field>
+            <field name="mail_template_id" position="after">
+                <field name="color" widget="colorpickier"/>
+            </field>
+        </field>
+    </record>
+
+        <record id ="view_project_activity_tree" model ="ir.ui.view">
+            <field name="name">project.activity.tree</field>
+            <field name="model">project.activity</field>
+            <field eval="2" name="priority"/>
+            <field name="arch" type="xml">
+                <tree decoration-danger="(default_error) or (date_deadline and (date_deadline&lt;current_date))" string="Activities">
+                    <field name="name"/>
+                    <field name="project_id" invisible="context.get('user_invisible', False)"/>
+                    <field name="progress" invisible="context.get('user_invisible', False)"/>
+                    <field name="date_deadline" invisible="context.get('deadline_visible',False)"/>
+                    <field name="stage_id"/>
+                    <field name="default_error"/>
+                    <field name="color" invisible="1"/>
+                </tree>
+            </field>
+
+        </record>
+
+        <record id="act_project_activity_tasks_all" model="ir.actions.act_window">
+            <field name="name">Tasks</field>
+            <field name="res_model">project.task</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot,graph</field>
+            <field name="context">{
+                'group_by': 'stage_id',
+                'search_default_activity_id': [active_id],
+                'default_activity_id': active_id,
+            }</field>
+            <field name="search_view_id" ref="project.view_task_search_form"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Here, you can create new tasks
+                </p>
+                <p>
+                    You can now manage your tasks in order to get things done efficiently. Track progress, discuss, attach documents, etc.
+                </p>
+            </field>
+        </record>
+
+        <record id="open_create_activity" model="ir.actions.act_window">
+            <field name="name">Create a Activity</field>
+            <field name="res_model">project.activity</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_project_activity_form"/>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_project_activity_kanban">
+            <field name="name">project.activity.kanban</field>
+            <field name="model">project.activity</field>
+            <field name="arch" type="xml">
+                <kanban class="oe_background_grey o_kanban_dashboard o_project_kanban">
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="user_id"/>
+                    <field name="progress"/>
+                    <field name="date_deadline"/>
+                    <field name="task_count"/>
+                    <field name="task_ids"/>
+                    <field name="color"/>
+                    <field name="use_tasks"/>
+                    <field name="label_tasks"/>
+
+                    <field name="stage_id"/>
+                    <field name="default_error"/>
+                    <templates>
+                        <t t-name="kanban-box">
+
+                           <div t-attf-class="#{kanban_color(record.color.raw_value)} oe_kanban_global_click">
+                                <div class="o_project_kanban_main">
+                                    <div class="o_kanban_card_content o_visible">
+                                        <div class="o_kanban_primary_left">
+                                            <div class="o_primary">
+                                                <span><strong>
+                                                    <t t-esc="record.name.value"/>
+                                                </strong></span>
+                                            </div>
+                                            <div class="text-muted">
+                                                <field name="project_id" invisible="context.get('default_project_id', False)"/>
+                                                <t t-if="record.date_deadline.raw_value and record.date_deadline.raw_value lt (new Date())" t-set="red">oe_kanban_text_red</t>
+                                                <span t-attf-class="#{red || ''}"><i><field name="date_deadline"/></i></span>
+                                            </div>
+                                            <div class="text-muted" t-if="record.default_error.value">
+                                                <t t-if="record.default_error.value" t-set="red">oe_kanban_text_red</t>
+                                                <span t-attf-class="#{red || ''}"><i><field name="stage_id"/></i></span>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="o_kanban_card_manage_pane o_invisible">
+
+                                        <div class="o_project_kanban_colorpicker">
+                                            <ul class="oe_kanban_colorpicker" data-field="color"/>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <div class="o_project_kanban_boxes">
+
+                                    <div t-if="record.use_tasks.raw_value" class="o_project_kanban_box">
+                                        <span name="%(act_project_activity_tasks_all)d" type="action">
+                                            <span class="o_value"><t t-esc="record.task_count.value"/></span>
+                                            <span class="o_label"><t t-esc="record.label_tasks.value"/></span>
+                                            <span class="o_label"><field name="progress" widget="gauge" style="width:75%;height: 25%; cursor: pointer;">
+                                             </field>
+                                            </span>
+
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+
+        <record id="view_project_activity_form" model="ir.ui.view">
+           <field name="name">project.activity.form</field>
+            <field name="model">project.activity</field>
+            <field name="arch" type="xml">
+                <form string="Activity" class="o_form_project_tasks">
+                     <header>
+                        <field name="stage_id" widget="statusbar" clickable="False"
+                               options="{'fold_field': 'fold'}"/>
+                    </header>
+                    <sheet name="Activity">
+                    <div class="oe_button_box" name="button_box" groups="base.group_user">
+                        <button class="oe_stat_button" type="action"
+                            name="%(project.act_project_project_2_project_task_all)d" icon="fa-tasks">
+                            <field string="Tasks" name="task_count" widget="statinfo" options="{'label_field': 'label_tasks'}"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Activity Name"/>
+                        </h1>
+                        <h2>
+                            <field name="project_id"/>
+                        </h2>
+                    </div>
+                    <group>
+                        <field name="user_id" invisible="1"/>
+
+                        <field name="tag_ids" widget="many2many_tags"/>
+                        <field name="color" invisible="1"/>
+                    </group>
+                    <group>
+                        <group  string="Costs">
+                            <field name="planned_cost"/>
+                            <field name="real_cost"/>
+                            <field name="task_cost"/>
+                        </group>
+                        <group string="Dates">
+                            <field name="date_deadline"/>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+
+                        </group>
+                    </group>
+
+
+                    <notebook>
+                        <page string="Tasks">
+                            <group>
+
+                                <!--<field name="remaining_hours"/>
+                                <field name="effective_hours"/>-->
+                                <field name="progress" widget="progressbar"/>
+                            </group>
+                            <field name="task_ids" context="{'default_project_id': project_id, 'default_activity_id' : id}">
+                                 <tree decoration-warning="sequence==1"
+                                 colors="blue: stage_id=='Finalizada'; green: stage_id=='generated'; gray: stage_id=='cancel'; red: stage_id=='open'">
+                                    <field name="sequence" invisible="1"/>
+                                    <field name="name"/>
+                                    <field name="project_id" invisible="1"/>
+                                    <field name="activity_id" invisible="1"/>
+                                    <field name="user_id" widget="many2manytags"/>
+
+                                    <field name="date_deadline"/>
+                                    <field name="done"/>
+                                    <field name="stage_id" />
+                                    <field name="real_cost_cal"/>
+
+
+                                </tree>
+                            </field>
+                        </page>
+
+                    </notebook>
+
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="view_task_search_form_with_act" model="ir.ui.view">
+            <field name="name">project.task.search.form.with.act</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_search_form"/>
+             <field name="arch" type="xml">
+                <xpath expr="//field[@name='project_id']" position="after">
+                    <field name="activity_id"/>
+                    <field name="done" invisible="1"/>
+                </xpath>
+
+                <xpath expr="//filter[@name='project']" position="after">
+                    <filter string="Activity" name="activity" context="{'group_by':'activity_id'}"/>
+
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_task_form2_add_activity" model="ir.ui.view">
+            <field name="name">project.task.with.activity.form</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_form2"/>
+            <field name="arch" type="xml">
+                <field name="user_id" position="before">
+                    <field name="activity_id"/>
+                </field>
+
+                <field name="user_id" position="after">
+
+                    <field name="real_cost_cal"/>
+                    <field name="planned_cost" />
+                    <field name="real_cost" />
+                 </field>
+                <field name="date_deadline" position="after">
+                    <field name="date_start"/>
+                    <field name="date_end"/>
+                    <field name="done" readonly="1" invisible="1"/>
+                </field>
+                <xpath expr="//notebook/page[@name='description_page']" position="after">
+                    <page string="Asociated Costs">
+                    <field name="cost_ids">
+                        <tree editable="bottom">
+                            <field name="name"/>
+                            <field name="product_id" required="1"/>
+                            <field name="user_id" invisible="1"/>
+                            <field name="task_id" invisible="1"/>
+                            <field name="quantity"/>
+                            <field name="unit_cost"/>
+                        </tree>
+                    </field>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+
+        <record id="view_task_tree2_with_activity" model="ir.ui.view">
+            <field name="name">project.task.tree.with.activity</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_tree2"/>
+            <field name="arch" type="xml">
+                <field name="project_id" position="after">
+                    <field name="activity_id" invisible="context.get('user_invisible', False)"/>
+                    <field name="real_cost_cal" invisible="context.get('user_invisible', False)"/>
+                </field>
+            </field>
+        </record>
+
+
+       <record id="project_form_form_add_activity" model="ir.ui.view">
+            <field name="name">Project Form With Activity</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="before">
+                    <header>
+                        <field name="state" widget="statusbar" clickable="True"/>
+                    </header>
+                </xpath>
+                <xpath expr="//button[@name='attachment_tree_view']" position="after">
+                     <button class="oe_stat_button" type="action"
+                            name="%(action_view_activity)d" icon="fa-tasks">
+                            <field string="Activities" name="activity_count" widget="statinfo"/>
+                    </button>
+                </xpath>
+                <field name="sequence" position="after">
+                    <field name="type_ids" widget="many2many_tags"/>
+                </field>
+
+                <xpath expr="//notebook/page[1]" position="after">
+
+                    <page string="Activities">
+                        <field name="activity_ids" context="{'default_project_id': id}">
+                            <tree string="Activities" default_order="sequence" decoration-warning="task_count==0"
+                                  decoration-danger="date_end and (date_end&lt;current_date) and (progress&lt;100)"
+                                  decoration-success="progress&gt;99">
+                                <field name ="sequence" invisible="1"/>
+                                <field name="name"/>
+                                <field name="user_id" invisible="1"/>
+                                <field name="planned_cost"/>
+                                <field name="task_cost"/>
+                                <field name="task_count"/>
+                                <!--<field name="date_start"/>-->
+                                <field name="date_end" invisible="1"/>
+                                <field name="progress" widget="progressbar"/>
+                                <field name="stage_id" invisible="1"/>
+
+
+
+                            </tree>
+                        </field>
+                        <group>
+                            <group strign="Costes">
+                                <field name="planned_cost"/>
+                                <field name="task_cost"/>
+                                <field name="real_cost"/>
+                            </group>
+                            <group>
+
+                            </group>
+                        </group>
+                    </page>
+                    <page string="Project Tasks">
+                        <field name="task_ids" context="{'default_project_id': id}">
+                            <tree string="Tasks">
+                                <field name="name"/>
+                                <field name="user_id"/>
+                                <field name="stage_id"/>
+                                <field name="real_cost_cal"/>
+
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+            </field>
+
+
+        </record>
+
+       <record id="view_activity_filter" model="ir.ui.view">
+            <field name="name">project.activity.select</field>
+            <field name="model">project.activity</field>
+            <field name="arch" type="xml">
+                <search string="Search Activity">
+                    <field name="project_id" string="Project"/>
+                    <field name="name" string="Activity"/>
+                    <field name="stage_id" string="Stage"/>
+                    <field name="default_error" string="Error"/>
+                    <field name="progress" string="progress"/>
+
+
+                    <filter string="My Activities" name="my_activities" domain="[('user_id','=',uid)]"/>
+                    <filter string="Unassigned" name="unassigned" domain="[('user_id', '=', False)]"/>
+                    <separator/>
+                    <filter string="Error" name="error" domain="[('default_error', '=', True)]"/>
+
+                    <separator/>
+                    <field name="user_id" string="Activity User"/>
+                    <group expand="0" string="Group By">
+                        <filter string="User" name="Manager" context="{'group_by':'user_id'}"/>
+                        <filter string="Project" name="Project" context="{'group_by':'project_id'}"/>
+                        <filter string="Stage" name="Sage" context="{'group_by':'stage_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+       <record id="action_view_activity_from_menu" model="ir.actions.act_window">
+            <field name="name">Activity</field>
+            <field name="res_model">project.activity</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_project_activity_kanban"/>
+             <field name="search_view_id" ref="view_activity_filter"/>
+            <field name="help" type="html">
+                <p>
+                    Odoo's project management allows you to manage project and activitties.
+                </p>
+            </field>
+       </record>
+
+       <record id="action_view_activity" model="ir.actions.act_window">
+            <field name="name">Activity</field>
+            <field name="res_model">project.activity</field>
+            <field name="view_mode">tree,form,calendar,pivot,kanban,graph</field>
+            <field name="context">{
+                'search_default_project_id': [active_id],
+                'default_project_id': active_id,
+            }</field>
+            <field name="search_view_id" ref="view_activity_filter"/>
+            <field name="help" type="html">
+                <p>
+                    Odoo's project management allows you to manage project and activitties.
+                </p>
+            </field>
+       </record>
+
+       <record id="open_view_activity_list_form" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">form</field>
+            <field name="act_window_id" ref="action_view_activity"/>
+       </record>
+
+       <record id="open_view_activity_list_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="0"/>
+            <field name="view_mode">tree</field>
+            <field name="act_window_id" ref="action_view_activity"/>
+        </record>
+       <record id="view_project_project_activity_kanban" model="ir.ui.view">
+            <field name="name">Project Kanban With Activity</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.view_project_kanban"/>
+            <field name="arch" type="xml">
+                <field name="name" position="after">
+                    <field name="activity_count" string ="Activity"/>
+                </field>
+                <xpath expr="//div[@class='o_kanban_primary_left']/div[1]" position="replace">
+
+                        <a name="%(project.open_view_project_all_config)d" type="action">
+                            <div class="o_primary">
+                            <span ><t t-esc="record.name.value"/></span>
+                            </div>
+                        </a>
+
+                </xpath>
+
+
+                <xpath expr="//div[@class='o_project_kanban_boxes']/div[1]" position="before">
+                    <div class="o_project_kanban_box">
+                        <a name="%(action_view_activity)d" type="action">
+                            <span class="o_value"><t t-esc="record.activity_count.value"/></span>
+                            <span class="o_label">Activities</span>
+                        </a>
+                    </div>
+                </xpath>
+
+            </field>
+        </record>
+
+
+       <record id="view_task_kanban_with_activity" model="ir.ui.view">
+            <field name="name">Task Kanban With Activity</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_kanban"/>
+            <field name="arch" type="xml">
+
+                <field name="color" position="before">
+                    <field name="activity_id" alt="project_id"/>
+                    <field name="stage_id_color"/>
+                    <field name="stage_id"/>
+                    <field name="working_color"/>
+
+                </field>
+<!--
+                <xpath expr="//div/field[@name='tag_ids']/.." position="before">
+                    <div class="oe_kanban_bottom_right">
+                        <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.stage_id_color.raw_value)}">
+                            <field name="stage_id" />
+                        </div>
+                    </div>
+
+                </xpath>
+-->
+
+                <xpath expr="//div[@class='text-muted']" position="after">
+                    <div>
+                        <field name="activity_id"/>
+
+                    </div>
+                </xpath>
+
+            </field>
+        </record>
+
+       <menuitem action="action_view_activity_from_menu" id="menu_action_view_activity" parent="project.menu_project_management" sequence="10"/>
+
+    </data>
+</openerp>
