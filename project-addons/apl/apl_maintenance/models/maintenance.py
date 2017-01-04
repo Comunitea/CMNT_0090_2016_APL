@@ -100,6 +100,23 @@ class ProjectTask(models.Model):
 
         return x
 
+    @api.one
+    def open_concurrent(self):
+        ids = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        domain = [('id', 'in', ids)]
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'open.concurring.tasks',
+            'res_model': 'product.task',
+            'view_type': 'tree',
+            'view_mode': 'tree,form',
+            'view_id': self.env['ir.ui.view'].search([('name','=','project.task.tree.concurring_tasks')]).id,
+            'target': 'current',
+            'domain': domain,
+        }
+
 class ReportProjectActivityTaskUser(models.Model):
     _inherit = "report.project.task.user"
 

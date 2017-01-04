@@ -17,11 +17,11 @@ class TaskCosts(models.Model):
 
     name = fields.Char('name')
     product_id = fields.Many2one("product.product")
-    task_id = fields.Many2one("project.task")
+    task_id = fields.Many2one("project.task", copy = False)
     user_id = fields.Many2one('res.users',
                               string='Assigned to',
                               default=lambda self: self.env.uid,
-                              index=True, track_visibility='always')
+                              index=True, track_visibility='always', copy = False)
     quantity= fields.Float("Quantity")
     unit_cost = fields.Float("Unit Cost")
     line_cost = fields.Float("Line Cost", compute="_get_task_line_cost")
@@ -54,7 +54,6 @@ class ProjectActivity(models.Model):
             project.task_count = len(project.task_ids)
 
     def _compute_dead_line(self):
-
         for activity in self:
             domain = [('activity_id', '=', activity.id), ('date_deadline', '!=', False)]
             activity.date_deadline = self.env['project.task'].search(domain, order="date_deadline desc", limit = 1).date_deadline
@@ -137,7 +136,7 @@ class ProjectActivity(models.Model):
         task = self.env['project.task'].search(search_domain, order="date_start desc", limit = 1)
         self.date_start = task.date_start if task else False
 
-
+    active = fields.Boolean("Active", default= True)
     name = fields.Char('name', required=True)
     sequence = fields.Integer(string='Sequence', index=True, default=10,
                               help="Gives the sequence order when displaying a list of activities.")
@@ -177,6 +176,26 @@ class ProjectActivity(models.Model):
                                domain="[('project_ids', '=', project_id)]", copy=False,
                                compute='_compute_stage_id', store=True)
 
+
+
+    @api.multi
+    def copy(self, default):
+
+        new_activity = super(ProjectActivity, self).copy(default)
+        tasks = self.env['project.task']
+        if new_activity.project_id:
+            default_stage_id = new_activity.project_id.get_first_stage()
+
+        for task in self.task_ids:
+            defaults = {'project_id': new_activity.project_id.id,
+                        'activity_id': new_activity.id,
+                        'name': task.name,
+                        'stage_id': default_stage_id and default_stage_id.id or False}
+            new_task = task.copy(defaults)
+            tasks += new_task
+
+        new_activity.write({'task_ids': [(6,0,tasks.ids)]})
+        return new_activity
 
 
     @api.multi
@@ -226,8 +245,6 @@ class ProjectActivity(models.Model):
 
         return ({'activity_ids': [(6, 0, activities.ids)],
                            'tasks': [(6, 0, tasks2.ids)]})
-
-
 
     def stage_find(self, section_id, domain=[], order='sequence'):
         """ Override of the base.stage method
@@ -285,8 +302,10 @@ class ProjectTask(models.Model):
     amount_cost_ids = fields.Float("Tasks Costs Amount", compute="_get_task_costs")
     #sobre escribo date_start paraquitar el valor por defecto
     date_start = fields.Datetime(string='Starting Date',
+                                 default= '',
                                  index=True, copy=False)
     done = fields.Boolean('Done')
+
     #@api.onchange('stage_id')
     #def _onchange_stage_id(self):
     #    self.color=self.stage_id.color
@@ -309,14 +328,53 @@ class ProjectTask(models.Model):
             done = (vals.get('stage_id', False) == self.project_id.get_last_stage().id)
             vals['done'] = done
 
+
         result = super(ProjectTask, self).write(vals)
 
         return result
 
     @api.onchange('user_id')
     def _onchange_user(self):
+
         if self.user_id:
             self.date_assign = fields.Datetime.now()
+
+    @api.multi
+    def copy(self, default):
+
+        new_task = super(ProjectTask, self).copy(default)
+        costs = self.env['project.task.cost']
+        for cost in self.cost_ids:
+            if cost.template_cost:
+                defaults= {'name': cost.name,
+                           'product_id': cost.product_id.id,
+                           'quantity': cost.quantity,
+                           'unit_cost': cost.product_id.standard_price,
+                           'task_id': new_task.id}
+
+                new_cost = cost.copy(defaults)
+                costs += new_cost
+        new_task.write({'cost_ids': [(6, 0, costs.ids)]})
+        return new_task
+
+
+class ProjectAplType(models.Model):
+    _name="project.type.apl"
+
+    name=fields.Char("Project Type", help="formación, i+d e innovación, análisis sensorial, APF,  institucional,…")
+
+class ProjectAplFinance(models.Model):
+
+    _name="project.finance.apl"
+
+
+    type = fields.Selection([
+        ('public', 'Public'),
+        ('private', 'Private'),
+    ])
+    name = fields.Char("Project Type", help="Europea/internacional, nacional, regional, etc.,…")
+
+
 
 class ProjectProject(models.Model):
 
@@ -385,7 +443,12 @@ class ProjectProject(models.Model):
     date_deadline = fields.Date(string='Deadline', compute="_compute_dead_line")
     date_start = fields.Datetime(string='Start Date', compute="_get_date_start")
     date_end = fields.Datetime(string='Ending Date', compute="_get_date_end")
-
+    project_type_apl_id=fields.Many2one("project.type.apl", string="Tipo de Projecto")
+    finance_type = fields.Selection([
+        ('public', 'Public'),
+        ('private', 'Private'),
+    ])
+    project_finance_apl_id = fields.Many2one("project.finance.apl", string="Tipo de financiacion", domain=[('type', '=','finance_type')])
 
     def get_first_stage(self):
         domain = [('id', 'in', [v.id for v in self.type_ids])]
@@ -453,10 +516,29 @@ class ProjectProject(models.Model):
     def copy(self, default=None):
         if self.state != "template":
             raise UserError(_('You only copy template project'))
-        project = super(ProjectProject, self).copy(default)
-        project.task_ids.unlink()
-        project.write (self.activity_ids.map_activity(project.id))
-        return project
+
+
+        new_project = super(ProjectProject, self).copy(default)
+
+
+        new_project.task_ids.unlink()
+        new_project.activity_ids.unlink()
+        activities = self.env['project.activity']
+        tasks = self.env['project_activity']
+        for activity in new_project.activity_ids:
+            default_activity = {
+                'name': activity.name,
+                'project_id': new_project.id,
+                'state': 'draft',
+            }
+            new_activity = activity.copy(default_activity)
+            activities += new_activity
+            tasks += new_activity.task_ids
+
+            new_project.write({'activity_ids': [(6, 0, activities.ids)],
+                               'tasks': [(6, 0, tasks.ids)]})
+
+        return new_project
 
 class ProjectTaskType(models.Model):
     _inherit = 'project.task.type'
