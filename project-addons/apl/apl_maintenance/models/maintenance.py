@@ -93,11 +93,11 @@ class ProjectTask(models.Model):
 
     @api.onchange('equipment_id')
     def get_user_ids_domain(self):
+
         if self.equipment_id:
             x = {'domain': {'user_ids': [('id', 'in', [x.id for x in self.allowed_user_ids])]}}
         else:
             x = {'domain': {'user_ids': []}}
-
         return x
 
     @api.one

@@ -176,7 +176,7 @@ class ProjectActivity(models.Model):
                                domain="[('project_ids', '=', project_id)]", copy=False,
                                compute='_compute_stage_id', store=True)
 
-
+    description = fields.Html(string='Description')
 
     @api.multi
     def copy(self, default):
@@ -267,7 +267,6 @@ class ProjectActivity(models.Model):
         # perform search, return the first found
         return self.env['project.task.type'].search(search_domain, order=order, limit=1).id
 
-
 class ProjectTask(models.Model):
 
     _inherit ="project.task"
@@ -356,7 +355,6 @@ class ProjectTask(models.Model):
                 costs += new_cost
         new_task.write({'cost_ids': [(6, 0, costs.ids)]})
         return new_task
-
 
 class ProjectAplType(models.Model):
     _name="project.type.apl"
@@ -449,6 +447,29 @@ class ProjectProject(models.Model):
         ('private', 'Private'),
     ])
     project_finance_apl_id = fields.Many2one("project.finance.apl", string="Tipo de financiacion", domain=[('type', '=','finance_type')])
+
+
+    color_stage = fields.Integer(string='Color Index', related="stage_id.color")
+    stage_id = fields.Many2one('project.task.type', compute="_compute_stage_id", string='Project Stage')
+
+    @api.depends('activity_ids', 'activity_ids.stage_id')
+    def _compute_stage_id(self):
+
+        for project in self:
+
+            start_stage_id = project.get_first_stage()
+            last_stage_id = project.get_last_stage()
+            run = False
+            project.stage_id = start_stage_id
+            for activity in project.activity_ids:
+                if activity.stage_id.default_error:
+                    project.stage_id = activity.stage_id
+                    break
+                elif activity.stage_id.default_running:
+                    project.stage_id = activity.stage_id
+                    run = True
+                elif activity.stage_id == last_stage_id and not run:
+                    project.stage_id = activity.stage_id
 
     def get_first_stage(self):
         domain = [('id', 'in', [v.id for v in self.type_ids])]

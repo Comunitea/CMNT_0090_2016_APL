@@ -193,6 +193,10 @@
 
 
                     <notebook>
+                        <page name="description_page" string="Description">
+                            <field name="description" type="html"/>
+                            <div class="oe_clear"/>
+                        </page>
                         <page string="Tasks">
                             <group>
 
@@ -228,7 +232,7 @@
 
 
          <record id="open_create_activity" model="ir.actions.act_window">
-            <field name="name">Create a Activity</field>
+            <field name="name">open.create.activity</field>
             <field name="res_model">project.activity</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
@@ -388,6 +392,14 @@
                 </p>
             </field>
        </record>
+        <record id="open_form_project" model="ir.actions.act_window">
+            <field name="name">open.form.project</field>
+            <field name="res_model">project.project</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="project.edit_project"/>
+
+        </record>
 
        <record id="open_view_activity_list_form" model="ir.actions.act_window.view">
             <field name="sequence" eval="1"/>
@@ -407,24 +419,37 @@
             <field name="arch" type="xml">
                 <field name="name" position="after">
                     <field name="activity_count" string ="Activity"/>
+                    <field name="color_stage"/>
+                    <field name="stage_id"/>
                 </field>
+                <xpath expr="//div[@t-attf-class='#{kanban_color(record.color.raw_value)} oe_kanban_global_click']" position="attributes">
+                    <attribute name="t-attf-class">#{kanban_color(record.color_stage.raw_value)} oe_kanban_global_click</attribute>
+                </xpath>
+
                 <xpath expr="//div[@class='o_kanban_primary_left']/div[1]" position="replace">
 
-                        <a name="%(project.open_view_project_all_config)d" type="action">
-                            <div class="o_primary">
+<a name="%(open_form_project)d" type="action">
+                        <div class="o_primary">
                             <span ><t t-esc="record.name.value"/></span>
-                            </div>
-                        </a>
+                        </div>
+                        <div t-if="record.alias_name.value and record.alias_domain.value">
+                            <span><i class="fa fa-envelope"></i> <t t-esc="record.alias_id.value"/></span>
+                        </div>
 
+                       <div class="text-muted">
+                            <span ><t t-esc="record.stage_id.value"/></span>
+                        </div></a>
                 </xpath>
 
 
-                <xpath expr="//div[@class='o_project_kanban_boxes']/div[1]" position="before">
+                <xpath expr="//div[@t-if='record.use_tasks.raw_value']" position="before">
                     <div class="o_project_kanban_box">
+                        <div><span>
                         <a name="%(action_view_activity)d" type="action">
                             <span class="o_value"><t t-esc="record.activity_count.value"/></span>
                             <span class="o_label">Activities</span>
-                        </a>
+                        </a></span>
+                        </div>
                     </div>
                 </xpath>
 
@@ -549,6 +574,7 @@
 
             </field>
         </record>
+
 
        <menuitem action="action_view_activity_from_menu" id="menu_action_view_activity" parent="project.menu_project_management" sequence="10"/>
 
