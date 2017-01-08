@@ -14,9 +14,9 @@
                 <field name="tag_ids" position="after">
                     <field name="equipment_id" attrs="{'readonly': [('stage_id', '=', 'draft')]}"/>
                     <field name="allowed_user_ids" widget="many2many_tags"/>
-                    <field name="ok_calendar" invisible="1"/>
+                    <field name="ok_calendar" invisible="0"/>
                     <button type="object" name="open_concurrent" string="Resolver" icon="fa-list"
-                            attrs="{'invisible': [('ok_calendar', '=', False)]}"/>
+                            attrs="{'invisible': [('ok_calendar', '=', True)]}"/>
                 </field>
                 <!--<xpath expr="//field[@name='user_id']" position="attributes">
                     <attribute name="domain">[('id', 'in', get_user_id_domain)]</attribute>

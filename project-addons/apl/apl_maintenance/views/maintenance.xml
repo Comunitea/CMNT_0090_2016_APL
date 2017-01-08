@@ -15,6 +15,16 @@
                 </xpath>
             </field>
         </record>
+        <record id="view_task_concurrent_calendar" model="ir.ui.view">
+            <field name="name">view.task.concurrent.calendar</field>
+            <field name="model">project.task.concurrent</field>
+            <field name="arch" type="xml">
+                <calendar color="user_id" date_start="date_start" date_stop="date_end" string="Concurrent Tasks" mode="month">
+                    <field name="origin_task_id"/>
+                    <field name="error"/>
+                </calendar>
+            </field>
+        </record>
 
         <record id="view_concurrent_task" model="ir.ui.view">
             <field name="name">project.task.concurrent.tree</field>
@@ -22,6 +32,7 @@
             <field name="arch" type="xml">
                 <tree string="Concurrent">
                     <field name="task_id"/>
+                    <button name="open_task_view" string="Confirm" icon="fa-tasks"/>
                     <field name="error"/>
                     <field name="date_start"/>
                     <field name="date_end"/>
@@ -30,7 +41,26 @@
                 </tree>
             </field>
         </record>
-
+        <record id="view_concurrent_task_form" model="ir.ui.view">
+            <field name="name">project.task.concurrent.form</field>
+            <field name="model">project.task.concurrent</field>
+            <field name="arch" type="xml">
+                <form string="Concurrent">
+                    <group><group readonly="True">
+                    <field name="task_id" readonly="1"/>
+                    <field name="error" readonly="1"/>
+                    <field name="equipment_id" readonly="1"/>
+                    <field name="user_id" readonly="1"/>
+                    </group>
+                    <group readonly="1">
+                    <field name="origin_task_id" readonly="1"/>
+                    <field name="date_start" readonly="1"/>
+                    <field name="date_end" readonly="1"/>
+                    </group>
+                    </group>
+                </form>
+            </field>
+        </record>
          <record id="view_task_search_form_with_equipment" model="ir.ui.view">
             <field name="name">project.task.search.form.with.equipment</field>
             <field name="model">project.task</field>

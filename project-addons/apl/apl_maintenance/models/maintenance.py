@@ -57,11 +57,12 @@ class MaintenanceEquipment(models.Model):
 
 class ConcurrentTask(models.Model):
     _name="project.task.concurrent"
+    _description = "Concurrent Tasks"
 
-    origin_task_id = fields.Many2one("project.task", string="Task")
+    origin_task_id = fields.Many2one("project.task", string="Task Reference(Actual)", help="Tarea actual")
     date_end = fields.Datetime(string='Ending Date')
-    date_start = fields.Datetime(string='Starating Date')
-    task_id = fields.Many2one("project.task", string="Task")
+    date_start = fields.Datetime(string='Starting Date')
+    task_id = fields.Many2one("project.task", string="Concurrent Task", help="Tarea en conflicto con la actual")
     equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
     name = fields.Char(related="task_id.name")
     #project_id= fields.Many2one(related="task_id.project_id")
@@ -74,6 +75,22 @@ class ConcurrentTask(models.Model):
 
 
 
+    def open_task_view(self):
+
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'name': 'view_task_form2',
+                        'res_model': 'project.task',
+                        'view_mode': 'form',
+                        }
+
+
+
+
+
+
+
+
 class ProjectTask(models.Model):
 
     _inherit ="project.task"
@@ -81,7 +98,11 @@ class ProjectTask(models.Model):
 
     @api.one
     def _get_ok_calendar(self):
-        self.ok_calendar = self.get_concurrent()
+
+        if not self.date_start or not self.date_end or not self.equipment_id:
+            self.ok_calendar = True
+        else:
+            self.ok_calendar = self.get_concurrent()
 
     equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
     allowed_user_ids = fields.Many2many(related="equipment_id.allowed_user_ids", string= "Allowed Users")
@@ -112,12 +133,13 @@ class ProjectTask(models.Model):
 
     def get_concurrent(self):
 
-        if not self.date_start or not self.date_end or not self.equipment_id:
-            return False
         concurrent_task_ids = []
         domain = [('origin_task_id','=',self.id)]
         borrar =self.env['project.task.concurrent'].search(domain)
         borrar.unlink()
+        if not self.date_start or not self.date_end or not self.equipment_id:
+            return False
+
         domain = [('equipment_id', '=',self.equipment_id.id),
                   ('stage_id','!=',6), ('id','!=',self.id)]
         pool_tasks = self.env['project.task'].search(domain)
@@ -149,32 +171,41 @@ class ProjectTask(models.Model):
                 }
                     concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
         #TODO COMPROBAR SI EL USUARIO ASIGANDO ESTA Y SI ESTA EN HORARIO
+        print concurrent_task_ids
         if concurrent_task_ids:
-            return True
-        return False
+            #si hay tareas concurrentes añado la original para poder viusualizar en el calendario
+            vals ={
+                'origin_task_id': self.id,
+                'task_id': self.id,
+                'user_id': self.user_id.id,
+                'date_start': self.date_start,
+                'date_end': self.date_end,
+                'equipment_id': self.equipment_id.id,
+                'error': "Referencia"
+            }
+            concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+            return False
+        return True
 
 
     def open_concurrent(self):
-        if self.get_concurrent():
-            return {
+
+        return {
                 'type': 'ir.actions.act_window',
                 'name': 'open.concurring.tasks',
                 'res_model': 'project.task.concurrent',
-                'view_mode': 'tree',
+                'view_mode': 'tree,form,calendar',
                 'domain': [('origin_task_id','=',self.id)]}
+
 
     @api.multi
     def write(self, vals):
-
+        print "OK_calendar %s" %self.ok_calendar
         if not self.ok_calendar:
-            if self.stage_id!='draft':
-                raise UserError(_('You cannot change the state because you have concurrent tasks'))
-
-
-
-
-
-
+            print "OK_calendar %s" %self.ok_calendar
+            print "stage_id %s"%vals.get('stage_id')
+            if vals.get('stage_id')>4:
+                raise UserError(_('You cannot change the state because you have concurrent tasks\n or incomplete fields'))
 
         result = super(ProjectTask, self).write(vals)
 

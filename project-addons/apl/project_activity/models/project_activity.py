@@ -320,11 +320,11 @@ class ProjectTask(models.Model):
     @api.multi
     def write(self, vals):
 
-        if self.create_uid != self.env.user and self.user_id != self.env.user:
+        if self.create_uid == self.env.user or self.user_id == self.env.user:
             user_admin = True
         else:
             user_admin = False
-
+        print "Es usuario admin para esta taresa: %s"%user_admin
         if ('stage_id' in vals):
 
             if (vals.get('kanban_state', 'normal') == 'blocked' or self.kanban_state == 'blocked'):
