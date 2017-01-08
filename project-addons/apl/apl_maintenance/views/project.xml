@@ -14,7 +14,7 @@
                 <field name="tag_ids" position="after">
                     <field name="equipment_id" attrs="{'readonly': [('stage_id', '=', 'draft')]}"/>
                     <field name="allowed_user_ids" widget="many2many_tags"/>
-                    <field name="ok_calendar" invisible="0"/>
+                    <field name="ok_calendar" invisible="1"/>
                     <button type="object" name="open_concurrent" string="Resolver" icon="fa-list"
                             attrs="{'invisible': [('ok_calendar', '=', True)]}"/>
                 </field>
