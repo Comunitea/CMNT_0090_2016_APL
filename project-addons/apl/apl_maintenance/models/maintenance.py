@@ -53,6 +53,27 @@ class MaintenanceEquipment(models.Model):
 
         return super(MaintenanceEquipment, self).write(vals)
 
+
+
+class ConcurrentTask(models.Model):
+    _name="project.task.concurrent"
+
+    origin_task_id = fields.Many2one("project.task", string="Task")
+    date_end = fields.Datetime(string='Ending Date')
+    date_start = fields.Datetime(string='Starating Date')
+    task_id = fields.Many2one("project.task", string="Task")
+    equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
+    name = fields.Char(related="task_id.name")
+    #project_id= fields.Many2one(related="task_id.project_id")
+    #activity_id  = fields.Many2one(related="task_id.activity_id")
+    #activity_id = fields.Many2one("project.activity",related="task_id.activity_id")# string="Activity")
+    user_ids = fields.Many2many('res.users',
+                                string='Assigned to')
+    user_id = fields.Many2one('res.users', string="Assigned to")
+    error = fields.Char("Tipo de Concurrencia")
+
+
+
 class ProjectTask(models.Model):
 
     _inherit ="project.task"
@@ -60,20 +81,7 @@ class ProjectTask(models.Model):
 
     @api.one
     def _get_ok_calendar(self):
-
-        if not (self.equipment_id and self.date_start):
-            self.ok_calendar = True
-            return
-
-        sql = "select count(id) from project_task where ((equipment_id = %s) and ('%s' between date_start and date_end))"%(self.equipment_id and self.equipment_id.id, self.date_start)
-        self._cr.execute(sql)
-
-        resw = self._cr.fetchone()
-        if resw:
-            self.ok_calendar = False
-        else:
-            self.ok_calendar = True
-
+        self.ok_calendar = self.get_concurrent()
 
     equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
     allowed_user_ids = fields.Many2many(related="equipment_id.allowed_user_ids", string= "Allowed Users")
@@ -90,8 +98,9 @@ class ProjectTask(models.Model):
                               string='Responsable',
                               default=lambda self: self.env.uid,
                               index=True, track_visibility='always')
+    #concurrent_task_ids = fields.Many2many("project.task.concurrent", column1="task_id", column2="origin_task_id")
 
-    @api.onchange('equipment_id')
+    @api.onchange('equipment_id')#, 'date_start', 'date_end', 'user_ids')
     def get_user_ids_domain(self):
 
         if self.equipment_id:
@@ -100,22 +109,84 @@ class ProjectTask(models.Model):
             x = {'domain': {'user_ids': []}}
         return x
 
-    @api.one
+
+    def get_concurrent(self):
+
+        if not self.date_start or not self.date_end or not self.equipment_id:
+            return False
+        concurrent_task_ids = []
+        domain = [('origin_task_id','=',self.id)]
+        borrar =self.env['project.task.concurrent'].search(domain)
+        borrar.unlink()
+        domain = [('equipment_id', '=',self.equipment_id.id),
+                  ('stage_id','!=',6), ('id','!=',self.id)]
+        pool_tasks = self.env['project.task'].search(domain)
+        for task in pool_tasks:
+            if (task.date_start<= self.date_start <= task.date_end) \
+                    or (task.date_start<= self.date_end <= task.date_end):
+                vals ={
+                    'origin_task_id': self.id,
+                    'task_id': task.id,
+                    'date_start': task.date_start,
+                    'date_end': task.date_end,
+                    'equipment_id': task.equipment_id.id,
+                    'error': "Equipo Ocupado"
+                }
+                concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+
+        domain = [('date_start', '>=',self.date_start),('date_start','<=',self.date_end), ('stage_id', '!=', 6), ('date_end','<=',self.date_end), ('date_end','<=',self.date_end), ('id','!=',self.id)]
+        pool_tasks = self.env['project.task'].search(domain)
+        for task in pool_tasks:
+            for user_id in self.user_ids:
+                if user_id in task.user_ids:
+                    vals ={
+                        'origin_task_id': self.id,
+                        'task_id': task.id,
+                        'user_id': user_id.id,
+                        'date_start': task.date_start,
+                        'date_end': task.date_end,
+                        'error': "Usuario Concurrente"
+                }
+                    concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+        #TODO COMPROBAR SI EL USUARIO ASIGANDO ESTA Y SI ESTA EN HORARIO
+        if concurrent_task_ids:
+            return True
+        return False
+
+
     def open_concurrent(self):
-        ids = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        if self.get_concurrent():
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'open.concurring.tasks',
+                'res_model': 'project.task.concurrent',
+                'view_mode': 'tree',
+                'domain': [('origin_task_id','=',self.id)]}
 
-        domain = [('id', 'in', ids)]
+    @api.multi
+    def write(self, vals):
 
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'open.concurring.tasks',
-            'res_model': 'product.task',
-            'view_type': 'tree',
-            'view_mode': 'tree,form',
-            'view_id': self.env['ir.ui.view'].search([('name','=','project.task.tree.concurring_tasks')]).id,
-            'target': 'current',
-            'domain': domain,
-        }
+        if not self.ok_calendar:
+            if self.stage_id!='draft':
+                raise UserError(_('You cannot change the state because you have concurrent tasks'))
+
+
+
+
+
+
+
+        result = super(ProjectTask, self).write(vals)
+
+        return result
+
+
+
+
+
+
+
+
 
 class ReportProjectActivityTaskUser(models.Model):
     _inherit = "report.project.task.user"
@@ -131,3 +202,5 @@ class ReportProjectActivityTaskUser(models.Model):
         return super(ReportProjectActivityTaskUser, self)._group_by() + """,
             equipment_id
             """
+
+

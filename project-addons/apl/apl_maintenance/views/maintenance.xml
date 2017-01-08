@@ -16,6 +16,21 @@
             </field>
         </record>
 
+        <record id="view_concurrent_task" model="ir.ui.view">
+            <field name="name">project.task.concurrent.tree</field>
+            <field name="model">project.task.concurrent</field>
+            <field name="arch" type="xml">
+                <tree string="Concurrent">
+                    <field name="task_id"/>
+                    <field name="error"/>
+                    <field name="date_start"/>
+                    <field name="date_end"/>
+                    <field name="equipment_id"/>
+                    <field name="user_id"/>
+                </tree>
+            </field>
+        </record>
+
          <record id="view_task_search_form_with_equipment" model="ir.ui.view">
             <field name="name">project.task.search.form.with.equipment</field>
             <field name="model">project.task</field>

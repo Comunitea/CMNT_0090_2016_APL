@@ -304,7 +304,7 @@ class ProjectTask(models.Model):
                                  default= '',
                                  index=True, copy=False)
     done = fields.Boolean('Done')
-
+    stage_name = fields.Char(related="stage_id.name")
     #@api.onchange('stage_id')
     #def _onchange_stage_id(self):
     #    self.color=self.stage_id.color
@@ -319,10 +319,26 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
+
+        if self.create_uid != self.env.user and self.user_id != self.env.user:
+            user_admin = True
+        else:
+            user_admin = False
+
         if ('stage_id' in vals):
 
             if (vals.get('kanban_state', 'normal') == 'blocked' or self.kanban_state == 'blocked'):
-                raise UserError(_('You cannot chane the state because task is blocked'))
+                raise UserError(_('You cannot change the state because task is blocked'))
+
+            stage_id =self.env['project.task.type'].browse(vals.get('stage_id'))
+            if stage_id.default_running and self.stage_id.name=='draft' and not user_admin:
+                raise UserError(_('You cannot change the state (task is in draft state)'))
+
+            if self.stage_id.default_error and not user_admin:
+                raise UserError(_('You cannot change the state (task is in error state)'))
+
+            if stage_id.id == self.project_id.get_last_stage().id and not user_admin and False:
+                raise UserError(_('You cannot change the state (task is finished)'))
 
             done = (vals.get('stage_id', False) == self.project_id.get_last_stage().id)
             vals['done'] = done
