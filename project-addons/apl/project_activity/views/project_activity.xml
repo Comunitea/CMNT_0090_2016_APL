@@ -132,7 +132,8 @@
                 </kanban>
             </field>
         </record>
-    <record id="view_project_finance_apl" model="ir.ui.view">
+        
+        <record id="view_project_finance_apl" model="ir.ui.view">
             <field name="name">view.project.finance.apl</field>
             <field name="model">project.finance.apl</field>
             <field name="view_type">form</field>
@@ -412,6 +413,7 @@
             <field name="view_mode">tree</field>
             <field name="act_window_id" ref="action_view_activity"/>
         </record>
+        
        <record id="view_project_project_activity_kanban" model="ir.ui.view">
             <field name="name">Project Kanban With Activity</field>
             <field name="model">project.project</field>
@@ -428,7 +430,7 @@
 
                 <xpath expr="//div[@class='o_kanban_primary_left']/div[1]" position="replace">
 
-<a name="%(open_form_project)d" type="action">
+                    <!--a name="%(open_form_project)d" type="action"-->
                         <div class="o_primary">
                             <span ><t t-esc="record.name.value"/></span>
                         </div>
@@ -438,7 +440,7 @@
 
                        <div class="text-muted">
                             <span ><t t-esc="record.stage_id.value"/></span>
-                        </div></a>
+                        </div><!--/a-->
                 </xpath>
 
 
