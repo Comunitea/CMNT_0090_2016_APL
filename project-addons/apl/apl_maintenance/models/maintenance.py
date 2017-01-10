@@ -7,6 +7,41 @@
 from odoo import fields, models, tools, api, _
 
 from odoo.exceptions import UserError, ValidationError
+from datetime import datetime, timedelta
+
+class MaintenanceRequest(models.Model):
+    _inherit = 'maintenance.request'
+
+    @api.multi
+    def write(self, vals):
+        #todo hay un cron que crea maintenance_request el dia que hay
+        #esta programdo en la ficha del equipo pero entonces no aparecen en la agenda
+        import ipdb; ipdb.set_trace()
+        res = super(MaintenanceRequest, self).write(vals)
+        if vals.get('stage_id', False) and self.maintenance_type=='preventive':
+            stage_id = self.env['maintenance.stage'].browse(vals.get('stage_id', False))
+            if stage_id.done == True:
+                #creamos uno nuevo
+                schedule_date = fields.Datetime.from_string(self.close_date) + timedelta(days = self.equipment_id.period)
+                request_date = self.close_date
+                maintenance_type ='preventive'
+                vals = {
+                    'request_date': schedule_date,
+                    'schedule_date': schedule_date,
+                    'maintenance_type':maintenance_type,
+                    'stage_id':1
+
+                }
+                new_request = self.copy(vals)
+
+
+
+
+
+
+
+
+        return res
 
 class MaintenanceEquipment(models.Model):
 
@@ -15,13 +50,13 @@ class MaintenanceEquipment(models.Model):
 
     @api.one
     def _get_active_task(self):
-        domain = [('equipment_id', '=', self.id), ('done', '=', False)]
+        domain = [('equipment_id', '=', self.id), ('stage_id.default_done', '=', False)]
         tasks = self.env['project.task'].search(domain)
         self.active_tasks = len(tasks)
 
     @api.one
     def _get_ok_calendar(self):
-        domain = [('equipment_id', '=', self.id), ('ok_calendar', '=', True), ('done','=', False)]
+        domain = [('equipment_id', '=', self.id), ('ok_calendar', '=', True), ('stage_id.default_done','=', False)]
         tasks = self.env['project.task'].search(domain)
         self.ok_calendar = self.tasks and self.tasks[0].ok_calendar or False
 
@@ -33,7 +68,6 @@ class MaintenanceEquipment(models.Model):
 
     @api.multi
     def copy(self):
-        import pdb; pdb.set_trace()
 
         vals = ({'allowed_user_ids': [6,0, [self.allowed_user_ids]]})
         new_equipment = super(MaintenanceEquipment, self).copy(vals)
@@ -53,8 +87,6 @@ class MaintenanceEquipment(models.Model):
 
         return super(MaintenanceEquipment, self).write(vals)
 
-
-
 class ConcurrentTask(models.Model):
     _name="project.task.concurrent"
     _description = "Concurrent Tasks"
@@ -70,7 +102,7 @@ class ConcurrentTask(models.Model):
     #activity_id = fields.Many2one("project.activity",related="task_id.activity_id")# string="Activity")
     user_ids = fields.Many2many('res.users',
                                 string='Assigned to')
-    user_id = fields.Many2one('res.users', string="Assigned to")
+    user_id = fields.Many2one('res.users', string="Responsable")
     error = fields.Char("Tipo de Concurrencia")
 
 
@@ -108,7 +140,7 @@ class ProjectTask(models.Model):
     allowed_user_ids = fields.Many2many(related="equipment_id.allowed_user_ids", string= "Allowed Users")
         #sobreescribo el campo user_id para eliminar el asignado por defecto y añadir el dominioo
     user_ids = fields.Many2many('res.users',
-                              string='Assigned to',
+                              string='Asignado a',
                               index=True, track_visibility='always')
                               #domain="[('id', '!=', allowed_user_ids and  allowed_user_ids[0][2])]")
                               #domain="[('id','in', allowed_user_ids and allowed_user_ids[0][2] or [])]")

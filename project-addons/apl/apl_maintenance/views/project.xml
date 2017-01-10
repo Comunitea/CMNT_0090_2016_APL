@@ -7,17 +7,18 @@
             <field name="inherit_id" ref="project.view_task_form2"/>
             <field name="arch" type="xml">
                 <field name="user_id" position="after">
-                    <field name="user_ids" widget="many2many_tags"/>
-                </field>
-
-
-                <field name="tag_ids" position="after">
                     <field name="equipment_id" attrs="{'readonly': [('stage_id', '=', 'draft')]}"/>
-                    <field name="allowed_user_ids" widget="many2many_tags"/>
+                    <field name="allowed_user_ids" widget="many2many_tags" invisible="1"/>
+                    <field name="user_ids" widget="many2many_tags" attrs="{'invisible': [('equipment_id','=',False)]}"/>
                     <field name="ok_calendar" invisible="1"/>
-                    <button type="object" name="open_concurrent" string="Resolver" icon="fa-list"
-                            attrs="{'invisible': [('ok_calendar', '=', True)]}"/>
                 </field>
+
+                <xpath expr="//button[@name='toggle_active']" position="before">
+                    <button type="object" name="open_concurrent" string="Resolver" class="oe_stat_button" icon="fa-list"
+                            attrs="{'invisible': [('ok_calendar', '=', True)]}">
+
+                    </button>
+                </xpath>
                 <!--<xpath expr="//field[@name='user_id']" position="attributes">
                     <attribute name="domain">[('id', 'in', get_user_id_domain)]</attribute>
                 </xpath>
@@ -44,7 +45,24 @@
 
             </field>
         </record>
+        <record id="view_task_search_form_with_user_ids" model="ir.ui.view">
+            <field name="name">project.task.search.form.with.act</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_search_form"/>
+             <field name="arch" type="xml">
+                <xpath expr="//field[@name='project_id']" position="after">
+                    <field name="equipment_id"/>
+                    <field name="user_ids"/>
+                </xpath>
+                <xpath expr="//filter[@name='my_tasks']" position="replace">
+                    <filter string="My Tasks" name="my_tasks" domain="['|',('user_id','=',uid),('user_ids','in',uid)]"/>
+                </xpath>
+               <xpath expr="//filter[@name='unassigned']" position="after">
+                    <filter string="Sin agendar" name="sin_agendar" domain="[('user_ids','=',False)]"/>
+                </xpath>
 
+            </field>
+        </record>
 
         <menuitem
         id="menu_equipment_form_in_project"

@@ -11,20 +11,20 @@ class ReportProjectActivityTaskUser(models.Model):
     _inherit = "report.project.task.user"
 
     activity_id = fields.Many2one("project.activity", readonly=True)
-    real_cost_cal = fields.Float('Cost', group_operator='sum', readonly=True)
+    real_cost = fields.Float('Cost', group_operator='sum', readonly=True)
     planned_cost = fields.Float('Planned Cost', group_operator='sum', readonly=True)
 
 
     def _select(self):
         return super(ReportProjectActivityTaskUser, self)._select() + """,
             activity_id as activity_id,
-            real_cost_cal as real_cost_cal,
+            real_cost as real_cost,
             planned_cost as planned_cost
             """
 
     def _group_by(self):
         return super(ReportProjectActivityTaskUser, self)._group_by() + """,
             activity_id,
-            real_cost_cal,
+            real_cost,
             planned_cost
             """
