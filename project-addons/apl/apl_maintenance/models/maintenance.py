@@ -157,9 +157,11 @@ class ProjectTask(models.Model):
     def get_user_ids_domain(self):
 
         if self.equipment_id:
-            x = {'domain': {'user_ids': [('id', 'in', [x.id for x in self.allowed_user_ids])]}}
+            x = {'domain': {'user_ids': [('id', 'in', [x.id for x in self.allowed_user_ids])]},
+                 'value': {'user_ids': []}}
         else:
-            x = {'domain': {'user_ids': []}}
+            x = {'domain': {'user_ids': []},
+                 'value': {'user_ids': []}}
         return x
 
 
