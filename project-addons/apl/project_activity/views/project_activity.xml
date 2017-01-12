@@ -282,7 +282,7 @@
                 </field>
                 <xpath expr="//notebook/page[@name='description_page']" position="after">
                     <page string="Asociated Costs">
-                    <field name="cost_ids">
+                    <field name="cost_ids"  invisible="1" >
                         <tree editable="bottom">
                             <field name="name"/>
                             <field name="product_id" required="1"/>
@@ -297,11 +297,11 @@
                     <group>
                         <group>
                             <field name="planned_cost" />
-                            <field name="real_cost" invisible="1" />
+                            <field name="real_cost"  />
                         </group>
 
                         <group>
-                            <field name="real_cost_cal" />
+                            <field name="real_cost_cal" invisible="1"/>
                         </group>
 
 
@@ -321,7 +321,7 @@
                 <field name="project_id" position="after">
 
                     <field name="activity_id" invisible="context.get('user_invisible', False)"/>
-                    <field name="real_cost" invisible="1"/>
+                    <field name="real_cost" />
                     <field name="date_start"/>
                    <field name="date_end"/>
                 </field>
@@ -377,7 +377,7 @@
         <record id="action_view_activity_from_menu" model="ir.actions.act_window">
             <field name="name">Activity</field>
             <field name="res_model">project.activity</field>
-            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot</field>
             <field name="view_type">form</field>
             <field name="view_id" ref="view_project_activity_kanban"/>
              <field name="search_view_id" ref="view_activity_filter"/>
@@ -543,7 +543,7 @@
                             </group>
                             <group>
                                 <field name="task_cost"/>
-                                <field name="real_cost" invisible="1"/>
+                                <field name="real_cost" />
                             </group>
                         </group>
                     </page>
@@ -553,7 +553,7 @@
                                 <field name="name"/>
                                 <field name="user_id"/>
                                 <field name="stage_id"/>
-                                <field name="real_cost_cal"/>
+                                <field name="real_cost_cal" invisible="1"/>
 
                             </tree>
                         </field>
@@ -600,5 +600,29 @@
 
        <menuitem action="action_view_activity_from_menu" id="menu_action_view_activity" parent="project.menu_project_management" sequence="10"/>
 
+
+         <record id="view_task_calendar_global" model="ir.ui.view">
+            <field name="name">Task Calendar Global</field>
+            <field name="model">project.task</field>
+            <field name="arch" type="xml">
+            <calendar string="Tasks" date_start="date_start" date_stop="date_end" display="[name]" attendee="user_ids" color="equipment_id">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="equipment_id"/>
+            </calendar>
+            </field>
+        </record>
+        
+        
+        <record id="action_task_calendar_menu" model="ir.actions.act_window">
+            <field name="name">Tasks</field>
+            <field name="res_model">project.task</field>
+            <field name="view_mode">calendar,tree,form</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_task_calendar_global"/>
+       </record>
+        
+        <menuitem action="action_task_calendar_menu" id="menu_task_calendar" sequence="10"/>
+        
     </data>
 </openerp>
