@@ -448,7 +448,7 @@
 
                     <!--a name="%(open_form_project)d" type="action"-->
                         <div class="o_primary">
-                            <span ><t t-esc="record.code"/<t t-esc="record.name.value"/></span>
+                            <span ><t t-esc="record.code"/><t t-esc="record.name.value"/></span>
                         </div>
                         <div t-if="record.alias_name.value and record.alias_domain.value">
                             <span><i class="fa fa-envelope"></i> <t t-esc="record.alias_id.value"/></span>
