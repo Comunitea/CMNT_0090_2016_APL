@@ -17,6 +17,7 @@
         "Kiko Sanchez<kiko@comunitea.com>",    ],
     "data": [
         'views/project_activity.xml',
+        'views/report_activity.xml',
     'security/ir.model.access.csv',
     ],
     "demo": [
