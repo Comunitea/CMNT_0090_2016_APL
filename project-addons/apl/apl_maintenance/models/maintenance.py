@@ -18,7 +18,7 @@ class MaintenanceRequest(models.Model):
     def write(self, vals):
         #todo hay un cron que crea maintenance_request el dia que hay
         #esta programdo en la ficha del equipo pero entonces no aparecen en la agenda
-        import ipdb; ipdb.set_trace()
+
         res = super(MaintenanceRequest, self).write(vals)
         if vals.get('stage_id', False) and self.maintenance_type=='preventive':
             stage_id = self.env['maintenance.stage'].browse(vals.get('stage_id', False))

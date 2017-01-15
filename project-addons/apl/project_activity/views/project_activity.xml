@@ -615,8 +615,7 @@
                 <field name="project_id"/>
                 <field name="equipment_id"/>
             </calendar>
-            </field>
-        </record>
+            </field> </record>
         
         
         <record id="action_task_calendar_menu" model="ir.actions.act_window">
@@ -626,7 +625,12 @@
             <field name="view_type">form</field>
             <field name="view_id" ref="view_task_calendar_global"/>
        </record>
-        
+       <act_window
+            id="act_create_new_master_from_activity"
+            name="New Template from "
+            res_model="project.activity"
+            context=""
+            src_model="project.activity"/>
         <menuitem action="action_task_calendar_menu" id="menu_task_calendar" sequence="10"/>
         
     </data>
