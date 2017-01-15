@@ -89,7 +89,7 @@ msgstr "Costes asociados"
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_user_id
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_user_id
 msgid "Assigned to"
-msgstr "Asignada a"
+msgstr "Responsable"
 
 #. module: project_activity
 #: model:ir.model.fields,help:project_activity.field_project_activity_use_tasks

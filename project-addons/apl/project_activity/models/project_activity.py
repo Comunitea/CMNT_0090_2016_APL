@@ -4,7 +4,7 @@
 # License AGPL-3 - See http://www.gnu.org/licenses/agpl-3.0.html
 
 from odoo import api, fields, models, tools, _
-from datetime import datetime
+from datetime import datetime, timedelta
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -69,7 +69,7 @@ class ProjectActivity(models.Model):
         progress = contador * 100
         self.progress = progress / (len(self.task_ids) or 1.0)
 
-    @api.depends('name', 'task_ids.stage_id')
+    @api.depends('task_ids', 'task_ids.stage_id')
     def _compute_stage_id(self):
 
         for activity in self:
@@ -230,10 +230,6 @@ class ProjectActivity(models.Model):
 
         return self
 
-
-
-
-
     @api.multi
     def copy(self, default):
 
@@ -256,7 +252,6 @@ class ProjectActivity(models.Model):
 
         new_activity.write({'task_ids': [(6,0,tasks.ids)]})
         return new_activity
-
 
     @api.multi
     def map_activity(self, new_project_id):
@@ -368,27 +363,26 @@ class ProjectTask(models.Model):
     color = fields.Integer(related="stage_id.color")
     working_color=fields.Integer("Active Color", default=3)
     planned_cost = fields.Float ("Planned Cost", help="Planned cost")
-    real_cost = fields.Float("Real Cost", help ="Real cost (after task finish)", copy=False)
+    real_cost = fields.Float("Real Cost", help ="Real cost (after task finish)")
     real_cost_cal = fields.Float("Real Cost Cal", help="Real cost or amount_cost_ids",
                                  compute='_get_real_cost_cal')
     cost_ids = fields.One2many("project.task.cost", "task_id", string="Tasks Costs")
     amount_cost_ids = fields.Float("Tasks Costs Amount", compute="_get_task_costs")
-    #sobre escribo date_start paraquitar el valor por defecto
+    #sobre escribo date_start para poner el valor por defecto y required = True
     date_start = fields.Datetime(string='Starting Date',
-                                 default= '',
-                                 index=True, copy=False)
+                                 default=fields.Datetime.now,
+                                 index=True, copy=False, required = True)
+    date_end = fields.Datetime(string='Ending Date', index=True,
+                               default=fields.Datetime.now,
+                               copy=False,required = True)
     stage_name = fields.Char(related="stage_id.name")
-    #@api.onchange('stage_id')
-    #def _onchange_stage_id(self):
-    #    self.color=self.stage_id.color
-        #
 
-        #if self.stage_id.running_state:
-        #    self.color = self.working_color
-        #elif self.stage_id.error_state:
-        #    self.color = 8project_id.
-        #else:
-        #    self.state=0
+    _sql_constraints = [
+        ('check_planned_cost', "CHECK (planned_cost > 0.00)", 'Planned cost should be > 0.'),
+        ('check_real_cost', "CHECK (real_cost > 0.00)", 'Real cost should be > 0.'),
+        ('check_dates', "CHECK (date_start <= date_end)", 'Ohhh !! Can you end before you start ????')
+    ]
+
 
     def _user_admin(self):
 
@@ -400,28 +394,34 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
-        print "\n\n################\n%s\n########\nStage id: %s\n#########\n\n"%(vals, self.stage_id.name)
-        if self.create_uid == self.env.user or self.user_id == self.env.user:
+
+        if self.create_uid == self.env.user or self.user_id == self.env.user or self.env.user.id==1:
             user_admin = True
         else:
             user_admin = False
         print "Es usuario admin para esta taresa: %s"%user_admin
-
+        #todo revisarlo para cmabiarlo por permisos
         if ('stage_id' in vals):
-
             if (vals.get('kanban_state', 'normal') == 'blocked' or self.kanban_state == 'blocked'):
                 raise UserError(_('You cannot change the state because task is blocked'))
 
             stage_id =self.env['project.task.type'].browse(vals.get('stage_id'))
 
-            if stage_id.default_running and self.stage_id.default_draft and not user_admin:
-                raise UserError(_('You cannot change the state (task is in draft state)'))
+            if stage_id.default_running:
+                if not user_admin:
+                    raise UserError(_('You cannot change the state (no enough permissions)'))
+                if (not self.date_start or not self.date_end) or (not self.user_id or not self.user_ids):
+                    raise UserError(_('You cannot change the state to running\nCheck dates star, date end, assigned to and equipment'))
 
             if self.stage_id.default_error and not user_admin:
                 raise UserError(_('You cannot change the state (task is in error state)'))
 
-            if self.stage_id.default_no_schedule and not user_admin:
-                raise UserError(_('You cannot change the state (task is in error state)'))
+            if stage_id.default_no_schedule:
+                if not user_admin:
+                    raise UserError(_('You cannot change the state (no enough permissions)'))
+                if (not self.user_id or not self.user_ids):
+                    raise UserError(_('You cannot change the state to not schedule\n Check equipment and assigned to'))
+
 
             if self.stage_id.default_done and not user_admin and False:
                 raise UserError(_('You cannot change the state (task is finished)'))
@@ -429,6 +429,15 @@ class ProjectTask(models.Model):
         result = super(ProjectTask, self).write(vals)
 
         return result
+
+
+    @api.onchange('planned_hours')
+    def get_date_end(self):
+        print "ONCHANGE --- planned_hours"
+        start_dt = fields.Datetime.from_string(self.date_start)
+        end_dt = start_dt + timedelta(minutes= (self.planned_hours-int(self.planned_hours)) * 60) + timedelta(hours=int(self.planned_hours))
+        self.date_end = end_dt
+
 
     @api.onchange('user_id')
     def _onchange_user(self):

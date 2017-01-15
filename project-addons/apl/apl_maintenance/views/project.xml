@@ -16,7 +16,8 @@
                 <xpath expr="//button[@name='toggle_active']" position="before">
                     <button type="object" name="open_concurrent" string="Resolver" class="oe_stat_button" icon="fa-list"
                             attrs="{'invisible': [('ok_calendar', '=', True)]}">
-
+                            </button>
+                    <button type="object" name="calc_ok" string="Calcular" class="oe_stat_button" icon="fa-list" invisible="1">
                     </button>
                 </xpath>
                 <!--<xpath expr="//field[@name='user_id']" position="attributes">

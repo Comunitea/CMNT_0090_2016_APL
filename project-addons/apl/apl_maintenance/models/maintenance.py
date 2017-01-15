@@ -8,6 +8,8 @@ from odoo import fields, models, tools, api, _
 
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
+from odoo.fields import Datetime
+import pytz
 
 class MaintenanceRequest(models.Model):
     _inherit = 'maintenance.request'
@@ -56,14 +58,16 @@ class MaintenanceEquipment(models.Model):
 
     @api.one
     def _get_ok_calendar(self):
-        domain = [('equipment_id', '=', self.id), ('ok_calendar', '=', True), ('stage_id.default_done','=', False)]
-        tasks = self.env['project.task'].search(domain)
-        self.ok_calendar = self.tasks and self.tasks[0].ok_calendar or False
+        domain = [('equipment_id', '=', self.id)]
+        tasks = self.env['project.task.concurrent'].search(domain)
+        self.ok_calendar = True if tasks else False
+
+
 
     allowed_user_ids = fields.Many2many('res.users', string="Allowed Users")
     active_tasks = fields.Integer("Tasks no finished", compute ="_get_active_task")
     ok_calendar = fields.Boolean("Ok Calendar", compute="_get_ok_calendar")
-
+    no_equipment = fields.Boolean("Default no equipment")
 
 
     @api.multi
@@ -100,9 +104,9 @@ class ConcurrentTask(models.Model):
     #project_id= fields.Many2one(related="task_id.project_id")
     #activity_id  = fields.Many2one(related="task_id.activity_id")
     #activity_id = fields.Many2one("project.activity",related="task_id.activity_id")# string="Activity")
-    user_ids = fields.Many2many('res.users',
-                                string='Assigned to')
-    user_id = fields.Many2one('res.users', string="Responsable")
+    #user_ids = fields.Many2many('res.users',
+    #                                string='Assigned to')
+    user_id = fields.Many2one('res.users', string="Assigned to")
     error = fields.Char("Tipo de Concurrencia")
 
 
@@ -116,25 +120,9 @@ class ConcurrentTask(models.Model):
                         'view_mode': 'form',
                         }
 
-
-
-
-
-
-
-
 class ProjectTask(models.Model):
 
     _inherit ="project.task"
-
-
-    @api.one
-    def _get_ok_calendar(self):
-
-        if not self.date_start or not self.date_end or not self.equipment_id:
-            self.ok_calendar = True
-        else:
-            self.ok_calendar = self.get_concurrent()
 
     equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
     allowed_user_ids = fields.Many2many(related="equipment_id.allowed_user_ids", string= "Allowed Users")
@@ -145,13 +133,27 @@ class ProjectTask(models.Model):
                               #domain="[('id', '!=', allowed_user_ids and  allowed_user_ids[0][2])]")
                               #domain="[('id','in', allowed_user_ids and allowed_user_ids[0][2] or [])]")
 
-    ok_calendar = fields.Boolean ("Ok Calendar", compute ="_get_ok_calendar")
+    ok_calendar = fields.Boolean ("Ok Calendar")
 
     user_id = fields.Many2one('res.users',
                               string='Responsable',
                               default=lambda self: self.env.uid,
                               index=True, track_visibility='always')
     #concurrent_task_ids = fields.Many2many("project.task.concurrent", column1="task_id", column2="origin_task_id")
+
+    @api.constrains('equipment_id', 'user_ids')
+    def _check_user_ids(self):
+        if self.equipment_id and not self.user_ids:
+            raise ValidationError(_('Error ! Task with equiment must be assigned.'))
+
+
+    @api.onchange('date_start', 'date_end', 'user_ids')
+    def _get_ok_calendar(self):
+
+        self.ok_calendar = False
+
+
+
 
     @api.onchange('equipment_id')#, 'date_start', 'date_end', 'user_ids')
     def get_user_ids_domain(self):
@@ -165,23 +167,33 @@ class ProjectTask(models.Model):
         return x
 
 
-    def get_concurrent(self):
+    def get_concurrent(self, self_id = False, equipment_id = False, 
+                       date_start = False, date_end = False):
+
+        
+        self_id = self_id or self.id
+        equipment_id = equipment_id or self.equipment_id.id
+        date_start = date_start or self.date_start
+        date_end = date_end or self.date_end
 
         concurrent_task_ids = []
-        domain = [('origin_task_id','=',self.id)]
-        borrar =self.env['project.task.concurrent'].search(domain)
+        domain = [('origin_task_id','=',self_id)]
+        borrar = self.env['project.task.concurrent'].search(domain)
         borrar.unlink()
-        if not self.date_start or not self.date_end or not self.equipment_id:
+
+        if not (date_start and date_end and equipment_id):
             return False
 
-        domain = [('equipment_id', '=',self.equipment_id.id),
-                  ('stage_id','!=',6), ('id','!=',self.id)]
+        domain = [('equipment_id', '=', equipment_id),
+                  ('equipment_id.no_equipment','!=', True),
+                  ('stage_id.default_done','!=', True),
+                  ('id','!=', self_id)]
         pool_tasks = self.env['project.task'].search(domain)
         for task in pool_tasks:
-            if (task.date_start<= self.date_start <= task.date_end) \
-                    or (task.date_start<= self.date_end <= task.date_end):
+            if (task.date_start<= date_start <= task.date_end) \
+                    or (task.date_start<= date_end <= task.date_end):
                 vals ={
-                    'origin_task_id': self.id,
+                    'origin_task_id': self_id,
                     'task_id': task.id,
                     'date_start': task.date_start,
                     'date_end': task.date_end,
@@ -190,37 +202,131 @@ class ProjectTask(models.Model):
                 }
                 concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
 
-        domain = [('date_start', '>=',self.date_start),('date_start','<=',self.date_end), ('stage_id', '!=', 6), ('date_end','<=',self.date_end), ('date_end','<=',self.date_end), ('id','!=',self.id)]
+        domain = [('stage_id.default_done', '!=', True),
+                  ('id','!=',self_id)]
         pool_tasks = self.env['project.task'].search(domain)
         for task in pool_tasks:
-            for user_id in self.user_ids:
-                if user_id in task.user_ids:
-                    vals ={
-                        'origin_task_id': self.id,
-                        'task_id': task.id,
+            if (task.date_start <= date_start <= task.date_end) \
+                    or (task.date_start <= date_end <= task.date_end):
+
+                for user_id in self.user_ids:
+                    if user_id in task.user_ids:
+                        vals ={
+                            'origin_task_id': self_id,
+                            'task_id': task.id,
+                            'user_id': user_id.id,
+                            'date_start': task.date_start,
+                            'date_end': task.date_end,
+                            'error': "Usuario Concurrente"
+                    }
+                        concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+
+
+
+        start_dt = Datetime.from_string(date_start)
+        end_dt = Datetime.from_string(date_end)
+        for user_id in self.user_ids:
+            employee = self.env['hr.employee'].search([('user_id', '=', user_id.id)])
+            if employee:
+                #mio si trabaja ese dia
+                domain_resource = [('user_id', '=', user_id.id)]
+                resource = self.env['resource.resource'].search(domain_resource)
+                is_work_day = resource._iter_work_days(start_dt, end_dt)
+                if is_work_day:
+
+                    calendar = employee.calendar_id
+                    intervals = calendar.get_working_intervals_of_day(start_dt=start_dt,
+                                                                 end_dt=end_dt,
+                                                                 leaves=None,
+                                                                 compute_leaves=True,
+                                                                 resource_id=resource,
+                                                                 default_interval=None)
+
+                    duracion_interval = 0
+                    day_interval = calendar.get_working_intervals_of_day(
+                        start_dt=start_dt.replace(hour=0, minute=0, second=0))
+                    if day_interval:
+                        day_hours = ''
+                        for i in day_interval:
+                            i1 = fields.Datetime.context_timestamp(self, i[0])
+                            i2 = fields.Datetime.context_timestamp(self, i[1])
+                            duracion_interval += (i1 - i2).seconds
+                            if day_hours:
+                                day_hours = "%s | %s:%s - %s:%s" % (day_hours, i1.hour, i1.minute, i2.hour, i2.minute)
+                            else:
+                                day_hours = "%s:%s - %s:%s" % (i1.hour, i1.minute, i2.hour, i2.minute)
+                    else:
+                        day_hours="Sin horario"
+
+                    if intervals:
+                        for interval in intervals:
+                            if not (start_dt >= interval[0] and end_dt <= interval[1]):
+                                vals = {
+                                    'origin_task_id': self_id,
+                                    'task_id': self_id,
+                                    'user_id': user_id.id,
+                                    'date_start': date_start,
+                                    'date_end': date_end,
+                                    'error': "Horario fuera de jornada: %s"%day_hours
+                                    }
+                                concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+                                #hago un break para evitar añadir 2 en caso de mañana y ttarde
+                                break
+                        duracion_tarea = (end_dt - start_dt).seconds
+
+                        #TODO COMPROBAR SI ESTO ES NECESARIO
+                        #compruebo si da tiempo a realizarlo dentro de la jornada
+
+                        if duracion_tarea > duracion_interval:
+                            horario = 'Tarea: %s - Jornada: %s (minutos)'%(duracion_tarea/60, duracion_interval/60)
+                            vals = {
+                                'origin_task_id': self_id,
+                                'task_id': self_id,
+                                'user_id': user_id.id,
+                                'date_start': date_start,
+                                'date_end': date_end,
+                                'error': "No da tiempo: %s" % horario
+                            }
+                            concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+
+                    else:
+                        #Si no hay intervalos
+                        vals = {
+                            'origin_task_id': self_id,
+                            'task_id': self_id,
+                            'user_id': user_id.id,
+                            'date_start': date_start,
+                            'date_end': date_end,
+                            'error': "Horario fuera de jornada: %s" % day_hours
+                        }
+                        concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+                else:
+                    #si no trbabaja ese dia is_working_day = False
+                    vals = {
+                        'origin_task_id': self_id,
+                        'task_id': self_id,
                         'user_id': user_id.id,
-                        'date_start': task.date_start,
-                        'date_end': task.date_end,
-                        'error': "Usuario Concurrente"
-                }
+                        'date_start': date_start,
+                        'date_end': date_end,
+                        'error': "%s no trabaja ese dia"%user_id.name
+                    }
                     concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
-        #TODO COMPROBAR SI EL USUARIO ASIGANDO ESTA Y SI ESTA EN HORARIO
-        print concurrent_task_ids
+
+
         if concurrent_task_ids:
+            return False
             #si hay tareas concurrentes añado la original para poder viusualizar en el calendario
             vals ={
-                'origin_task_id': self.id,
-                'task_id': self.id,
-                'user_id': self.user_id.id,
-                'date_start': self.date_start,
-                'date_end': self.date_end,
-                'equipment_id': self.equipment_id.id,
+                'origin_task_id': self_id,
+                'task_id': self_id,
+                'date_start': date_start,
+                'date_end': date_end,
+                'equipment_id': equipment_id,
                 'error': "Referencia"
             }
-            concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
-            return False
-        return True
+            # concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
 
+        return True
 
     def open_concurrent(self):
 
@@ -231,15 +337,25 @@ class ProjectTask(models.Model):
                 'view_mode': 'tree,form,calendar',
                 'domain': [('origin_task_id','=',self.id)]}
 
+    def calc_ok(self):
+
+        self.get_concurrent()
+
 
     @api.multi
     def write(self, vals):
-        print "OK_calendar %s" %self.ok_calendar
-        if not self.ok_calendar:
-            print "OK_calendar %s" %self.ok_calendar
-            print "stage_id %s"%vals.get('stage_id')
-            if vals.get('stage_id')>4:
-                raise UserError(_('You cannot change the state because you have concurrent tasks\n or incomplete fields'))
+
+        if vals.get('date_start') or vals.get('date_end') or vals.get('user_ids'):
+            vals['ok_calendar'] = self.get_concurrent(self.id,
+                                                      vals.get('equiment_id', False),
+                                                      vals.get('date_start', False),
+                                                      vals.get('date_end', False))
+
+        if vals.get('stage_id') and not self.ok_calendar:
+            raise UserError(_('You cannot change the state because you have concurrent tasks\n or incomplete fields'))
+
+        if vals.get('equipment_id', False) and not vals.get('user_ids', False):
+            raise UserError(_('You assigned employees if you set equipment'))
 
         result = super(ProjectTask, self).write(vals)
 
