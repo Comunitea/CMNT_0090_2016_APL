@@ -27,14 +27,13 @@ class ProjectActivityTemplateWz(models.TransientModel):
 
     @api.multi
     def create_activity_template(self):
-
         vals = {'is_template': True,
                 'name': self.new_name,
                 'project_id': False
                 }
-
-        new_activity = self.default_activity.copy(vals)
-
+        contextual_self = self.with_context(default_project_id=False)
+        new_activity = contextual_self.default_activity.copy(vals)
+        new_activity.project_id = False
         return {
                         'type': 'ir.actions.act_window',
                         'res_model': 'project.activity',

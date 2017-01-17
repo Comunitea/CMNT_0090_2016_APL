@@ -211,7 +211,6 @@ class ProjectActivity(models.Model):
         contextual_self = self.with_context(default_code=default_code)
         return super(ProjectActivity, contextual_self).default_get(default_fields)
 
-
     @api.onchange('master_activity_id')
     def onchange_master_activity_id(self):
         if not self.master_activity_id:
@@ -255,7 +254,6 @@ class ProjectActivity(models.Model):
     @api.multi
     def copy(self, default):
         self.ensure_one()
-        print default
         new_activity = super(ProjectActivity, self).copy(default)
         tasks = []
 
@@ -267,9 +265,10 @@ class ProjectActivity(models.Model):
                         'date_end': fields.Datetime.from_string(fields.Datetime.now()) + timedelta(
                             minutes=(task.planned_hours - int(task.planned_hours)) * 60) +
                                     timedelta(hours=int(task.planned_hours)),
-                        }
+                        'project_id': False}
             if default.get('project_id', False):
                 defaults['project_id'] = default.get('project_id', False)
+
             new_task = task.copy(defaults)
             #new_task.name = "%s.%s"%(task.name, new_task.code.split('.')[1])
             tasks += new_task
@@ -534,7 +533,6 @@ class ProjectTask(models.Model):
 
     def new_activity_from_task(self):
         return True
-
 
 class ProjectAplType(models.Model):
     _name="project.type.apl"
