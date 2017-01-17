@@ -18,6 +18,8 @@
     "data": [
         'views/project_activity.xml',
         'views/report_activity.xml',
+        'wizard/project_activity_templates.xml',
+        'data/project_activity_sequence.xml',
     'security/ir.model.access.csv',
     ],
     "demo": [

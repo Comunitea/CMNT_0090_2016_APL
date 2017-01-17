@@ -12,7 +12,7 @@
             </field>
             <field name="mail_template_id" position="after">
                 <field name="default_draft"/>
-                <field name="default_no_schedule"/>
+
                 <field name="default_error"/>
                 <field name="default_running"/>
                 <field name="default_done"/>
@@ -78,7 +78,7 @@
                     <field name="color"/>
                     <field name="use_tasks"/>
                     <field name="label_tasks"/>
-
+                    <field name="long_code"/>
                     <field name="stage_id"/>
                     <field name="default_error"/>
                     <templates>
@@ -89,9 +89,12 @@
                                     <div class="o_kanban_card_content o_visible">
                                         <div class="o_kanban_primary_left">
                                             <div class="o_primary">
-                                                <span><strong>
-                                                    <t t-esc="record.name.value"/>
-                                                </strong></span>
+                                                <span><t t-esc="record.long_code.value"/></span>
+                                                <span>
+                                                    <strong>
+                                                        <t t-esc="record.name.value"/>
+                                                    </strong>
+                                                </span>
                                             </div>
                                             <div class="text-muted">
                                                 <field name="project_id" invisible="context.get('default_project_id', False)"/>
@@ -157,8 +160,9 @@
             <field name="arch" type="xml">
                 <form string="Activity" class="o_form_project_tasks">
                      <header>
-                        <field name="stage_id" widget="statusbar" clickable="False"
-                               options="{'fold_field': 'fold'}"/>
+                        <field name="stage_id" widget="statusbar"
+                               clickable="False" readonly="1" options="{'fold_field': 'fold'}"
+                               attrs="{'invisible':[('is_template','!=',False)]}"/>
                     </header>
                     <sheet name="Activity">
                     <div class="oe_button_box" name="button_box" groups="base.group_user">
@@ -167,20 +171,30 @@
                             <field string="Tasks" name="task_count" widget="statinfo" options="{'label_field': 'label_tasks'}"/>
                         </button>
                     </div>
+
+
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Activity Name"/>
                         </h1>
+
                         <h2>
                             <field name="project_id"/>
                         </h2>
                     </div>
+
                     <group>
+
+
+                        <field name="long_code" readonly="1" />
+
+                    </group><group>
                         <field name="user_id" invisible="1"/>
 
                         <field name="tag_ids" widget="many2many_tags"/>
-                        <field name="is_master" invisible="1"/>
+                        <field name="is_template" attrs="{'invisible':[('is_template','=',False)]}"/>
                         <field name="color" invisible="1"/>
+
                     </group>
                     <group>
                         <group  string="Costs">
@@ -199,32 +213,17 @@
 
                     <notebook>
                         <page name="description_page" string="Description">
+                            <group>
+                                <field name="code"/>
+                            </group>
                             <field name="description" type="html"/>
                             <div class="oe_clear"/>
                         </page>
                         <page string="Tasks">
                             <group>
-
-                                <!--<field name="remaining_hours"/>
-                                <field name="effective_hours"/>-->
                                 <field name="progress" widget="progressbar"/>
                             </group>
-                            <field name="task_ids" context="{'default_project_id': project_id, 'default_activity_id' : id}">
-                                 <tree decoration-warning="sequence==1"
-                                 colors="blue: stage_id=='Finalizada'; green: stage_id=='generated'; gray: stage_id=='cancel'; red: stage_id=='open'">
-                                    <field name="sequence" invisible="1"/>
-                                    <field name="name"/>
-                                    <field name="project_id" invisible="1"/>
-                                    <field name="activity_id" invisible="1"/>
-                                    <field name="user_id"/>
-                                    <field name="user_ids" widget="many2many_tags"/>
-                                    <field name="date_deadline"/>
-                                    <field name="stage_id" />
-                                    <field name="real_cost_cal"/>
 
-
-                                </tree>
-                            </field>
                         </page>
 
                     </notebook>
@@ -251,10 +250,17 @@
              <field name="arch" type="xml">
                 <xpath expr="//field[@name='project_id']" position="after">
                     <field name="activity_id"/>
+                    <field name="ok_calendar"/>
+                    <field name="no_schedule"/>
                 </xpath>
-
+                 <xpath expr="//filter[@name='unassigned']" position="after">
+                     <separator/>
+                     <filter string="Concorrents" name="concurrents" domain="[('ok_calendar', '=', False)]"/>
+                     <filter string="No schedules" name="no_schedule" domain="[('no_schedule', '=', True)]"/>
+                </xpath>
                 <xpath expr="//filter[@name='project']" position="after">
                     <filter string="Activity" name="activity" context="{'group_by':'activity_id'}"/>
+
                 </xpath>
 
             </field>
@@ -269,6 +275,28 @@
                     <label for="user_id" string="Responsable"/>
                     <field name="user_id" nolabel="1"/>
                 </field>
+                <xpath expr="//button[@name='toggle_active']" position="before">
+                    <button type="object" name="new_activity_from_task" string="New Activity" class="oe_stat_button" icon="fa-list"
+                            attrs="{'invisible': [('no_schedule', '!=', True)]}">
+                    </button>
+                </xpath>
+                <xpath expr="//h1" position="after">
+                    <div>
+                        <group>
+                            <group>
+
+                            </group>
+                            <group>
+
+                            </group>
+                        </group>
+                    </div>
+                </xpath>
+                <field name="project_id" position="before">
+                    <field name="no_schedule" />
+                    <field name="new_activity_id" attrs="{'invisible':[('no_schedule','=',False)]}"/>
+                    <field name="long_code" readonly="1" />
+                </field>
                 <field name="project_id" position="after">
                     <field name="activity_id"/>
                 </field>
@@ -282,6 +310,10 @@
                     <field name="planned_hours" widget="float_time"/>
                     <field name="date_end"/>
                 </field>
+                <field name="sequence" position="after">
+                    <field name="code" />
+                </field>
+
                 <xpath expr="//notebook/page[@name='description_page']" position="after">
                     <page string="Asociated Costs">
                     <field name="cost_ids"  invisible="1" >
@@ -441,6 +473,8 @@
                     <field name="activity_count" string ="Activity"/>
                     <field name="color_stage"/>
                     <field name="stage_id"/>
+                    <field name="code"/>
+
                 </field>
                 <xpath expr="//div[@t-attf-class='#{kanban_color(record.color.raw_value)} oe_kanban_global_click']" position="attributes">
                     <attribute name="t-attf-class">#{kanban_color(record.color_stage.raw_value)} oe_kanban_global_click</attribute>
@@ -450,7 +484,8 @@
 
                     <!--a name="%(open_form_project)d" type="action"-->
                         <div class="o_primary">
-                            <span ><t t-esc="record.code"/><t t-esc="record.name.value"/></span>
+                            <span><t t-esc="record.code.value"/></span>
+                            <span><t t-esc="record.name.value"/></span>
                         </div>
                         <div t-if="record.alias_name.value and record.alias_domain.value">
                             <span><i class="fa fa-envelope"></i> <t t-esc="record.alias_id.value"/></span>
@@ -476,6 +511,17 @@
             </field>
         </record>
 
+        <record id="project_project_view_form_simplified_code" model="ir.ui.view">
+            <field name="name">Project Form Simplified With Code</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.project_project_view_form_simplified"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='alias_def']" position="after">
+                    <field name="code" readonly="0"/>
+                </xpath>
+
+            </field>
+        </record>
         <record id="project_form_form_add_activity" model="ir.ui.view">
             <field name="name">Project Form With Activity</field>
             <field name="model">project.project</field>
@@ -492,9 +538,13 @@
                             <field string="Activities" name="activity_count" widget="statinfo"/>
                     </button>
                 </xpath>
-                <field name="name" position="before">
-                    <field name="code" />
-                </field>
+
+                <xpath expr="//div[@class='oe_title']" position="after">
+                    <group>
+                        <field name="code" readonly="0"/>
+                    </group>
+                </xpath>
+
                 <field name="sequence" position="after">
                     <field name="type_ids" widget="many2many_tags"/>
                 </field>
@@ -573,34 +623,26 @@
             <field name="model">project.task</field>
             <field name="inherit_id" ref="project.view_task_kanban"/>
             <field name="arch" type="xml">
-
                 <field name="color" position="before">
                     <field name="activity_id" alt="project_id"/>
                     <field name="stage_id_color"/>
                     <field name="stage_id"/>
                     <field name="working_color"/>
-
+                    <field name="long_code"/>
                 </field>
-<!--
-                <xpath expr="//div/field[@name='tag_ids']/.." position="before">
-                    <div class="oe_kanban_bottom_right">
-                        <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.stage_id_color.raw_value)}">
-                            <field name="stage_id" />
-                        </div>
-                    </div>
-
+                <xpath expr="//field[@name='name']/../.." position="before">
+                    <div><field name="long_code"/></div>
                 </xpath>
--->
 
                 <xpath expr="//div[@class='text-muted']" position="after">
                     <div>
                         <field name="activity_id"/>
-
                     </div>
                 </xpath>
 
             </field>
-        </record>
+       </record>
+
 
 
        <menuitem action="action_view_activity_from_menu" id="menu_action_view_activity" parent="project.menu_project_management" sequence="10"/>
@@ -614,6 +656,8 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="equipment_id"/>
+                <field name="stage_id"/>
+                <field name="ok_calendar"/>
             </calendar>
             </field> </record>
         
@@ -625,12 +669,7 @@
             <field name="view_type">form</field>
             <field name="view_id" ref="view_task_calendar_global"/>
        </record>
-       <act_window
-            id="act_create_new_master_from_activity"
-            name="New Template from "
-            res_model="project.activity"
-            context=""
-            src_model="project.activity"/>
+
         <menuitem action="action_task_calendar_menu" id="menu_task_calendar" sequence="10"/>
         
     </data>

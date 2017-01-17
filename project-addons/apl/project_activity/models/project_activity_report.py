@@ -8,6 +8,7 @@ from odoo import fields, models, tools
 
 # vecesito heredar esto tambien de hr_timesheet
 class ReportProjectActivityTaskUser(models.Model):
+
     _inherit = "report.project.task.user"
 
     activity_id = fields.Many2one("project.activity", readonly=True)

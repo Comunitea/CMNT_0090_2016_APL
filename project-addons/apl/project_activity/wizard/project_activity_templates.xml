@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <record id="view_pj_activity_template_wz" model="ir.ui.view">
+            <field name="name">Activity Templates Orders</field>
+            <field name="model">project.activity.template.wz</field>
+            <field name="arch" type="xml">
+                <form string="Nueva plantilla de actividad">
+                    <p class="oe_grey">
+                        Nueva plantilla desde existente.
+                    </p>
+                    <group>
+                        <field name="default_activity"/>
+                        <field name="new_name"/>
+                        <field name="copy_user_id"/>
+                        <field name="copy_equipo"/>
+                        <field name="copy_planned_cost"/>
+                    </group>
+                    <footer>
+                        <button name="create_activity_template" string="Crear Plantilla" type="object"
+                            class="btn-primary"/>
+                        <button string="Cancel" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_view_pj_activity_template_wz" model="ir.actions.act_window">
+            <field name="name">Crear plantillas de actividad</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">project.activity.template.wz</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+
+        </record>
+        <act_window
+            id="act_create_new_master_from_activity"
+            name="New Template from "
+            res_model="project.activity.template.wz"
+            view_id="view_pj_activity_template_wz"
+            view_type="form"
+            view_mode="form"
+            target="new"
+            context="{'default_default_activity_id': active_id}"
+            src_model="project.activity"/>
+        <!-- TODO: check if we need this
+        <record model="ir.values" id="pj_activity_template_wz">
+            <field name="model_id" ref="project.activity.template.wz" />
+            <field name="name">crear plantillas</field>
+            <field name="key2">client_action_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' + str(ref('action_view_sale_advance_payment_inv'))" />
+            <field name="key">action</field>
+            <field name="model">sale.order</field>
+        </record> -->
+
+</odoo>
