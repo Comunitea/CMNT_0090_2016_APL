@@ -21,7 +21,7 @@
 														int(date[1]), 
 														int(date[2])).isocalendar()[1]"/>										
 										<t t-if="week1 != week">
-											Semana <t t-raw="week1"/>; 
+											Week <t t-raw="week1"/>
 										</t>
 										<t t-set="week" t-value="week1"/>
 									</t>
@@ -63,62 +63,97 @@
 				<t t-foreach="docs" t-as="o">
 					<t t-call="project_activity.layout">
 						<div class="page">
-							<table class="table table-condensed table-bordered" style="font-weight: bold; table-layout: fixed;">
+							<table class="table table-condensed table-bordered" style="table-layout: fixed;">
+
 								<tr>
-									<td style="width: 150px">Cliente</td>
-									<td><span t-field="o.project_id.partner_id"/></td>
+									<td style="font-weight: bold; width: 15%">Project</td>
+									<td >
+										<t t-if="o.project_id.code">
+											<span t-field="o.project_id.code"/><br/>
+										</t>
+										<span t-field="o.project_id"/>
+
+									</td>
 								</tr>
 								<tr>
-									<td>Proyecto</td>
-									<td><span t-field="o.project_id"/></td>
-								</tr>
-								<tr>
-									<td>Responsable</td>
+									<td style="font-weight: bold">Manager</td>
 									<td><span t-field="o.project_id.user_id"/></td>
+								</tr>
+								<tr>
+									<td style="font-weight: bold">Partner</td>
+									<td><span t-field="o.project_id.partner_id"/></td>
 								</tr>
 							</table>
 														
 							
 							<table class="table table-condensed table-bordered" style="table-layout: fixed;">
-								<tr style="font-weight: bold">
-									<td style="width: 150px">Actividad</td>
-									<td><span t-field="o.name"/></td>
-								</tr>
 								<tr>
-									<td>Descripción</td>
+									<td style="font-weight: bold; width: 15%">Activity</td>
+									<td>
+										<t t-if="o.code">
+											<span t-field="o.code"/><br/>
+										</t>
+										<span t-field="o.name"/>
+
+									</td>
+								</tr>
+
+								<tr>
+									<td style="font-weight: bold">Description</td>
 									<td><span t-field="o.description"/></td>
 								</tr>
+
 							</table>
 							
 							<t t-foreach="o.task_ids" t-as="task">
 								<table class="table table-condensed table-bordered" style="table-layout: fixed;">
+									<tr style="visibility: hidden">
+										<td style="width: 15%"></td>
+										<td style="width: 15%"></td>
+										<td></td>
+									</tr>
 									<tr>
-										<td style="width: 100px">
+										<td rowspan="6" >
 											<t t-if="task.date_start">
-												<t t-set="date" t-value="task.date_start.split(' ')[0].split('-')"/>											
-												<t t-raw="date[2]"/>/<t t-raw="date[1]"/>/<t t-raw="date[0]"/><br/>
-											</t>											
+												<t t-set="date" t-value="task.date_start.split(' ')[0].split('-')"/>
+												<t t-raw="date[2]"/>/<t t-raw="date[1]"/>/<t t-raw="date[0]"/>
+												<br/>
+											</t>
+											<t t-if="task.date_start"><span t-field="task.date_start"
+																	   t-field-options='{"format": "HH:mm"}'/></t>
+											 -
+											<t t-if="task.date_end"><span t-field="task.date_end"
+																	   t-field-options='{"format": "HH:mm"}'/></t>
 										</td>
-										<td colspan="2"><span t-field="task.name"/></td>
+									</tr>
+									<tr >
+										<td colspan="2">
+											<t t-if="task.code">
+											<span t-field="task.code"/><br/>
+											</t>
+										</td>
+
+									</tr>
+									<tr >
+										<td colspan="2">
+											<span t-field="task.name"/>
+										</td>
 									</tr>
 									<tr>
-										<td rowspan="3">
-											<t t-if="task.date_start"><t t-raw="task.date_start.split(' ')[1]"/></t><br/>
-											<t t-if="task.date_end"><t t-raw="task.date_end.split(' ')[1]"/></t>
-										</td>
-										<td colspan="2"><span t-field="task.description"/></td>
-									</tr>
-									<tr>
-										<td>EQUIPOS</td>
+										<td style="width: 20%; font-weight: bold">Equipment</td>
 										<td><span t-field="task.equipment_id"/></td>
 									</tr>
 									<tr>
-										<td>TÉCNICOS</td>
+										<td style="font-weight: bold">Assigned to</td>
 										<td>
 											<t t-foreach="task.user_ids" t-as="user">
 												<span t-field="user.name"/><br/>
 											</t>										
 										</td>
+									</tr>
+									<tr>
+
+										<td colspan="2" ><span t-field="task.description"/></td>
 									</tr>
 								</table>							
 							</t>			
