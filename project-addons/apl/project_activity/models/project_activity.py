@@ -476,7 +476,7 @@ class ProjectTask(models.Model):
         return res
 
     def _user_admin(self):
-        if self.create_uid == self.env.user or self.user_id == self.env.user:
+        if self.create_uid == self.env.user or self.user_id == self.env.user or self.env.user.id == 1:
             user_admin = True
         else:
             user_admin = False
@@ -496,13 +496,13 @@ class ProjectTask(models.Model):
             if ('stage_id' in vals):
                 stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
 
-                if task.stage_id.default_done and not self._user_admin():
+                if task.stage_id.default_done and not task._user_admin():
                     raise UserError(_('Only managers can change stage done'))
 
                 if (vals.get('kanban_state', 'normal') == 'blocked' or task.kanban_state == 'blocked'):
                     raise UserError(_('You cannot change the state because task is blocked'))
 
-                if stage_id.default_running and not self.no_schedule and not self.user_ids:
+                if stage_id.default_running and not task.no_schedule and not task.user_ids:
                     raise UserError(_('You need assign this task to somebody'))
 
             if vals.get('project_id'):

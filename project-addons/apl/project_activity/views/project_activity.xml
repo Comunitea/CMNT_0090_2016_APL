@@ -29,7 +29,7 @@
                 <tree decoration-danger="(default_error) or (date_deadline and (date_deadline&lt;current_date))" string="Activities">
                     <field name="name"/>
                     <field name="project_id" invisible="context.get('user_invisible', False)"/>
-                    <field name="progress" invisible="context.get('user_invisible', False)"/>
+                    <field name="progress" widget="progressbar" invisible="context.get('user_invisible', False)"/>
                     <field name="date_deadline" invisible="1"/>
                     <field name="date_start" invisible="0"/>
                     <field name="date_end" invisible="0"/>
