@@ -143,22 +143,27 @@ class ProjectActivity(models.Model):
         self.date_end = task.date_end if task else False
 
     @api.one
+    def _get_default_user_id(self):
+
+        self.user_id = self.project_id and self.project_id.user_id or self.env.user
+
+    @api.one
     def _get_date_start(self):
 
         search_domain = [('activity_id','=',self.id), ('date_start', '!=', False)]
         task = self.env['project.task'].search(search_domain, order="date_start asc", limit = 1)
         self.date_start = task.date_start if task else False
 
-
     @api.one
     def _get_long_code(self):
         try:
             if self.project_id:
-                self.long_code = "%s-AC%s"%(self.project_id.code , self.code.split('.')[1])
+                self.long_code = "%s-%s"%(self.project_id.code , self.code)
                 return
         except:
             pass
         self.long_code = self.code
+
 
     active = fields.Boolean("Active", default= True)
     name = fields.Char('name', required=True)
@@ -172,7 +177,7 @@ class ProjectActivity(models.Model):
     date_end = fields.Datetime(string='Ending Date', compute="_get_date_end")
     user_id = fields.Many2one('res.users',
                               string='Manager',
-                              default=lambda self: self.env.uid,
+                              default=_get_default_user_id,
                               index=True, track_visibility='always')
     color = fields.Integer(string='Color Index', related="stage_id.color")
     progress = fields.Integer(compute='_progress_get', string='Tasks done')
@@ -204,7 +209,8 @@ class ProjectActivity(models.Model):
     description = fields.Html(string='Description')
     master_activity_id = fields.Many2one('project.activity', string="Template Activity", domain=[('is_template', '=', True)], copy= False)
     is_template = fields.Boolean('Template activity', copy=True)
-
+    parent_task_id = fields.Many2one('project.task', string="Parent task",
+                                     help="This activity was created from this task")
 
     @api.model
     def default_get(self, default_fields):
@@ -400,7 +406,7 @@ class ProjectTask(models.Model):
     def _get_long_code(self):
         try:
             if self.activity_id:
-                self.long_code = "%s-TA%s" % (self.activity_id.long_code, self.code.split('.')[1])
+                self.long_code = "%s-%s" % (self.activity_id.long_code, self.code)
                 return
         except:
             pass
@@ -436,11 +442,13 @@ class ProjectTask(models.Model):
     code = fields.Char("Code", copy=False)
     long_code = fields.Char("Complete Id", compute="_get_long_code")
     no_schedule = fields.Boolean("No schedule", help='if check, task manager will created a new activity from this task', default = False)
-    new_activity_id = fields.Many2one("project.activity", string="New activity", help ="New activity will be created from this task when done",
+    new_activity_id = fields.Many2one("project.activity", string="Activity template", help ="New activity will be created from this task when done",
                                       domain =[('is_template','=', True)])
-    new_activity_created =  fields.Many2one("project.activity", string="New activity", help ="New activity created from this task")
+    new_activity_created =  fields.Many2one("project.activity", string="Related activity", help ="New activity created from this task")
     is_template = fields.Boolean(related='activity_id.is_template')
-
+    user_id = fields.Many2one('res.users', string='Assigned to',
+                              default=lambda self: self.activity_id.user_id or self.env.uid,
+                              index=True, track_visibility='always')
     # _sql_constraints = [
     #     ('check_planned_cost', "CHECK (planned_cost > 0.00)", 'Planned cost should be > 0.'),
     #     ('check_real_cost', "CHECK (real_cost > 0.00)", 'Real cost should be > 0.'),
@@ -452,9 +460,6 @@ class ProjectTask(models.Model):
 
         if self.planned_cost <= 0.00:
             raise ValidationError(_('Error ! Check cost: %s'%self.name))
-
-
-
 
     @api.model
     def default_get(self, default_fields):
@@ -481,6 +486,7 @@ class ProjectTask(models.Model):
     def write(self, vals):
 
         for task in self:
+
             if task.activity_id.is_template and 'project_id' in vals:
                 raise UserError(_('You cannot assign project to template activity'))
 
@@ -505,7 +511,6 @@ class ProjectTask(models.Model):
 
         result = super(ProjectTask, self).write(vals)
         return result
-
 
     @api.onchange('planned_hours')
     def onchange_planned_hours(self):
@@ -550,8 +555,33 @@ class ProjectTask(models.Model):
 
     def new_activity_from_task(self):
 
+        if not self.project_id:
+            raise UserError(_('You need set "project_id"'))
+
         if not self.new_activity_id:
-            raise UserError(_('You need set "New activity from task"'))
+            if len(self.user_ids)>1:
+                raise UserError(_('More than one assigned user'))
+            default = {
+                'project_id': self.project_id.id,
+                'is_template': False,
+                'user_id': self.user_ids and self.user_ids[0].id or self.user_id.id,
+                'name': self.name,
+                'parent_task_id': self.id
+
+                }
+            new_activity = self.new_activity_id.create(default)
+            self.new_activity_created = new_activity
+            self.new_activity_id = False
+
+            self.stage_id = self.project_id.get_done_stage()
+
+            return {'type': 'ir.actions.act_window',
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'res_model': 'project.activity',
+                    'res_id': new_activity.id,
+                    }
+
         if not self.new_activity_id.is_template:
             raise UserError(_('"New activity from task" must be template activity'))
         if not self.project_id:
@@ -574,12 +604,12 @@ class ProjectTask(models.Model):
         self.new_activity_created = new_activity
         self.new_activity_id = False
         self.stage_id = self.project_id.get_done_stage()
+
         return True
 
 
     @api.model
     def search(self, args, offset=0, limit=None, order=None, count=False):
-
         return super(ProjectTask, self).search(args, offset, limit, order, count=count)
 
 class ProjectAplType(models.Model):
@@ -676,12 +706,17 @@ class ProjectProject(models.Model):
     color_stage = fields.Integer(string='Color Index', related="stage_id.color")
     stage_id = fields.Many2one('project.task.type', compute="_compute_stage_id", string='Project Stage')
 
-
     @api.model
     def default_get(self, default_fields):
         default_code = self.env['ir.sequence'].next_by_code('project.project.sequence')
         contextual_self = self.with_context(default_code=default_code)
         return super(ProjectProject, contextual_self).default_get(default_fields)
+
+    @api.onchange('user_id')
+    def _onchange(self):
+        for task in self.task_ids:
+            task.user_id =self.user_id
+
 
     @api.depends('activity_ids', 'activity_ids.stage_id')
     def _compute_stage_id(self):

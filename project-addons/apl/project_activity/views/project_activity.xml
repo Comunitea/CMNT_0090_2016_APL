@@ -76,7 +76,7 @@
                     <field name="color"/>
                     <field name="use_tasks"/>
                     <field name="label_tasks"/>
-                    <field name="long_code"/>
+                    <field name="code"/>
                     <field name="stage_id"/>
                     <field name="default_error"/>
                     <templates>
@@ -87,7 +87,7 @@
                                     <div class="o_kanban_card_content o_visible">
                                         <div class="o_kanban_primary_left">
                                             <div class="o_primary">
-                                                <span><t t-esc="record.long_code.value"/></span>
+                                                <span><t t-esc="record.code.value"/></span>
                                                 <span>
                                                     <strong>
                                                         <t t-esc="record.name.value"/>
@@ -175,24 +175,20 @@
                         <h1>
                             <field name="name" placeholder="Activity Name"/>
                         </h1>
-
-                        <h2>
-                            <field name="project_id"/>
-                        </h2>
                     </div>
-
                     <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="long_code" readonly="1" invisible="1" />
+                            <field name="user_id"/>
 
-
-                        <field name="long_code" readonly="1" />
-
-                    </group><group>
-                        <field name="user_id" invisible="1"/>
-
-                        <field name="tag_ids" widget="many2many_tags"/>
-                        <field name="is_template" attrs="{'invisible':[('is_template','=',False)]}"/>
-                        <field name="color" invisible="1"/>
-
+                        </group>
+                        <group>
+                            <field name="tag_ids" widget="many2many_tags"/>
+                            <field name="is_template" attrs="{'invisible':[('is_template','=',False)]}"/>
+                            <field name="color" invisible="1"/>
+                            <field name="parent_task_id"  attrs="{'invisible':[('parent_task_id','=',False)]}"/>
+                        </group>
                     </group>
                     <group>
                         <group  string="Costs">
@@ -256,16 +252,16 @@
                 <xpath expr="//filter[@name='my_tasks']" position="after">
                     <separator/>
                     <filter string="Templates" name="my_tasks" domain="[('is_template','=',True)]"/>
-                    <filter string="No Templates" name="my_tasks" domain="[('is_template','=',False)]"/>
                  </xpath>
                  <xpath expr="//filter[@name='unassigned']" position="after">
                      <separator/>
-                     <filter string="Concurrents" name="concurrents" domain="[('ok_calendar', '=', False)]"/>
-                     <filter string="No schedules" name="no_schedule" domain="[('is_template','=',False),('no_schedule', '=',True)]"/>
+                     <filter string="Concurrents" name="concurrents"
+                             domain="[('is_template','=',False),('ok_calendar', '=', False), '|',('user_id','=',uid),('user_ids','in',uid)]"/>
+                     <filter string="No schedules" name="no_schedule"
+                             domain="[('is_template','=',False),('no_schedule', '=',True), '|',('user_id','=',uid),('user_ids','in',uid)]"/>
                 </xpath>
                 <xpath expr="//filter[@name='project']" position="after">
                     <filter string="Activity" name="activity" context="{'group_by':'activity_id'}"/>
-
                 </xpath>
 
             </field>
@@ -282,7 +278,7 @@
                 </field>
                 <xpath expr="//button[@name='toggle_active']" position="before">
                     <button type="object" name="new_activity_from_task" string="New Activity" class="oe_stat_button" icon="fa-list"
-                            attrs="{'invisible': [('new_activity_id', '=', False)]}">
+                            attrs="{'invisible': [('no_schedule', '=', False)]}">
                     </button>
                 </xpath>
                 <xpath expr="//h1" position="after">
@@ -298,17 +294,19 @@
                     </div>
                 </xpath>
                 <field name="project_id" position="before">
-                    <field name="long_code" readonly="1" />
+                    <field name="long_code" readonly="1" invisible="1"/>
                 </field>
 
                 <field name="project_id" position="after">
-                    <field name="activity_id"/>
+                    <field name="activity_id" required="1"/>
                 </field>
-
+                <xpath expr="//field[@name='project_id']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
                 <field name="legend_blocked" position="before">
                     <field name="no_schedule" />
-                    <field name="new_activity_id" attrs="{'invisible':['|',('new_activity_created','!=',False) ,('no_schedule','=',False)]}"/>
-                    <field name="new_activity_created" attrs="{'invisible':[('new_activity_created','=',False)]}"/>
+                    <field name="new_activity_id" string="Plantilla de solicitud" attrs="{'invisible':['|',('new_activity_created','!=',False) ,('no_schedule','=',False)]}"/>
+                    <field name="new_activity_created" string="Actividad relacionada" attrs="{'invisible':[('new_activity_created','=',False)]}"/>
 
                 </field>
 
@@ -433,13 +431,7 @@
             </field>
        </record>
 
-
-
-
-
-
-
-       <record id="action_view_activity" model="ir.actions.act_window">
+        <record id="action_view_activity" model="ir.actions.act_window">
             <field name="name">Activity</field>
             <field name="res_model">project.activity</field>
             <field name="view_mode">tree,form,calendar,pivot,kanban,graph</field>
@@ -498,9 +490,9 @@
                             <span><t t-esc="record.code.value"/></span>
                             <span><t t-esc="record.name.value"/></span>
                         </div>
-                        <div t-if="record.alias_name.value and record.alias_domain.value">
+                        <!--<div t-if="record.alias_name.value and record.alias_domain.value">
                             <span><i class="fa fa-envelope"></i> <t t-esc="record.alias_id.value"/></span>
-                        </div>
+                        </div>-->
 
                        <div class="text-muted">
                             <span ><t t-esc="record.stage_id.value"/></span>
@@ -527,8 +519,13 @@
             <field name="model">project.project</field>
             <field name="inherit_id" ref="project.project_project_view_form_simplified"/>
             <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="attributes">
+                    <attribute name="string">Acronym</attribute>
+                </xpath>
+
                 <xpath expr="//div[@name='alias_def']" position="after">
                     <field name="code" readonly="0"/>
+                    <field name="user_id" readonly="0"/>
                 </xpath>
 
             </field>
@@ -641,10 +638,10 @@
                     <field name="stage_id_color"/>
                     <field name="stage_id"/>
                     <field name="working_color"/>
-                    <field name="long_code"/>
+                    <field name="code"/>
                 </field>
                 <xpath expr="//field[@name='name']/../.." position="before">
-                    <div><field name="long_code"/></div>
+                    <div><field name="code"/></div>
                 </xpath>
 
                 <xpath expr="//div[@class='text-muted']" position="after">

@@ -133,10 +133,7 @@ class ProjectTask(models.Model):
                               #domain="[('id', '!=', allowed_user_ids and  allowed_user_ids[0][2])]")
                               #domain="[('id','in', allowed_user_ids and allowed_user_ids[0][2] or [])]")
     ok_calendar = fields.Boolean ("Ok Calendar", default=True)
-    user_id = fields.Many2one('res.users',
-                              string='Manager',
-                              default=lambda self: self.env.uid,
-                              index=True, track_visibility='always')
+
     #concurrent_task_ids = fields.Many2many("project.task.concurrent", column1="task_id", column2="origin_task_id")
 
     @api.constrains('equipment_id', 'user_ids')
@@ -150,8 +147,6 @@ class ProjectTask(models.Model):
     @api.onchange('equipment_id')#, 'date_start', 'date_end', 'user_ids')
     def get_user_ids_domain(self):
 
-
-
         if self.equipment_id:
             x = {'domain': {'user_ids': [('id', 'in', [x.id for x in self.allowed_user_ids])]},
                  'value': {'user_ids': []}}
@@ -159,7 +154,7 @@ class ProjectTask(models.Model):
             x = {'domain': {'user_ids': []},
                  'value': {'user_ids': []}}
 
-        if not self.stage_id.default_draft:
+        if self.stage_id.id and not self.stage_id.default_draft:
             x['warning'] =  {'title': _('Warning'),
                              'message': _('You are changing equipment in wrong stage.')}
         return x

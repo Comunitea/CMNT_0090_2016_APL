@@ -475,12 +475,12 @@ msgstr "No es plantilla"
 #: model:ir.model.fields,field_description:project_activity.field_project_task_no_schedule
 #: selection:project.task,state:0
 msgid "No schedule"
-msgstr "Sin agenda"
+msgstr "Solicitud de actividad"
 
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_task_search_form_with_act
 msgid "No schedules"
-msgstr "Sin agenda"
+msgstr "Solicitudes de actividad"
 
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_pj_activity_template_wz
