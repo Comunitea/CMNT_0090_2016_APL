@@ -146,8 +146,11 @@ class ProjectTask(models.Model):
             if not self.stage_id.default_draft :
                 raise ValidationError(_('Error ! Task with equiment must be assigned.'))
 
+
     @api.onchange('equipment_id')#, 'date_start', 'date_end', 'user_ids')
     def get_user_ids_domain(self):
+
+
 
         if self.equipment_id:
             x = {'domain': {'user_ids': [('id', 'in', [x.id for x in self.allowed_user_ids])]},
@@ -155,8 +158,11 @@ class ProjectTask(models.Model):
         else:
             x = {'domain': {'user_ids': []},
                  'value': {'user_ids': []}}
-        return x
 
+        if not self.stage_id.default_draft:
+            x['warning'] =  {'title': _('Warning'),
+                             'message': _('You are changing equipment in wrong stage.')}
+        return x
 
     def get_concurrent(self, user_ids = False, equipment_id = False,
                        date_start = False, date_end = False):
@@ -176,7 +182,7 @@ class ProjectTask(models.Model):
 
 
         if user_ids:
-            user_ids = self.env['res.users'].browse(user_ids[0][2])
+            user_ids = self.env['res.users'].browse(user_ids)
         else:
             user_ids = self.user_ids
 
@@ -355,7 +361,6 @@ class ProjectTask(models.Model):
         return ok_calendar
 
     def open_concurrent(self):
-
         return {
                 'type': 'ir.actions.act_window',
                 'name': 'open.concurring.tasks',
@@ -376,41 +381,103 @@ class ProjectTask(models.Model):
         if vals.get('user_ids'):
             self.user_ids = vals.get('user_ids')
 
+    def getval(self, vals, field, type = False):
+        if field in vals:
+            if type =='o2m' or type== 'm2m':
+                new_value = vals.get(field)[0][2]
+            else:
+                new_value = vals[field]
+        else:
+            if type == 'm2o':
+                new_value = self[field].id
+            elif type =='o2m' or type =='m2m':
+                new_value = [x.id for x in self[field]]
+            else:
+                new_value = self[field]
+
+
+
+        return new_value
+
     @api.multi
     def write(self, vals):
 
         for task in self:
-            if task.project_id or 'project_id' in vals:
-                equipment_id = False
-                if 'equipment_id' in vals:
-                    if vals['equipment_id'] > 1:
-                        if not vals.get('user_ids', False):
-                            raise UserError(_('You must assigned employees if you set equipment'))
-                        else:
-                            equipment_id=vals['equipment_id']
-                    else:
-                        equipment_id= False
+
+            project_id = task.getval(vals, 'project_id', 'm2o')
+            equipment_id = task.getval(vals, 'equipment_id', 'm2o')
+            no_schedule = task.getval(vals, 'no_schedule')
+            date_start = task.getval(vals, 'date_start')
+            date_end = task.getval(vals, 'date_end')
+            new_activity_id = task.getval(vals, 'new_activity_id', 'm2o')
+            user_ids = task.getval(vals, 'user_ids', 'o2m')
+            new_activity_created = task.getval(vals, 'new_activity_created', 'm2o')
+            activity_id = task.getval(vals, 'activity_id', 'm2o')
+
+            if 'user_ids' in vals:
+                followers=[]
+                userf_ids = vals['user_ids'][0][2]
+                message_follower_ids = []
+
+                if userf_ids:
+
+                    no_unlink = [self.user_id.partner_id.id, self.env['res.users'].browse(1).partner_id.id]
+                    to_append = []
+                    to_unlink = []
+                    partner_ids = []
+                    follower_ids = [x.partner_id.id for x in self.message_follower_ids]
+
+                    for us in userf_ids:
+                        partner_id = self.env['res.users'].browse(us).partner_id.id
+                        partner_ids += [partner_id]
+                        if partner_id not in follower_ids:
+                            to_append += [partner_id]
+
+                    for follower in self.message_follower_ids:
+                        if follower.partner_id.id not in partner_ids and \
+                                        follower.partner_id.id not in no_unlink:
+                            to_unlink += [follower.id]
+
+                    res = self.env['mail.followers'].browse(to_unlink).unlink()
+
+                    for new_follower_id in to_append:
+                        #import ipdb; ipdb.set_trace()
+                        #new_follower = self.env['res.users'].browse(new_follower_id).partner_id.id
+                        message_follower_id, po = self.message_follower_ids._add_follower_command('project.task',
+                                                   [self.id],
+                                                   {new_follower_id: None},
+                                                    {}, True)
+                        message_follower_ids += message_follower_id
+                    vals['message_follower_ids'] = message_follower_ids
+
+
+                    #aqui borro
+            # {'res_model': 'project.task', 'subtype_ids': [(6, 0, [1])], 'res_id': 308, 'partner_id': 16}
+            # print "Equipo: %s" %equipment_id
+            # print "Usuarios: %s"%user_ids
+            # print "Nueva Actividad: %s" %new_activity_id
+            # print "No schedule: %s" % no_schedule
+
+            if task.activity_id and task.activity_id.is_template:
+                vals['ok_calendar']= True
+            else:
+                if not user_ids and not no_schedule:
+                    raise UserError(_('You must assigned employees or new activity to schedule'))
+
+                if equipment_id and not user_ids:
+                    raise UserError(_('You must assigned employees if you set equipment'))
+
+                if not no_schedule:
+                    ok_calendar = task.get_concurrent(user_ids, equipment_id, date_start, date_end)
                 else:
-                    equipment_id = task.equipment_id.id
+                    ok_calendar = True
 
-
-
-                if not task.no_schedule:
-                    date_start = vals.get('date_start', False) or task.date_start
-                    date_end = vals.get('date_end', False) or task.date_end
-                    user_ids = vals.get('user_ids', False)
-                    vals['ok_calendar'] = task.get_concurrent(user_ids,
-                                                              equipment_id,
-                                                              date_start,
-                                                              date_end
-                                                              )
-                else:
-                    vals['ok_calendar'] = True
                 if 'stage_id' in vals:
                     stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
-                    if not task.ok_calendar and not stage_id.default_draft and not task.no_schedule:
+                    if not ok_calendar and not stage_id.default_draft:
                             raise ValidationError(
                                 _('Error stage. Concurrent Task Error'))
+                vals['ok_calendar'] = ok_calendar
 
         result = super(ProjectTask, self).write(vals)
         return result

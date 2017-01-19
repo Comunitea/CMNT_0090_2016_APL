@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 10.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-30 10:19+0000\n"
-"PO-Revision-Date: 2016-12-30 10:19+0000\n"
+"POT-Creation-Date: 2017-01-19 12:50+0000\n"
+"PO-Revision-Date: 2017-01-19 12:50+0000\n"
 "Last-Translator: <>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -16,14 +16,36 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: project_activity
+#: code:addons/apl/project_activity/models/project_activity.py:551
+#: code:addons/project_activity/models/project_activity.py:551
+#, python-format
+msgid "\"New activity from task\" must be template activity"
+msgstr "\"Para crear una nueva actividad\" debes seleccionar una plantilla de actividad"
+
+#. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_project_project_activity_kanban
 msgid "<span class=\"o_label\">Activities</span>"
 msgstr "<span class=\"o_label\">Actividades</span>"
 
 #. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_project_long_name
+msgid "Long name"
+msgstr "Nombre largo"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_active
+msgid "Active"
+msgstr "Activo"
+
+#. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_task_working_color
 msgid "Active Color"
 msgstr "Color Activo"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_default_activity
+msgid "Actividad a duplicar"
+msgstr "Actividad a duplicar"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_project_activity_count
@@ -43,6 +65,7 @@ msgstr "Coste de las Actividades: Suma del coste real de las actividades o suma 
 #: model:ir.actions.act_window,name:project_activity.action_view_activity_from_menu
 #: model:ir.model.fields,field_description:project_activity.field_project_task_activity_id
 #: model:ir.ui.menu,name:project_activity.menu_action_view_activity
+#: model:ir.ui.view,arch_db:project_activity.activity_report_document
 #: model:ir.ui.view,arch_db:project_activity.view_activity_filter
 #: model:ir.ui.view,arch_db:project_activity.view_project_activity_form
 #: model:ir.ui.view,arch_db:project_activity.view_project_project_activity_kanban
@@ -58,7 +81,7 @@ msgstr "Coste de la actividad"
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_project_activity_form
 msgid "Activity Name"
-msgstr "Activity Name"
+msgstr "Nombre de la actividad Name"
 
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_activity_filter
@@ -68,7 +91,7 @@ msgstr "Usuario"
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_report_project_task_user_activity_id
 msgid "Activity id"
-msgstr "Activity id"
+msgstr "Id de la actividad"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_alias_id
@@ -86,10 +109,15 @@ msgid "Asociated Costs"
 msgstr "Costes asociados"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_activity_user_id
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_user_id
+#: model:ir.ui.view,arch_db:project_activity.activity_report_document
 msgid "Assigned to"
 msgstr "Responsable"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.view_pj_activity_template_wz
+msgid "Cancel"
+msgstr "Cancelar"
 
 #. module: project_activity
 #: model:ir.model.fields,help:project_activity.field_project_activity_use_tasks
@@ -98,17 +126,28 @@ msgstr "Marque esta casilla para gestionar actividades internas en este proyecto
 
 #. module: project_activity
 #: model:ir.model.fields,help:project_activity.field_project_activity_color
+#: model:ir.model.fields,help:project_activity.field_project_project_color_stage
 #: model:ir.model.fields,help:project_activity.field_project_task_stage_id_color
 #: model:ir.model.fields,help:project_activity.field_project_task_type_color
 msgid "Choose your color"
 msgstr "Escoge tu color"
 
 #. module: project_activity
+#: model:ir.actions.act_window,help:project_activity.action_task_calendar_menu
+msgid "Click here to add new tareas"
+msgstr "Click aqui para crear una tarea nueva"
+
+#. module: project_activity
 #: selection:project.activity,state:0
 #: selection:project.project,state:0
-#: selection:project.task,state:0
 msgid "Closed"
 msgstr "Cerrada"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_code
+#: model:ir.model.fields,field_description:project_activity.field_project_task_code
+msgid "Code"
+msgstr "Código"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_task_stage_id_color
@@ -118,13 +157,40 @@ msgstr "Color"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_color
+#: model:ir.model.fields,field_description:project_activity.field_project_project_color_stage
 msgid "Color Index"
 msgstr "Índice de Colores"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_report_project_task_user_real_cost_cal
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_long_code
+#: model:ir.model.fields,field_description:project_activity.field_project_task_long_code
+msgid "Complete Id"
+msgstr "Id completo"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.view_task_search_form_with_act
+msgid "Concurrents"
+msgstr "Tareas con incidencias"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.view_concurring_tasks
+msgid "Concurring Tasks"
+msgstr "Tareas conincidencias"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_report_project_task_user_real_cost
 msgid "Cost"
 msgstr "Coste"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.project_form_form_add_activity
+msgid "Costes"
+msgstr "Costes"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_copy_planned_cost
+msgid "Costes en la plantilla"
+msgstr "Costes en la plantilla"
 
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_project_activity_form
@@ -132,21 +198,37 @@ msgid "Costs"
 msgstr "Costes"
 
 #. module: project_activity
-#: model:ir.actions.act_window,name:project_activity.open_create_activity
-msgid "Create a Activity"
-msgstr "Create a Activity"
+#: model:ir.ui.view,arch_db:project_activity.view_pj_activity_template_wz
+msgid "Crear Plantilla"
+msgstr "Crear Plantilla"
+
+#. module: project_activity
+#: model:ir.actions.act_window,name:project_activity.action_view_pj_activity_template_wz
+msgid "Crear plantillas de actividad"
+msgstr "Crear plantillas de actividad"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_create_uid
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_create_uid
+#: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_create_uid
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_create_uid
+#: model:ir.model.fields,field_description:project_activity.field_project_type_apl_create_uid
 msgid "Created by"
 msgstr "Creado por"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_create_date
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_create_date
+#: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_create_date
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_create_date
+#: model:ir.model.fields,field_description:project_activity.field_project_type_apl_create_date
 msgid "Created on"
 msgstr "Creado el"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.project_form_form_add_activity
+msgid "Customer"
+msgstr "Cliente"
 
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_project_activity_form
@@ -165,13 +247,22 @@ msgid "Default for New Projects"
 msgstr "por defecto para proyectos nuevos"
 
 #. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_description
+#: model:ir.ui.view,arch_db:project_activity.activity_report_document
+#: model:ir.ui.view,arch_db:project_activity.view_project_activity_form
+msgid "Description"
+msgstr "Descripción"
+
+#. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_display_name
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_display_name
+#: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_display_name
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_display_name
+#: model:ir.model.fields,field_description:project_activity.field_project_type_apl_display_name
 msgid "Display Name"
 msgstr "Nombre a mostrar"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_task_done
 #: selection:project.activity,state:0
 #: selection:project.project,state:0
 #: selection:project.task,state:0
@@ -179,10 +270,21 @@ msgid "Done"
 msgstr "Realizado"
 
 #. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_task_type_default_done
+msgid "Done stage"
+msgstr "Realizad0"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.view_activity_filter
 #: selection:project.activity,state:0
 #: selection:project.project,state:0
 #: selection:project.task,state:0
 msgid "Draft"
+msgstr "Borrador"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_task_type_default_draft
+msgid "Draft stage"
 msgstr "Borrador"
 
 #. module: project_activity
@@ -192,16 +294,43 @@ msgid "Ending Date"
 msgstr "Fecha de fin"
 
 #. module: project_activity
-#: model:ir.ui.view,arch_db:project_activity.view_activity_filter
+#: model:ir.ui.view,arch_db:project_activity.activity_report_document
+msgid "Equipment"
+msgstr "Equipamiento"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_copy_equipo
+msgid "Equipo"
+msgstr "Equipo"
+
+#. module: project_activity
 #: selection:project.activity,state:0
+#: selection:project.task,state:0
 msgid "Error"
 msgstr "Error"
+
+#. module: project_activity
+#: code:addons/apl/project_activity/models/project_activity.py:454
+#: code:addons/project_activity/models/project_activity.py:454
+#, python-format
+msgid "Error ! Check cost: %s"
+msgstr "Error ! Comprueba el coste: %s"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_default_error
 #: model:ir.model.fields,field_description:project_activity.field_project_task_type_default_error
 msgid "Error stage"
 msgstr "Etapa con Incidencia"
+
+#. module: project_activity
+#: model:ir.model.fields,help:project_activity.field_project_finance_apl_name
+msgid "Europea/internacional, nacional, regional, etc.,…"
+msgstr "Europea/internacional, nacional, regional, etc.,…"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_project_project_finance_apl_id
+msgid "Finance type"
+msgstr "Tipo de financiacion type"
 
 #. module: project_activity
 #: model:ir.model.fields,help:project_activity.field_project_activity_label_tasks
@@ -211,7 +340,7 @@ msgstr "De mas etiquetas a las tareas en la vista kanban del proyecto."
 #. module: project_activity
 #: model:ir.model.fields,help:project_activity.field_project_activity_sequence
 msgid "Gives the sequence order when displaying a list of activities."
-msgstr "Gives the sequence order when displaying a list of activities."
+msgstr "Orden de secuencia al mostrar una lista de actividades."
 
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_activity_filter
@@ -225,7 +354,10 @@ msgstr "Aquí, puedes crear nuevas tareas"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_id
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_id
+#: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_id
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_id
+#: model:ir.model.fields,field_description:project_activity.field_project_type_apl_id
 msgid "ID"
 msgstr "ID"
 
@@ -246,25 +378,44 @@ msgid "In Progress"
 msgstr "En proceso"
 
 #. module: project_activity
+#: model:ir.actions.report.xml,name:project_activity.report_activity
+msgid "Informe de Actividad"
+msgstr "Informe de Actividad"
+
+#. module: project_activity
 #: model:ir.model.fields,help:project_activity.field_project_activity_alias_id
 msgid "Internal email associated with this project. Incoming emails are automatically synchronized with Tasks (or optionally Issues if the Issue Tracker module is installed)."
 msgstr "Internal email associated with this project. Incoming emails are automatically synchronized with Tasks (or optionally Issues if the Issue Tracker module is installed)."
 
 #. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.view_activity_filter
+msgid "Is template"
+msgstr "Es una plantilla"
+
+#. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity___last_update
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz___last_update
+#: model:ir.model.fields,field_description:project_activity.field_project_finance_apl___last_update
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost___last_update
+#: model:ir.model.fields,field_description:project_activity.field_project_type_apl___last_update
 msgid "Last Modified on"
 msgstr "Última modificación en"
 
 #. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_write_uid
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_write_uid
+#: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_write_uid
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_write_uid
+#: model:ir.model.fields,field_description:project_activity.field_project_type_apl_write_uid
 msgid "Last Updated by"
 msgstr "Última actualización por"
 
 #. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_write_date
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_write_date
+#: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_write_date
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_write_date
+#: model:ir.model.fields,field_description:project_activity.field_project_type_apl_write_date
 msgid "Last Updated on"
 msgstr "Última actualización el"
 
@@ -274,15 +425,88 @@ msgid "Line Cost"
 msgstr "Coste asociado"
 
 #. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_user_id
+#: model:ir.ui.view,arch_db:project_activity.activity_report_document
+msgid "Manager"
+msgstr "Responsable"
+
+#. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_activity_filter
 msgid "My Activities"
 msgstr "Mis actividades"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_new_name
+msgid "Name"
+msgstr "Nombre"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.view_task_form2_add_activity
+msgid "New Activity"
+msgstr "Nueva actividad"
+
+#. module: project_activity
+#: model:ir.actions.act_window,name:project_activity.act_create_new_master_from_activity
+msgid "New Template from "
+msgstr "Nueva plantilla desde aqui"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_task_new_activity_created
+#: model:ir.model.fields,field_description:project_activity.field_project_task_new_activity_id
+msgid "New activity"
+msgstr "Nueva Actividad"
+
+#. module: project_activity
+#: model:ir.model.fields,help:project_activity.field_project_task_new_activity_created
+msgid "New activity created from this task"
+msgstr "Actividad asociada a esa tarea"
+
+#. module: project_activity
+#: model:ir.model.fields,help:project_activity.field_project_task_new_activity_id
+msgid "New activity will be created from this task when done"
+msgstr "Se creara una nueva actividad al completar esta tarea"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.view_task_search_form_with_act
+msgid "No Templates"
+msgstr "No es plantilla"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_task_no_schedule
+#: selection:project.task,state:0
+msgid "No schedule"
+msgstr "Sin agenda"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.view_task_search_form_with_act
+msgid "No schedules"
+msgstr "Sin agenda"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.view_pj_activity_template_wz
+msgid "Nueva plantilla de actividad"
+msgstr "Nueva plantilla de actividad"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.view_pj_activity_template_wz
+msgid "Nueva plantilla desde existente."
+msgstr "Nueva plantilla desde existente."
 
 #. module: project_activity
 #: model:ir.actions.act_window,help:project_activity.action_view_activity
 #: model:ir.actions.act_window,help:project_activity.action_view_activity_from_menu
 msgid "Odoo's project management allows you to manage project and activitties."
 msgstr "El gestor de proyectos de Odoo te permite gestionar tus proyectos y actividades."
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.layout_header
+msgid "PROGRAMA DE TRABAJO EN PLANTA PILOTO"
+msgstr "Programa de trabaja en planta piloto"
+
+#. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.activity_report_document
+msgid "Partner"
+msgstr "Empresa"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_planned_cost
@@ -308,13 +532,25 @@ msgid "Planned cost: Sum planned task cost"
 msgstr "Coste previsto. Suma de los costes previstos de las tareas asociadas a la actividad."
 
 #. module: project_activity
+#: selection:project.finance.apl,type:0
+#: selection:project.project,finance_type:0
+msgid "Private"
+msgstr "Privado"
+
+#. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_product_id
 msgid "Product id"
 msgstr "Producto"
 
 #. module: project_activity
+#: selection:project.task,state:0
+msgid "Progress"
+msgstr "Progreso"
+
+#. module: project_activity
 #: model:ir.model,name:project_activity.model_project_project
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_project_id
+#: model:ir.ui.view,arch_db:project_activity.activity_report_document
 #: model:ir.ui.view,arch_db:project_activity.view_activity_filter
 msgid "Project"
 msgstr "Proyecto"
@@ -326,8 +562,36 @@ msgstr "Coste de proyecto"
 
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.project_form_form_add_activity
-msgid "Project Tasks"
-msgstr "Tareas de proyecto"
+msgid "Project Manager"
+msgstr "Responsable de proyecto"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_project_stage_id
+msgid "Project Stage"
+msgstr "Estado del proyecto"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_name
+#: model:ir.model.fields,field_description:project_activity.field_project_type_apl_name
+msgid "Project Type"
+msgstr "Tipo de proyecto"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_project_finance_type
+#: model:ir.ui.view,arch_db:project_activity.view_project_finance_apl
+msgid "Project finance"
+msgstr "Financiacion del proyecto"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_project_project_type_apl_id
+msgid "Project type"
+msgstr "Tipo de proyecto"
+
+#. module: project_activity
+#: selection:project.finance.apl,type:0
+#: selection:project.project,finance_type:0
+msgid "Public"
+msgstr "Publico"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_quantity
@@ -357,6 +621,12 @@ msgid "Real cost or amount_cost_ids"
 msgstr "Coste real (o suma de costes asociados)"
 
 #. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_copy_user_id
+#: model:ir.ui.view,arch_db:project_activity.view_task_form2_add_activity
+msgid "Responsable"
+msgstr "Responsable"
+
+#. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_task_type_default_running
 msgid "Runnning stage"
 msgstr "Etapa en marcha"
@@ -376,6 +646,11 @@ msgstr "Secuencia"
 #: model:ir.ui.view,arch_db:project_activity.view_activity_filter
 msgid "Stage"
 msgstr "Etapa"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_task_stage_name
+msgid "Stage Name"
+msgstr "Nombre de la etapa"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_date_start
@@ -422,9 +697,11 @@ msgstr "Tarea"
 
 #. module: project_activity
 #: model:ir.actions.act_window,name:project_activity.act_project_activity_tasks_all
+#: model:ir.actions.act_window,name:project_activity.action_task_calendar_menu
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_task_ids
-#: model:ir.ui.view,arch_db:project_activity.project_form_form_add_activity
+#: model:ir.ui.menu,name:project_activity.menu_task_calendar
 #: model:ir.ui.view,arch_db:project_activity.view_project_activity_form
+#: model:ir.ui.view,arch_db:project_activity.view_task_calendar_global
 msgid "Tasks"
 msgstr "Tareas"
 
@@ -459,14 +736,31 @@ msgid "Template"
 msgstr "Plantilla"
 
 #. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_master_activity_id
+msgid "Template Activity"
+msgstr "Plantilla de actividad"
+
+#. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_template_cost
 msgid "Template Cost"
 msgstr "Plantilla de coste"
 
 #. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_is_template
+#: model:ir.model.fields,field_description:project_activity.field_project_task_is_template
+msgid "Template activity"
+msgstr "Plantilla de actividad"
+
+#. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_activity_filter
-msgid "Unassigned"
-msgstr "No asignado"
+#: model:ir.ui.view,arch_db:project_activity.view_task_search_form_with_act
+msgid "Templates"
+msgstr "Plantillas"
+
+#. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_type
+msgid "Type"
+msgstr "Tipo"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_task_cost_unit_cost
@@ -489,31 +783,94 @@ msgid "User"
 msgstr "Usuario"
 
 #. module: project_activity
+#: model:ir.ui.view,arch_db:project_activity.layout_header
+msgid "Week"
+msgstr "Semana"
+
+#. module: project_activity
 #: model:ir.actions.act_window,help:project_activity.act_project_activity_tasks_all
 msgid "You can now manage your tasks in order to get things done efficiently. Track progress, discuss, attach documents, etc."
 msgstr "Puede gestionar sus tareas para realizar las cosas de forma eficiente. Seguir el progreso, discusiones, adjuntar documentos, etc."
 
 #. module: project_activity
-#: code:addons/project_activity/models/project_activity.py:235
+#: code:addons/apl/project_activity/models/project_activity.py:484
+#: code:addons/project_activity/models/project_activity.py:484
 #, python-format
-msgid "You cannot chane the state because task is blocked"
-msgstr "No puedes cambiar la etapa de la tarea porque esta bloqueada"
+msgid "You cannot assign project to template activity"
+msgstr "No puedes asignar una plantilla a un projecto"
+
+#. module: project_activity
+#: code:addons/apl/project_activity/models/project_activity.py:487
+#: code:addons/project_activity/models/project_activity.py:487
+#, python-format
+msgid "You cannot change field values in done state"
+msgstr "No puedes cambiar los valores de los campos en estado realizado"
+
+#. module: project_activity
+#: code:addons/apl/project_activity/models/project_activity.py:493
+#: code:addons/project_activity/models/project_activity.py:493
+#, python-format
+msgid "You cannot change the state because task is blocked"
+msgstr "No puedes cambiar el estado. La tarea esta bloqueada"
+
+#. module: project_activity
+#: code:addons/apl/project_activity/models/project_activity.py:496
+#: code:addons/project_activity/models/project_activity.py:496
+#, python-format
+msgid "You need assign this task to somebody"
+msgstr "Tienes que asignar esta tarea a alguien"
+
+#. module: project_activity
+#: code:addons/apl/project_activity/models/project_activity.py:549
+#: code:addons/project_activity/models/project_activity.py:549
+#, python-format
+msgid "You need set \"New activity from task\""
+msgstr "Necesitas asignar una plantilla"
+
+#. module: project_activity
+#: code:addons/apl/project_activity/models/project_activity.py:553
+#: code:addons/project_activity/models/project_activity.py:553
+#, python-format
+msgid "You need set \"project_id\""
+msgstr "Necesitas asignar un proyecto"
+
+#. module: project_activity
+#: code:addons/apl/project_activity/models/project_activity.py:733
+#: code:addons/project_activity/models/project_activity.py:733
+#, python-format
+msgid "You only copy template project"
+msgstr "Solo puedes copiar plantillas"
+
+#. module: project_activity
+#: model:ir.model.fields,help:project_activity.field_project_type_apl_name
+msgid "formación, i+d e innovación, análisis sensorial, APF,  institucional,…"
+msgstr "formación, i+d e innovación, análisis sensorial, APF,  institucional,…"
+
+#. module: project_activity
+#: model:ir.model.fields,help:project_activity.field_project_task_no_schedule
+msgid "if check, task manager will created a new activity from this task"
+msgstr "Si esta marcado, el responsable creara una nueva actividad desde la plantilla"
+
+#. module: project_activity
+#: model:ir.model.fields,help:project_activity.field_project_task_type_default_draft
+msgid "if check, this is a draft stage"
+msgstr "Si esta marcado, es estado borrador"
+
+#. module: project_activity
+#: model:ir.model.fields,help:project_activity.field_project_task_type_default_done
+msgid "if check, this is an done stage"
+msgstr "Si esta marcado, es estado realizado"
 
 #. module: project_activity
 #: model:ir.model.fields,help:project_activity.field_project_activity_default_error
 #: model:ir.model.fields,help:project_activity.field_project_task_type_default_error
 msgid "if check, this is an error stage"
-msgstr "Si esta seteado, es un error o incidencia."
+msgstr "Si esta marcado, es estado error."
 
 #. module: project_activity
 #: model:ir.model.fields,help:project_activity.field_project_task_type_default_running
 msgid "if check, this is an running stage"
-msgstr "Si esta seteado, esta una etapa en progreso"
-
-#. module: project_activity
-#: selection:project.task,state:0
-msgid "in Progress"
-msgstr "En progreso"
+msgstr "Si esta marcado, es estado en proceso"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_name
@@ -527,6 +884,16 @@ msgid "oe_kanban_text_red"
 msgstr "oe_kanban_text_red"
 
 #. module: project_activity
+#: model:ir.actions.act_window,name:project_activity.open_create_activity
+msgid "open.create.activity"
+msgstr "Crear una actividad"
+
+#. module: project_activity
+#: model:ir.actions.act_window,name:project_activity.open_form_project
+msgid "open.form.project"
+msgstr "Proyecto"
+
+#. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_activity_filter
 msgid "progress"
 msgstr "Progreso"
@@ -537,9 +904,24 @@ msgid "project.activity"
 msgstr "project.activity"
 
 #. module: project_activity
+#: model:ir.model,name:project_activity.model_project_activity_template_wz
+msgid "project.activity.template.wz"
+msgstr "project.activity.template.wz"
+
+#. module: project_activity
+#: model:ir.model,name:project_activity.model_project_finance_apl
+msgid "project.finance.apl"
+msgstr "project.finance.apl"
+
+#. module: project_activity
 #: model:ir.model,name:project_activity.model_project_task_cost
 msgid "project.task.cost"
 msgstr "project.task.cost"
+
+#. module: project_activity
+#: model:ir.model,name:project_activity.model_project_type_apl
+msgid "project.type.apl"
+msgstr "project.type.apl"
 
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_task_kanban_with_activity

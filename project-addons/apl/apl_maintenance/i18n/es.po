@@ -97,5 +97,5 @@ msgstr "You cannot open new sheet because you have one"
 #: code:addons/apl_maintenance/models/project_activity.py:130
 #, python-format
 msgid "You cannot start the task while is blocked kanban state"
-msgstr "You cannot start the task while is blocked kanban state"
+msgstr "No puedes iniciar una tarea si esta bloqueada en el estado Kanban"
 

@@ -34,6 +34,7 @@ class TaskCosts(models.Model):
 class ProjectActivity(models.Model):
 
     _name = "project.activity"
+    _inherit = ['mail.thread', 'ir.needaction_mixin']
 
     def _compute_task_cost(self):
         for activity in self:
@@ -71,24 +72,25 @@ class ProjectActivity(models.Model):
 
     @api.depends('task_ids', 'task_ids.stage_id', 'project_id')
     def _compute_stage_id(self):
+        return
 
         for activity in self:
-
             if activity.project_id:
-                run = False
-                activity.stage_id = activity.project_id.get_draft_stage()
+                done =0
+                draft=0
 
+                activity.stage_id = activity.project_id.get_draft_state()
                 for task in activity.task_ids:
-                    if task.stage_id.default_error:
-                        activity.stage_id = task.stage_id
-                        break
-                    elif task.stage_id.default_running:
-                        activity.stage_id = task.stage_id
-                        run = True
-                    elif task.stage_id.default_done and not run:
-                        activity.stage_id = task.stage_id
-                    elif task.stage_id.default_draft and not run:
-                        activity.stage_id = task.stage_id
+
+                    if task.stage_id.default_done:
+                        done=+1
+                    elif task.stage_id.default_draft:
+                        draft += 1
+
+                if done == len(activity.task_ids):
+                    pass
+
+
             else:
                 activity.stage_id = False
 
@@ -144,7 +146,7 @@ class ProjectActivity(models.Model):
     def _get_date_start(self):
 
         search_domain = [('activity_id','=',self.id), ('date_start', '!=', False)]
-        task = self.env['project.task'].search(search_domain, order="date_start desc", limit = 1)
+        task = self.env['project.task'].search(search_domain, order="date_start asc", limit = 1)
         self.date_start = task.date_start if task else False
 
 
@@ -156,7 +158,7 @@ class ProjectActivity(models.Model):
                 return
         except:
             pass
-        self.long_code = False
+        self.long_code = self.code
 
     active = fields.Boolean("Active", default= True)
     name = fields.Char('name', required=True)
@@ -164,7 +166,7 @@ class ProjectActivity(models.Model):
                               help="Gives the sequence order when displaying a list of activities.")
     task_count = fields.Integer(compute='_compute_task_count', string="Tasks count")
     project_id = fields.Many2one('project.project', string='Project', copy=False)
-    task_ids = fields.One2many('project.task', 'activity_id', string="Tasks")#, domain = "[('project_id', '=', project_id)]")
+    task_ids = fields.One2many('project.task', 'activity_id', string="Tasks", copy = False)#, domain = "[('project_id', '=', project_id)]")
     tag_ids = fields.Many2many('project.tags', string='Tags', oldname='categ_ids')
     date_start = fields.Datetime(string='Start Date', compute="_get_date_start")
     date_end = fields.Datetime(string='Ending Date', compute="_get_date_end")
@@ -190,7 +192,7 @@ class ProjectActivity(models.Model):
 
     use_tasks = fields.Boolean(related="project_id.use_tasks")
     code = fields.Char("Code", copy=False)
-    long_code = fields.Char("Code", compute="_get_long_code")
+    long_code = fields.Char("Complete Id", compute="_get_long_code")
     label_tasks = fields.Char(related="project_id.label_tasks")
     alias_id = fields.Many2one(related="project_id.alias_id")
 
@@ -345,7 +347,6 @@ class ProjectActivity(models.Model):
         # perform search, return the first found
         return self.env['project.task.type'].search(search_domain, order=order, limit=1).id
 
-
     @api.multi
     def write(self, vals):
 
@@ -356,6 +357,14 @@ class ProjectActivity(models.Model):
 
         res = super(ProjectActivity, self).write(vals)
         return res
+
+    @api.multi
+    def unlink(self):
+        for activity in self:
+            for task in activity.task_ids:
+                task.unlink()
+
+        return super(ProjectActivity, self).unlink()
 
 class ProjectTask(models.Model):
 
@@ -395,7 +404,7 @@ class ProjectTask(models.Model):
                 return
         except:
             pass
-        self.long_code = False
+        self.long_code = self.code
 
 
     state = fields.Selection([
@@ -425,9 +434,13 @@ class ProjectTask(models.Model):
                                copy=False,required = True)
     stage_name = fields.Char(related="stage_id.name")
     code = fields.Char("Code", copy=False)
-    long_code = fields.Char("Code", compute="_get_long_code")
+    long_code = fields.Char("Complete Id", compute="_get_long_code")
     no_schedule = fields.Boolean("No schedule", help='if check, task manager will created a new activity from this task', default = False)
-    new_activity_id = fields.Many2one("project.activity", string="New activity from task", help ="New activity from this task when done", domain =[('is_template','=', True)])
+    new_activity_id = fields.Many2one("project.activity", string="New activity", help ="New activity will be created from this task when done",
+                                      domain =[('is_template','=', True)])
+    new_activity_created =  fields.Many2one("project.activity", string="New activity", help ="New activity created from this task")
+    is_template = fields.Boolean(related='activity_id.is_template')
+
     # _sql_constraints = [
     #     ('check_planned_cost', "CHECK (planned_cost > 0.00)", 'Planned cost should be > 0.'),
     #     ('check_real_cost', "CHECK (real_cost > 0.00)", 'Real cost should be > 0.'),
@@ -466,21 +479,25 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
+
         for task in self:
+            if task.activity_id.is_template and 'project_id' in vals:
+                raise UserError(_('You cannot assign project to template activity'))
+
+            if task.stage_id.default_done and not ('stage_id' in vals):
+                raise UserError(_('You cannot change field values in done state'))
 
             if ('stage_id' in vals):
                 stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
+
+                if task.stage_id.default_done and not self._user_admin():
+                    raise UserError(_('Only managers can change stage done'))
 
                 if (vals.get('kanban_state', 'normal') == 'blocked' or task.kanban_state == 'blocked'):
                     raise UserError(_('You cannot change the state because task is blocked'))
 
                 if stage_id.default_running and not self.no_schedule and not self.user_ids:
-
                     raise UserError(_('You need assign this task to somebody'))
-
-
-                if stage_id.default_done and not self.stage_id.default_running:
-                    raise UserError(_('You only mark as done from running state '))
 
             if vals.get('project_id'):
                 stage_id = self.env['project.project'].browse(vals.get('project_id')).get_draft_stage()
@@ -532,7 +549,38 @@ class ProjectTask(models.Model):
         #     return new_task
 
     def new_activity_from_task(self):
+
+        if not self.new_activity_id:
+            raise UserError(_('You need set "New activity from task"'))
+        if not self.new_activity_id.is_template:
+            raise UserError(_('"New activity from task" must be template activity'))
+        if not self.project_id:
+            raise UserError(_('You need set "project_id"'))
+        self = self.with_context(show_template=True)
+
+        default={
+            'project_id': self.project_id.id,
+            'is_template': False
+        }
+
+        new_activity = self.new_activity_id.copy(default)
+        tasks = []
+        vals = {
+                'no_schedule': False,
+                'project_id': self.project_id.id
+        }
+        new_activity.task_ids.write(vals)
+
+        self.new_activity_created = new_activity
+        self.new_activity_id = False
+        self.stage_id = self.project_id.get_done_stage()
         return True
+
+
+    @api.model
+    def search(self, args, offset=0, limit=None, order=None, count=False):
+
+        return super(ProjectTask, self).search(args, offset, limit, order, count=count)
 
 class ProjectAplType(models.Model):
     _name="project.type.apl"
@@ -623,7 +671,7 @@ class ProjectProject(models.Model):
         ('private', 'Private'),
     ], string="Project finance")
     project_finance_apl_id = fields.Many2one("project.finance.apl", string="Finance type", domain=[('type', '=','finance_type')])
-
+    long_name = fields.Char("Long name")
 
     color_stage = fields.Integer(string='Color Index', related="stage_id.color")
     stage_id = fields.Many2one('project.task.type', compute="_compute_stage_id", string='Project Stage')
@@ -660,9 +708,18 @@ class ProjectProject(models.Model):
         return stage1
 
     def get_draft_stage(self):
-
         for stage in self.type_ids:
             if stage.default_draft:
+                return stage.id
+
+    def get_done_stage(self):
+        for stage in self.type_ids:
+            if stage.default_done:
+                return stage.id
+
+    def get_running_stage(self):
+        for stage in self.type_ids:
+            if stage.default_running:
                 return stage.id
 
     def get_last_stage(self):

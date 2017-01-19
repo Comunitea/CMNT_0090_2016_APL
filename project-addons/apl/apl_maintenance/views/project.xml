@@ -7,9 +7,9 @@
             <field name="inherit_id" ref="project.view_task_form2"/>
             <field name="arch" type="xml">
                 <field name="user_id" position="after">
-                    <field name="equipment_id" attrs="{'invisible':[('no_schedule','=',True)]}"/>
+                    <field name="equipment_id" />
                     <field name="allowed_user_ids" widget="many2many_tags" invisible="1"/>
-                    <field name="user_ids" widget="many2many_tags" attrs="{'required':[('equipment_id','!=',False)],'invisible':[('no_schedule','=',True)]}"/>
+                    <field name="user_ids" widget="many2many_tags" attrs="{'required':[('equipment_id','!=',False)]}"/>
                     <field name="ok_calendar" invisible="1"/>
                 </field>
 
@@ -59,7 +59,7 @@
                     <filter string="My Tasks" name="my_tasks" domain="['|',('user_id','=',uid),('user_ids','in',uid)]"/>
                 </xpath>
                <xpath expr="//filter[@name='unassigned']" position="after">
-                    <filter string="Sin agendar" name="sin_agendar" domain="[('user_ids','=',False)]"/>
+                    <filter string="No asigned to" name="no_asigned_to" domain="[('user_ids','=',False)]"/>
                 </xpath>
 
             </field>
