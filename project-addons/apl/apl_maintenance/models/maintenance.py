@@ -109,6 +109,7 @@ class ConcurrentTask(models.Model):
     user_id = fields.Many2one('res.users', string="Assigned to")
     error = fields.Char("Concurrence type")
     error_color = fields.Integer("Kanban Color")
+    is_reference=fields.Boolean('is reference task', default=False)
 
 
     def open_task_view(self):
@@ -125,16 +126,14 @@ class ProjectTask(models.Model):
     _inherit ="project.task"
 
     equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
-    allowed_user_ids = fields.Many2many(related="equipment_id.allowed_user_ids", string= "Allowed Users")
+    #allowed_user_ids = fields.Many2many(related="equipment_id.allowed_user_ids", string= "Allowed Users")
         #sobreescribo el campo user_id para eliminar el asignado por defecto y añadir el dominioo
     user_ids = fields.Many2many('res.users',
                               string='Asigned to',
-                              index=True, track_visibility='always')
+                              index=True, track_visibility='always', required=True)
                               #domain="[('id', '!=', allowed_user_ids and  allowed_user_ids[0][2])]")
                               #domain="[('id','in', allowed_user_ids and allowed_user_ids[0][2] or [])]")
     ok_calendar = fields.Boolean ("Ok Calendar", default=True)
-
-    #concurrent_task_ids = fields.Many2many("project.task.concurrent", column1="task_id", column2="origin_task_id")
 
     @api.constrains('equipment_id', 'user_ids')
     def _check_user_ids(self):
@@ -148,7 +147,7 @@ class ProjectTask(models.Model):
     def get_user_ids_domain(self):
 
         if self.equipment_id:
-            x = {'domain': {'user_ids': [('id', 'in', [x.id for x in self.allowed_user_ids])]},
+            x = {'domain': {'user_ids': [('id', 'in', [x.id for x in self.equipment_id.allowed_user_ids])]},
                  'value': {'user_ids': []}}
         else:
             x = {'domain': {'user_ids': []},
@@ -160,16 +159,15 @@ class ProjectTask(models.Model):
         return x
 
     def get_concurrent(self, user_ids = False, equipment_id = False,
-                       date_start = False, date_end = False):
+                       date_start = False, date_end = False, self_id = False):
 
-        if isinstance(self.id, models.NewId):
-            self_id = self._context['params']['id']
-        else:
-            self_id = self.id
+        if not self_id:
+            if isinstance(self.id, models.NewId):
+                self_id = self._context['params']['id']
+            else:
+                self_id = self.id
+
         equipment_id = equipment_id or self.equipment_id.id
-
-        if self.env['maintenance.equipment'].browse(equipment_id).no_equipment:
-            equipment_id = False
 
         date_start = date_start or self.date_start
         date_end = date_end or self.date_end
@@ -186,6 +184,7 @@ class ProjectTask(models.Model):
         domain = [('origin_task_id','=',self_id)]
         borrar = self.env['project.task.concurrent'].search(domain)
         borrar.unlink()
+        add_reference = False
 
         if equipment_id:
             domain = [('equipment_id', '=', equipment_id),
@@ -206,13 +205,9 @@ class ProjectTask(models.Model):
                         'error_color':1
                     }
                     concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
-
+                    add_reference=True
         if user_ids:
-            domain = [('stage_id.default_done', '!=', True), ('id','!=',self_id),
-                      (('|'),
-                      ('&', ('date_start', '<', date_start), ('date_end', '>', date_start)),
-                      ('&', ('date_start', '<', date_end), ('date_end', '>', date_end)))
-                      ]
+
             domain = [('stage_id.default_done', '!=', True), ('id','!=',self_id),
                       '|',
                       '&', ('date_start', '<', date_end), ('date_end', '>', date_end),
@@ -220,7 +215,7 @@ class ProjectTask(models.Model):
             ]
 
             pool_tasks = self.env['project.task'].search(domain)
-
+            #import ipdb; ipdb.set_trace()
             for task in pool_tasks:
                 if user_ids:
                 #if (task.date_start < date_start < task.date_end) \
@@ -239,7 +234,7 @@ class ProjectTask(models.Model):
                                 'error_color': 2
                         }
                             concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
-
+                            add_reference = True
             start_dt = Datetime.from_string(date_start)
             end_dt = Datetime.from_string(date_end)
 
@@ -248,11 +243,12 @@ class ProjectTask(models.Model):
             for user_id in user_ids:
                 employee = self.env['hr.employee'].search([('user_id', '=', user_id.id)])
                 calendar = employee.calendar_id
+
                 if employee and calendar:
                     #mio si trabaja ese dia
                     domain_resource = [('user_id', '=', user_id.id)]
                     resource = self.env['resource.resource'].search(domain_resource)
-                    is_work_day = resource._iter_work_days(start_dt, end_dt)
+                    is_work_day = resource._is_work_day(start_dt)
                     if is_work_day:
 
                         calendar = employee.calendar_id
@@ -320,7 +316,7 @@ class ProjectTask(models.Model):
                                 'user_id': user_id.id,
                                 'date_start': date_start,
                                 'date_end': date_end,
-                                'error': "ask out of calendar: %s" % day_hours,
+                                'error': "Task out of calendar: %s" % day_hours,
                                 'error_color': 1
                             }
                             concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
@@ -332,7 +328,7 @@ class ProjectTask(models.Model):
                             'user_id': user_id.id,
                             'date_start': date_start,
                             'date_end': date_end,
-                            'error': "%s no calendar for that day"%user_id.name,
+                            'error': "%s don't work this day"%user_id.name,
                             'error_color': 5
                         }
                         concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
@@ -340,17 +336,19 @@ class ProjectTask(models.Model):
 
         if concurrent_task_ids:
             ok_calendar = False
+            if add_reference:
             #si hay tareas concurrentes añado la original para poder visualizar en el calendario de concurrentes
-            vals ={
-                'origin_task_id': self_id,
-                'task_id': self_id,
-                'date_start': date_start,
-                'date_end': date_end,
-                'equipment_id': equipment_id,
-                'error': "Reference Task",
-                'error_color':0
-            }
-            concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+                vals ={
+                    'origin_task_id': self_id,
+                    'task_id': self_id,
+                    'date_start': date_start,
+                    'date_end': date_end,
+                    'equipment_id': equipment_id,
+                    'error': "Reference Task",
+                    'error_color':0,
+                    'is_reference':True
+                }
+                concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
         else:
             ok_calendar = True
         return ok_calendar
@@ -416,7 +414,7 @@ class ProjectTask(models.Model):
 
                 if userf_ids:
 
-                    no_unlink = [self.user_id.partner_id.id, self.env['res.users'].browse(1).partner_id.id]
+                    no_unlink = [self.user_id.partner_id.id]
                     to_append = []
                     to_unlink = []
                     partner_ids = []
@@ -433,11 +431,10 @@ class ProjectTask(models.Model):
                                         follower.partner_id.id not in no_unlink:
                             to_unlink += [follower.id]
 
+
                     res = self.env['mail.followers'].browse(to_unlink).unlink()
 
                     for new_follower_id in to_append:
-                        #import ipdb; ipdb.set_trace()
-                        #new_follower = self.env['res.users'].browse(new_follower_id).partner_id.id
                         message_follower_id, po = self.message_follower_ids._add_follower_command('project.task',
                                                    [self.id],
                                                    {new_follower_id: None},
@@ -445,36 +442,27 @@ class ProjectTask(models.Model):
                         message_follower_ids += message_follower_id
                     vals['message_follower_ids'] = message_follower_ids
 
+            if not user_ids:
+                raise UserError(_('You must assigned employees'))
 
-                    #aqui borro
-            # {'res_model': 'project.task', 'subtype_ids': [(6, 0, [1])], 'res_id': 308, 'partner_id': 16}
-            # print "Equipo: %s" %equipment_id
-            # print "Usuarios: %s"%user_ids
-            # print "Nueva Actividad: %s" %new_activity_id
-            # print "No schedule: %s" % no_schedule
-
-            if task.activity_id and task.activity_id.is_template:
-                vals['ok_calendar']= True
+            if no_schedule:
+                ok_calendar = True
             else:
-                if not user_ids and not no_schedule:
-                    raise UserError(_('You must assigned employees or new activity to schedule'))
+                ok_calendar = task.get_concurrent(user_ids, equipment_id, date_start, date_end)
 
-                if equipment_id and not user_ids:
-                    raise UserError(_('You must assigned employees if you set equipment'))
+            vals['ok_calendar'] = ok_calendar
 
-                if not no_schedule:
-                    ok_calendar = task.get_concurrent(user_ids, equipment_id, date_start, date_end)
-                else:
-                    ok_calendar = True
+            if 'stage_id' in vals:
+                stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
+                if not ok_calendar and not stage_id.default_draft:
+                        raise ValidationError(
+                            _('Error stage. Concurrent Task Error'))
 
-                if 'stage_id' in vals:
-                    stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
-                    if not ok_calendar and not stage_id.default_draft:
-                            raise ValidationError(
-                                _('Error stage. Concurrent Task Error'))
-                vals['ok_calendar'] = ok_calendar
 
         result = super(ProjectTask, self).write(vals)
+
+
+
         return result
 
 class ReportProjectActivityTaskUser(models.Model):

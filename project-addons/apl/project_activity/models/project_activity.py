@@ -35,6 +35,7 @@ class ProjectActivity(models.Model):
 
     _name = "project.activity"
     _inherit = ['mail.thread', 'ir.needaction_mixin']
+    _order = 'code ASC'
 
     def _compute_task_cost(self):
         for activity in self:
@@ -79,7 +80,7 @@ class ProjectActivity(models.Model):
                 done =0
                 draft=0
 
-                activity.stage_id = activity.project_id.get_draft_state()
+                activity.stage_id = activity.project_id.get_draft_stage()
                 for task in activity.task_ids:
 
                     if task.stage_id.default_done:
@@ -175,10 +176,14 @@ class ProjectActivity(models.Model):
     tag_ids = fields.Many2many('project.tags', string='Tags', oldname='categ_ids')
     date_start = fields.Datetime(string='Start Date', compute="_get_date_start")
     date_end = fields.Datetime(string='Ending Date', compute="_get_date_end")
-    user_id = fields.Many2one('res.users',
-                              string='Manager',
-                              default=_get_default_user_id,
+    # user_id = fields.Many2one('res.users',
+    #                           string='Manager',
+    #                           default=_get_default_user_id,
+    #                           index=True, track_visibility='always')
+    user_id = fields.Many2one('res.users', string='Assigned to',
                               index=True, track_visibility='always')
+
+
     color = fields.Integer(string='Color Index', related="stage_id.color")
     progress = fields.Integer(compute='_progress_get', string='Tasks done')
     date_deadline = fields.Date(string='Deadline', compute="_compute_dead_line")
@@ -215,8 +220,14 @@ class ProjectActivity(models.Model):
     @api.model
     def default_get(self, default_fields):
 
+        default_user_id=False
+        if self.env.context.get('default_project_id', False):
+            default_project_id = self.env.context.get('default_project_id', False)
+            default_user_id = self.env['project.project'].browse(default_project_id).user_id.id or self.env.uid
+
+
         default_code = self.env['ir.sequence'].next_by_code('project.activity.sequence')
-        contextual_self = self.with_context(default_code=default_code)
+        contextual_self = self.with_context(default_code=default_code, default_user_id=default_user_id)
         return super(ProjectActivity, contextual_self).default_get(default_fields)
 
     @api.onchange('master_activity_id')
@@ -357,6 +368,12 @@ class ProjectActivity(models.Model):
     def write(self, vals):
 
         for activity in self:
+            if 'stage_id' and activity.parent_task_id:
+                activity.parent_task_id.write({'date_start': fields.Datetime.now(),
+                                               'date_end': fields.Datetime.now(),
+                                               'stage_id': activity.project_id.get_draft_stage()})
+
+
             if vals.get('project_id') and vals['project_id'] != activity.project_id.id:
                 stage_id = self.env['project.project'].browse(vals['project_id']).get_draft_stage()
                 activity.task_ids.write({'project_id': vals['project_id'],})
@@ -375,6 +392,7 @@ class ProjectActivity(models.Model):
 class ProjectTask(models.Model):
 
     _inherit ="project.task"
+    _order = 'code ASC'
 
     def _get_task_costs(self):
         for task in self:
@@ -422,10 +440,8 @@ class ProjectTask(models.Model):
     ], compute = "_get_task_state", store=True)
 
     activity_id = fields.Many2one("project.activity", string ="Activity")
-    stage_id_color = fields.Integer(related="stage_id.color")
     color = fields.Integer(related="stage_id.color")
-    working_color=fields.Integer("Active Color", default=3)
-    planned_cost = fields.Float ("Planned Cost", help="Planned cost")
+    planned_cost = fields.Float ("Planned Cost", help="Planned cost", required=True)
     real_cost = fields.Float("Real Cost", help ="Real cost (after task finish)")
     real_cost_cal = fields.Float("Real Cost Cal", help="Real cost or amount_cost_ids",
                                  compute='_get_real_cost_cal')
@@ -438,7 +454,6 @@ class ProjectTask(models.Model):
     date_end = fields.Datetime(string='Ending Date', index=True,
                                default=fields.Datetime.now,
                                copy=False,required = True)
-    stage_name = fields.Char(related="stage_id.name")
     code = fields.Char("Code", copy=False)
     long_code = fields.Char("Complete Id", compute="_get_long_code")
     no_schedule = fields.Boolean("No schedule", help='if check, task manager will created a new activity from this task', default = False)
@@ -447,19 +462,57 @@ class ProjectTask(models.Model):
     new_activity_created =  fields.Many2one("project.activity", string="Related activity", help ="New activity created from this task")
     is_template = fields.Boolean(related='activity_id.is_template')
     user_id = fields.Many2one('res.users', string='Assigned to',
-                              default=lambda self: self.activity_id.user_id or self.env.uid,
                               index=True, track_visibility='always')
+    default_draft = fields.Boolean(related='stage_id.default_draft')
+    default_done = fields.Boolean(related='stage_id.default_done')
     # _sql_constraints = [
     #     ('check_planned_cost', "CHECK (planned_cost > 0.00)", 'Planned cost should be > 0.'),
     #     ('check_real_cost', "CHECK (real_cost > 0.00)", 'Real cost should be > 0.'),
     #     ('check_dates', "CHECK (date_start <= date_end)", 'Ohhh !! Can you end before you start ????')
     # ]
 
-    @api.constrains('planned_cost', 'real_cost')
+    @api.model
+    def default_get(self, default_fields):
+
+        default_user_id = self.env.uid
+        if self.env.context.get('default_activity_id', False):
+            default_activity_id = self.env.context.get('default_activity_id', False)
+            default_user_id = self.env['project.activity'].browse(default_activity_id).user_id.id or self.env.uid
+
+        default_code = self.env['ir.sequence'].next_by_code('project.activity.sequence')
+        contextual_self = self.with_context(default_code=default_code, default_user_id=default_user_id)
+        return super(ProjectActivity, contextual_self).default_get(default_fields)
+
+    @api.constrains('planned_cost')
     def _check_costs(self):
 
         if self.planned_cost <= 0.00:
-            raise ValidationError(_('Error ! Check cost: %s'%self.name))
+            raise ValidationError(_('Error! Check planned cost'))
+
+    @api.onchange('planned_hours')
+    def _onchange_planned_hours(self):
+
+        start_dt = fields.Datetime.from_string(self.date_start)
+        end_dt = start_dt + timedelta(minutes=(self.planned_hours - int(self.planned_hours)) * 60) + timedelta(
+            hours=int(self.planned_hours))
+        self.date_end = end_dt
+
+    @api.onchange('planned_cost')
+    def _onchange_planned_cost(self):
+        if self.real_cost == 0.00:
+            self.real_cost = self.planned_cost
+
+    @api.onchange('user_id')
+    def _onchange_user(self):
+        if self.user_id:
+            self.date_assign = fields.Datetime.now()
+
+    @api.onchange('date_start')
+    def _onchange_dates(self):
+        self._onchange_planned_hours()
+        return
+        #if not self._user_admin():
+        #    raise UserError(_('You have no enough permission to do this'))
 
     @api.model
     def default_get(self, default_fields):
@@ -470,30 +523,38 @@ class ProjectTask(models.Model):
             default_project_id = py and py.project_id and py.project_id.id or False
             contextual_self = contextual_self.with_context(default_project_id=default_project_id)
 
+        if self._context.get('default_activity_id', False):
+            default_activity_id = self.env.context.get('default_activity_id', False)
+            default_user_id = self.env['project.activity'].browse(default_activity_id).user_id.id or self.env.uid
+            contextual_self = contextual_self.with_context(default_user_id=default_user_id)
+
         default_code = self.env['ir.sequence'].next_by_code('project.task.sequence')
         contextual_self = contextual_self.with_context(default_code=default_code)
         res = super(ProjectTask, contextual_self).default_get(default_fields)
         return res
 
     def _user_admin(self):
+
         if self.create_uid == self.env.user or self.user_id == self.env.user or self.env.user.id == 1:
             user_admin = True
         else:
             user_admin = False
+
+        print user_admin
         return user_admin
 
     @api.multi
     def write(self, vals):
 
+
         for task in self:
 
-            if task.activity_id.is_template and 'project_id' in vals:
-                raise UserError(_('You cannot assign project to template activity'))
-
-            if task.stage_id.default_done and not ('stage_id' in vals):
-                raise UserError(_('You cannot change field values in done state'))
+            #TODO Comprobar esta limitacion
+            if not task._user_admin():
+                raise UserError(_('You have no enough permission to do this'))
 
             if ('stage_id' in vals):
+
                 stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
 
                 if task.stage_id.default_done and not task._user_admin():
@@ -510,25 +571,10 @@ class ProjectTask(models.Model):
                 vals['stage_id']=stage_id
 
         result = super(ProjectTask, self).write(vals)
+
         return result
 
-    @api.onchange('planned_hours')
-    def onchange_planned_hours(self):
 
-        start_dt = fields.Datetime.from_string(self.date_start)
-        end_dt = start_dt + timedelta(minutes= (self.planned_hours-int(self.planned_hours)) * 60) + timedelta(hours=int(self.planned_hours))
-        self.date_end = end_dt
-
-    @api.onchange('planned_cost')
-    def _onchange_planned_cost(self):
-        if self.real_cost==0.00:
-            self.real_cost = self.planned_cost
-
-
-    @api.onchange('user_id')
-    def _onchange_user(self):
-        if self.user_id:
-            self.date_assign = fields.Datetime.now()
 
     @api.multi
     def copy(self, default):
@@ -631,6 +677,7 @@ class ProjectAplFinance(models.Model):
 class ProjectProject(models.Model):
 
     _inherit = "project.project"
+    _order = 'code ASC'
 
     def _compute_activity_count(self):
         for project in self:

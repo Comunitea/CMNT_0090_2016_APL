@@ -26,7 +26,8 @@
             <field name="model">project.activity</field>
             <field eval="2" name="priority"/>
             <field name="arch" type="xml">
-                <tree decoration-danger="(default_error) or (date_deadline and (date_deadline&lt;current_date))" string="Activities">
+                <tree
+                    string="Activities">
                     <field name="name"/>
                     <field name="project_id" invisible="context.get('user_invisible', False)"/>
                     <field name="progress" widget="progressbar" invisible="context.get('user_invisible', False)"/>
@@ -36,6 +37,7 @@
                     <field name="stage_id"/>
                     <field name="default_error"/>
                     <field name="color" invisible="1"/>
+
                 </tree>
             </field>
 
@@ -305,7 +307,8 @@
                 </xpath>
                 <field name="legend_blocked" position="before">
                     <field name="no_schedule" />
-                    <field name="new_activity_id" string="Plantilla de solicitud" attrs="{'invisible':['|',('new_activity_created','!=',False) ,('no_schedule','=',False)]}"/>
+                    <field name="new_activity_id" string="Plantilla de solicitud"
+                           attrs="{'invisible':['|',('new_activity_created','!=',False) ,('no_schedule','=',False)]}"/>
                     <field name="new_activity_created" string="Actividad relacionada" attrs="{'invisible':[('new_activity_created','=',False)]}"/>
 
                 </field>
@@ -317,7 +320,7 @@
 
                 <field name="date_deadline" position="after">
                     <field name="date_start"/>
-                    <field name="planned_hours" widget="float_time"/>
+                    <field name="planned_hours" widget="float_time" required="1"/>
                     <field name="date_end"/>
                 </field>
                 <field name="sequence" position="after">
@@ -340,7 +343,7 @@
                     </field>
                     <group>
                         <group>
-                            <field name="planned_cost" />
+                            <field name="planned_cost" required="1"/>
                             <field name="real_cost"  />
                         </group>
 
@@ -362,12 +365,26 @@
             <field name="model">project.task</field>
             <field name="inherit_id" ref="project.view_task_tree2"/>
             <field name="arch" type="xml">
-                <field name="project_id" position="after">
+                <xpath expr="//tree" position="attributes">
+                    <attribute name="decoration-danger">
+                         ok_calendar==False
+                    </attribute>
+                    <attribute name="decoration-muted">
+                         default_draft
+                    </attribute>
+                    <attribute name="decoration-success">
+                         default_done
+                    </attribute>
 
+                </xpath>
+                <field name="project_id" position="after">
                     <field name="activity_id" invisible="context.get('user_invisible', False)"/>
                     <field name="real_cost" />
                     <field name="date_start"/>
-                   <field name="date_end"/>
+                    <field name="date_end"/>
+                    <field name="ok_calendar" invisible="1"/>
+                    <field name="default_draft" invisible="1"/>
+                    <field name="default_done" invisible="1"/>
                 </field>
             </field>
         </record>
@@ -569,7 +586,6 @@
                             <field name="project_type_apl_id"/>
                             <field name="finance_type"/>
                                 <label for="project_finance_apl_id" string=" " class="oe_inline"/>
-
                                 <field name="project_finance_apl_id" nolabel="1" class="oe_inline"  domain="[('type', '=', finance_type)]"/>
 
                             </group>
@@ -635,9 +651,7 @@
             <field name="arch" type="xml">
                 <field name="color" position="before">
                     <field name="activity_id" alt="project_id"/>
-                    <field name="stage_id_color"/>
                     <field name="stage_id"/>
-                    <field name="working_color"/>
                     <field name="code"/>
                 </field>
                 <xpath expr="//field[@name='name']/../.." position="before">

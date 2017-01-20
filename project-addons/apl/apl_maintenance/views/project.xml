@@ -8,8 +8,7 @@
             <field name="arch" type="xml">
                 <field name="user_id" position="after">
                     <field name="equipment_id" />
-                    <field name="allowed_user_ids" widget="many2many_tags" invisible="1"/>
-                    <field name="user_ids" widget="many2many_tags" attrs="{'required':[('equipment_id','!=',False)]}"/>
+                    <field name="user_ids" widget="many2many_tags" required="1"/>
                     <field name="ok_calendar" invisible="1"/>
                 </field>
 

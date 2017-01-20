@@ -30,7 +30,9 @@
             <field name="name">project.task.concurrent.tree</field>
             <field name="model">project.task.concurrent</field>
             <field name="arch" type="xml">
-                <tree string="Concurrent">
+                <tree string="Concurrent"
+                    decoration-success="is_reference"
+                    >
                     <field name="task_id"/>
                     <button name="open_task_view" string="Confirm" icon="fa-tasks"/>
                     <field name="error"/>
@@ -38,6 +40,7 @@
                     <field name="date_end"/>
                     <field name="equipment_id"/>
                     <field name="user_id"/>
+                    <field name="is_reference" invisible="1"/>
                 </tree>
             </field>
         </record>
@@ -49,11 +52,12 @@
                     <group><group readonly="True">
                     <field name="task_id" readonly="1"/>
                     <field name="error" readonly="1"/>
-                    <field name="equipment_id" readonly="1"/>
-                    <field name="user_id" readonly="1"/>
+                    <field name="equipment_id" readonly="1" attrs="{'invisible':[('equipment_id','=',False)]}"/>
+                    <field name="user_id" readonly="1" attrs="{'invisible':[('user_id','=',False)]}"/>
                     </group>
                     <group readonly="1">
-                    <field name="origin_task_id" readonly="1"/>
+                    <field name="origin_task_id" readonly="1"  attrs="{'invisible':[('is_reference','=',True)]}"/>
+                    <field name="is_reference" invisible="1"/>
                     <field name="date_start" readonly="1"/>
                     <field name="date_end" readonly="1"/>
                     </group>

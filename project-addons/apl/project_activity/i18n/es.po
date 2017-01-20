@@ -648,11 +648,6 @@ msgid "Stage"
 msgstr "Etapa"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_task_stage_name
-msgid "Stage Name"
-msgstr "Nombre de la etapa"
-
-#. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_date_start
 msgid "Start Date"
 msgstr "Fecha de inicio"
