@@ -483,7 +483,17 @@
             <field name="view_mode">tree</field>
             <field name="act_window_id" ref="action_view_activity"/>
         </record>
-        
+        <record id="view_project_project_tree_withcode" model="ir.ui.view">
+            <field name="name">view.project.project.tree.wirthcode</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.view_project"/>
+            <field name="arch" type="xml">
+                <field name="active" position="after">
+                    <field name="code"/>
+
+                </field>
+            </field>
+        </record>
        <record id="view_project_project_activity_kanban" model="ir.ui.view">
             <field name="name">Project Kanban With Activity</field>
             <field name="model">project.project</field>

@@ -392,6 +392,51 @@ class ProjectTask(models.Model):
 
         return new_value
 
+    def refresh_follower_ids(self, new_follower_ids = []):
+        message_follower_ids = []
+        if new_follower_ids:
+
+            no_unlink = [self.user_id.partner_id.id]
+            to_append = []
+            to_unlink = []
+            partner_ids = []
+            follower_ids = [x.partner_id.id for x in self.message_follower_ids]
+
+            for us in new_follower_ids:
+                partner_id = self.env['res.users'].browse(us).partner_id.id
+                partner_ids += [partner_id]
+                if partner_id not in follower_ids:
+                    to_append += [partner_id]
+
+            for follower in self.message_follower_ids:
+                if follower.partner_id.id not in partner_ids and \
+                                follower.partner_id.id not in no_unlink:
+                    to_unlink += [follower.id]
+
+            res = self.env['mail.followers'].browse(to_unlink).unlink()
+
+            for new_follower_id in to_append:
+                message_follower_id, po = self.message_follower_ids._add_follower_command('project.task',
+                                                                                          [self.id],
+                                                                                          {new_follower_id: None},
+                                                                                          {}, True)
+                message_follower_ids += message_follower_id
+
+            return message_follower_ids
+
+
+    @api.model
+    def create(self, vals):
+
+        if 'user_ids' in vals:
+            userf_ids = vals['user_ids'][0][2]
+            vals['message_follower_ids'] = self.refresh_follower_ids(new_follower_ids=userf_ids)
+        res = super(ProjectTask, self).create(vals)
+        return res
+
+
+
+
     @api.multi
     def write(self, vals):
 
@@ -408,39 +453,8 @@ class ProjectTask(models.Model):
             activity_id = task.getval(vals, 'activity_id', 'm2o')
 
             if 'user_ids' in vals:
-                followers=[]
                 userf_ids = vals['user_ids'][0][2]
-                message_follower_ids = []
-
-                if userf_ids:
-
-                    no_unlink = [self.user_id.partner_id.id]
-                    to_append = []
-                    to_unlink = []
-                    partner_ids = []
-                    follower_ids = [x.partner_id.id for x in self.message_follower_ids]
-
-                    for us in userf_ids:
-                        partner_id = self.env['res.users'].browse(us).partner_id.id
-                        partner_ids += [partner_id]
-                        if partner_id not in follower_ids:
-                            to_append += [partner_id]
-
-                    for follower in self.message_follower_ids:
-                        if follower.partner_id.id not in partner_ids and \
-                                        follower.partner_id.id not in no_unlink:
-                            to_unlink += [follower.id]
-
-
-                    res = self.env['mail.followers'].browse(to_unlink).unlink()
-
-                    for new_follower_id in to_append:
-                        message_follower_id, po = self.message_follower_ids._add_follower_command('project.task',
-                                                   [self.id],
-                                                   {new_follower_id: None},
-                                                    {}, True)
-                        message_follower_ids += message_follower_id
-                    vals['message_follower_ids'] = message_follower_ids
+                vals['message_follower_ids'] = task.refresh_follower_ids(new_follower_ids = userf_ids)
 
             if not user_ids:
                 raise UserError(_('You must assigned employees'))
