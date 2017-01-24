@@ -396,11 +396,18 @@ class ProjectTask(models.Model):
         message_follower_ids = []
         if new_follower_ids:
 
-            no_unlink = [self.user_id.partner_id.id]
+            if self.user_id.id in new_follower_ids:
+                no_unlink=[]
+            else:
+                no_unlink = [self.user_id.partner_id.id]
             to_append = []
             to_unlink = []
             partner_ids = []
-            follower_ids = [x.partner_id.id for x in self.message_follower_ids]
+            follower_ids =[]
+            for x in self.message_follower_ids:
+                if x != self.user_id:
+                    follower_ids += [x.partner_id.id]
+
 
             for us in new_follower_ids:
                 partner_id = self.env['res.users'].browse(us).partner_id.id
@@ -428,10 +435,13 @@ class ProjectTask(models.Model):
     @api.model
     def create(self, vals):
 
+        res = super(ProjectTask, self).create(vals)
         if 'user_ids' in vals:
             userf_ids = vals['user_ids'][0][2]
-            vals['message_follower_ids'] = self.refresh_follower_ids(new_follower_ids=userf_ids)
-        res = super(ProjectTask, self).create(vals)
+
+            vals['message_follower_ids'] = res.refresh_follower_ids(new_follower_ids=userf_ids)
+            vals2={'message_follower_ids': vals['message_follower_ids'] }
+            res.write(vals2)
         return res
 
 
@@ -467,6 +477,7 @@ class ProjectTask(models.Model):
             vals['ok_calendar'] = ok_calendar
 
             if 'stage_id' in vals:
+
                 stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
                 if not ok_calendar and not stage_id.default_draft:
                         raise ValidationError(
@@ -474,9 +485,6 @@ class ProjectTask(models.Model):
 
 
         result = super(ProjectTask, self).write(vals)
-
-
-
         return result
 
 class ReportProjectActivityTaskUser(models.Model):

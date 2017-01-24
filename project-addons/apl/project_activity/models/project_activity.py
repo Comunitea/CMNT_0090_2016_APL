@@ -406,6 +406,16 @@ class ProjectTask(models.Model):
         for task in self:
             task.real_cost_cal = task.real_cost or task.amount_cost_ids
 
+    def _get_default_stage_id(self):
+        """ Gives default stage_id """
+        #TODO Sobre escribo para
+        project_id = self.env.context.get('default_project_id')
+        res = self.stage_find(project_id, [('fold', '=', False)])
+        stage = self.env['project.task.type'].browse(res).default_draft
+        if not stage:
+            res = self.env['project.task.type'].search([('default_draft','=',True)], order = 'sequence,id ASC', limit = 1).id
+        return res
+
     @api.multi
     @api.depends('stage_id')
     def _get_task_state(self):
@@ -550,8 +560,8 @@ class ProjectTask(models.Model):
         for task in self:
 
             #TODO Comprobar esta limitacion
-            if not task._user_admin():
-                raise UserError(_('You have no enough permission to do this'))
+            #if not task._user_admin():
+            #    raise UserError(_('You have no enough permission to do this'))
 
             if ('stage_id' in vals):
 
@@ -611,7 +621,7 @@ class ProjectTask(models.Model):
                 'project_id': self.project_id.id,
                 'is_template': False,
                 'user_id': self.user_ids and self.user_ids[0].id or self.user_id.id,
-                'name': self.name,
+                'name': "%s/%s/%s"%(self.project_id.code, self.activity_id.code, self.code),
                 'parent_task_id': self.id
 
                 }

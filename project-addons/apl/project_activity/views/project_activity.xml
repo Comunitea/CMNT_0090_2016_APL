@@ -35,7 +35,6 @@
                     <field name="date_start" invisible="0"/>
                     <field name="date_end" invisible="0"/>
                     <field name="stage_id"/>
-                    <field name="default_error"/>
                     <field name="color" invisible="1"/>
 
                 </tree>
@@ -463,6 +462,7 @@
                 </p>
             </field>
        </record>
+
         <record id="open_form_project" model="ir.actions.act_window">
             <field name="name">open.form.project</field>
             <field name="res_model">project.project</field>
@@ -494,6 +494,19 @@
                 </field>
             </field>
         </record>
+
+        <record id="open_view_project_all_vista_tree" model="ir.actions.act_window">
+            <field name="name">ProjectsMasVistatree</field>
+            <field name="res_model">project.project</field>
+            <field name="inherit_id" ref="project.open_view_project_all"/>
+            <field name="arch" type="xml">
+                <field name="view_mode" position="replace">
+                    <field name="view_mode">kanban,tree,form</field>
+                </field>
+            </field>
+        </record>
+
+
        <record id="view_project_project_activity_kanban" model="ir.ui.view">
             <field name="name">Project Kanban With Activity</field>
             <field name="model">project.project</field>
