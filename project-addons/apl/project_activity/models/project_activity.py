@@ -171,7 +171,7 @@ class ProjectActivity(models.Model):
     sequence = fields.Integer(string='Sequence', index=True, default=1,
                               help="Gives the sequence order when displaying a list of activities.")
     task_count = fields.Integer(compute='_compute_task_count', string="Tasks count")
-    project_id = fields.Many2one('project.project', string='Project', copy=False)
+    project_id = fields.Many2one('project.project', string='Project', copy=True)
     task_ids = fields.One2many('project.task', 'activity_id', string="Tasks", copy = False)#, domain = "[('project_id', '=', project_id)]")
     tag_ids = fields.Many2many('project.tags', string='Tags', oldname='categ_ids')
     date_start = fields.Datetime(string='Start Date', compute="_get_date_start")
@@ -275,7 +275,7 @@ class ProjectActivity(models.Model):
         self.ensure_one()
         new_activity = super(ProjectActivity, self).copy(default)
         tasks = []
-
+        project_id = default.get('project_id', False) or self.project_id.id or False
         for task in self.task_ids:
             defaults = {
                         'activity_id': new_activity.id,
@@ -284,9 +284,8 @@ class ProjectActivity(models.Model):
                         'date_end': fields.Datetime.from_string(fields.Datetime.now()) + timedelta(
                             minutes=(task.planned_hours - int(task.planned_hours)) * 60) +
                                     timedelta(hours=int(task.planned_hours)),
-                        'project_id': False}
-            if default.get('project_id', False):
-                defaults['project_id'] = default.get('project_id', False)
+                        'project_id': project_id}
+            print defaults
 
             new_task = task.copy(defaults)
             #new_task.name = "%s.%s"%(task.name, new_task.code.split('.')[1])
