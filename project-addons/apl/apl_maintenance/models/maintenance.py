@@ -396,30 +396,27 @@ class ProjectTask(models.Model):
         message_follower_ids = []
         if new_follower_ids:
 
-            if self.user_id.id in new_follower_ids:
-                no_unlink=[]
-            else:
-                no_unlink = [self.user_id.partner_id.id]
+
             to_append = []
             to_unlink = []
             partner_ids = []
             follower_ids =[]
             for x in self.message_follower_ids:
-                if x != self.user_id:
-                    follower_ids += [x.partner_id.id]
+                follower_ids += [x.partner_id.id]
 
 
             for us in new_follower_ids:
                 partner_id = self.env['res.users'].browse(us).partner_id.id
                 partner_ids += [partner_id]
-                if partner_id not in follower_ids:
-                    to_append += [partner_id]
+                to_append += [partner_id]
+
+            to_append += [self.user_id.partner_id.id]
+            to_append += [self.create_uid.partner_id.id]
+            to_append = list(set(to_append))
+
 
             for follower in self.message_follower_ids:
-                if follower.partner_id.id not in partner_ids and \
-                                follower.partner_id.id not in no_unlink:
-                    to_unlink += [follower.id]
-
+                to_unlink += [follower.id]
             res = self.env['mail.followers'].browse(to_unlink).unlink()
 
             for new_follower_id in to_append:
