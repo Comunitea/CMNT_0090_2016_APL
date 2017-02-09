@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="account_invoice_form_APL" model="ir.ui.view">
+            <field name="name">account.invoice.form.APL</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_form"/>
+            <field name="arch" type="xml">
+                <field name="date_invoice" position="before">
+                    <field name="project_id"/>
+                </field>
+                <xpath expr="//field[@name='invoice_line_ids']" position="attributes">
+                    <attribute name="context">{'type': type, 'journal_id': journal_id, 'default_invoice_id': id, 'default_account_analytic_id': account_analytic_id}</attribute>
+                </xpath>
+                <xpath expr="//notebook" posicion="inside">
+                    <page string ="Project" attrs="{'invisible': [('project_id','=', False)]}">
+                        <group>
+                            <group>
+                                <field name="account_analytic_id" readonly="1"/>
+                                <field name="project_user_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="date_end"/>
+                                <field name="planned_cost"/>
+                            </group>
+                        </group>
+                    </page>
+
+                </xpath>
+            </field>
+        </record>
+         <record id="account_invoice_supplier_form_APL" model="ir.ui.view">
+            <field name="name">account.invoice.invoice.form.APL</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_supplier_form"/>
+            <field name="arch" type="xml">
+                <field name="date_invoice" position="before">
+                    <field name="project_id"/>
+                </field>
+                <xpath expr="//field[@name='invoice_line_ids']" position="attributes">
+                    <attribute name="context">{'type': type, 'journal_id': journal_id, 'default_invoice_id': id, 'default_account_analytic_id': account_analytic_id}</attribute>
+                </xpath>
+                <xpath expr="//notebook" posicion="inside">
+                    <page string ="Project" attrs="{'invisible': [('project_id','=', False)]}">
+                        <group>
+                            <group>
+                                <field name="account_analytic_id" readonly="1"/>
+                                <field name="project_user_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="date_end"/>
+                                <field name="planned_cost" readonly="1"/>
+                            </group>
+                        </group>
+                    </page>
+
+                </xpath>
+
+            </field>
+        </record>
+
+
+        <record id="project_form_invoices_buttoms" model="ir.ui.view">
+            <field name="name">project.form.invoices.buttoms</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+            <field name="arch" type="xml">
+
+                <xpath expr="//button[@name='toggle_active']" position="after">
+                     <button class="oe_stat_button" type="object"
+                            name="show_invoice" icon="fa-tasks">
+                            <field string="Invoices" name="invoice_count" widget="statinfo"/>
+                    </button>
+                    <button class="oe_stat_button" type="object"
+                            name="show_invoice_purchase" icon="fa-tasks">
+                            <field string="Purchase invoices" name="purchase_invoice_count" widget="statinfo"/>
+                    </button>
+                </xpath>
+
+
+            </field>
+        </record>
+        <record id="account_invoice_tree_with_project" model="ir.ui.view">
+            <field name="name">account.invoice.tree.with.project</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_tree"/>
+            <field name="arch" type="xml">
+                <field name="partner_id" position="after">
+                    <field name = "project_id"/>
+                </field>
+                <field name="date_invoice" position="before">
+                     <field name = "date_end"/>
+                </field>
+                <field name="amount_total_signed" position="before">
+                     <field name = "planned_cost" sum="Planned Cost"/>
+                </field>
+            </field>
+        </record>
+        <record id="account_invoice_supplier_tree_with_project" model="ir.ui.view">
+            <field name="name">account.invoice.supplier.tree.with.project</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_supplier_tree"/>
+            <field name="arch" type="xml">
+                <field name="partner_id" position="after">
+                    <field name = "project_id"/>
+                </field>
+                <field name="date_invoice" position="before">
+                     <field name = "date_end"/>
+                </field>
+                <field name="amount_total_signed" position="before">
+                     <field name = "planned_cost" sum="Planned Cost"/>
+                </field>
+            </field>
+        </record>
+
+
+        <record id="view_account_invoice_filter_project" model="ir.ui.view">
+            <field name="name">account_payment_partner.account_invoice_search.project</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+            <field name="arch" type="xml">
+                <field name="partner_id" position="before">
+                    <field name="project_id" operator="child_of"/>
+                    <field name="project_user_id" string="Asigned to"/>
+                    <field name="date_end"/>
+                    <separator/>
+                </field>
+                <xpath expr="//group" position="before">
+                    <filter domain="[('project_user_id','=',uid)]" help="My asigned projects"/>
+                </xpath>
+                <xpath expr="//filter[@name='status']" position="after">
+                    <separator/>
+                    <filter string="Estimated end" context="{'group_by':'date_end'}"/>
+                    <filter string="Project" context="{'group_by':'project_id'}"/>
+                </xpath>
+
+            </field>
+        </record>
+
+
+    </data>
+</openerp>
+
