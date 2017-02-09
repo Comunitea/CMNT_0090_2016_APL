@@ -33,6 +33,7 @@
             <field name="name">account.invoice.invoice.form.APL</field>
             <field name="model">account.invoice</field>
             <field name="inherit_id" ref="account.invoice_supplier_form"/>
+
             <field name="arch" type="xml">
                 <field name="date_invoice" position="before">
                     <field name="project_id"/>
@@ -64,15 +65,16 @@
             <field name="name">project.form.invoices.buttoms</field>
             <field name="model">project.project</field>
             <field name="inherit_id" ref="project.edit_project"/>
+
             <field name="arch" type="xml">
 
                 <xpath expr="//button[@name='toggle_active']" position="after">
                      <button class="oe_stat_button" type="object"
-                            name="show_invoice" icon="fa-pencil-square-o">
+                            name="show_invoice" icon="fa-pencil-square-o" groups="account.group_account_user">
                             <field string="Invoices" name="invoice_count" widget="statinfo"/>
                     </button>
                     <button class="oe_stat_button" type="object"
-                            name="show_invoice_purchase" icon="fa-pencil-square-o">
+                            name="show_invoice_purchase" icon="fa-pencil-square-o" groups="account.group_account_user">
                             <field string="Purchase invoices" name="purchase_invoice_count" widget="statinfo"/>
                     </button>
                 </xpath>

@@ -74,8 +74,8 @@ class ProjectProject(models.Model):
         self.purchase_invoice_count = len(self.env['account.invoice'].search(domain))
 
 
-    purchase_invoice_count = fields.Integer ('Purchase Invoices', compute = "_get_purchase_invoice_count")
-    invoice_count = fields.Integer('Purchase Invoices', compute="_get_invoice_count")
+    purchase_invoice_count = fields.Integer ('Purchase Invoices', compute = "_get_purchase_invoice_count", groups='account.group_account_user')
+    invoice_count = fields.Integer('Purchase Invoices', compute="_get_invoice_count", groups='account.group_account_user')
 
 
     @api.multi
