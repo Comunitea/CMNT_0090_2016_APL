@@ -68,11 +68,11 @@
 
                 <xpath expr="//button[@name='toggle_active']" position="after">
                      <button class="oe_stat_button" type="object"
-                            name="show_invoice" icon="fa-tasks">
+                            name="show_invoice" icon="fa-pencil-square-o">
                             <field string="Invoices" name="invoice_count" widget="statinfo"/>
                     </button>
                     <button class="oe_stat_button" type="object"
-                            name="show_invoice_purchase" icon="fa-tasks">
+                            name="show_invoice_purchase" icon="fa-pencil-square-o">
                             <field string="Purchase invoices" name="purchase_invoice_count" widget="statinfo"/>
                     </button>
                 </xpath>
