@@ -89,7 +89,7 @@ class ProjectProject(models.Model):
         ctx.update({'project_id': self.id,
                     'default_partner_id': self.partner_id.id,
                     'default_date_end_estimated': self.date_end,
-                    #'default_planned_cost': self.planned_cost,
+                    'default_planned_cost': self.planned_cost,
                     'default_project_id': self.id,
                     'default_search_project_id': self.id})
 
@@ -117,7 +117,7 @@ class ProjectProject(models.Model):
         ctx.update({'project_id': self.id,
                     'default_partner_id': self.partner_id.id,
                     'default_date_end_estimated': self.date_end,
-                    #'default_planned_cost': self.planned_cost,
+                    'default_planned_cost': self.planned_cost,
                     'default_project_id': self.id,
                     'default_search_project_id': self.id})
 
