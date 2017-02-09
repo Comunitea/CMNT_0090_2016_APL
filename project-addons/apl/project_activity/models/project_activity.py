@@ -285,8 +285,6 @@ class ProjectActivity(models.Model):
                             minutes=(task.planned_hours - int(task.planned_hours)) * 60) +
                                     timedelta(hours=int(task.planned_hours)),
                         'project_id': project_id}
-            print defaults
-
             new_task = task.copy(defaults)
             #new_task.name = "%s.%s"%(task.name, new_task.code.split('.')[1])
             tasks += new_task
@@ -391,7 +389,7 @@ class ProjectActivity(models.Model):
 class ProjectTask(models.Model):
 
     _inherit ="project.task"
-    _order = 'code ASC'
+    _order = 'date_start ASC'
 
     def _get_task_costs(self):
         for task in self:
@@ -542,16 +540,6 @@ class ProjectTask(models.Model):
         res = super(ProjectTask, contextual_self).default_get(default_fields)
         return res
 
-    def _user_admin(self):
-
-        if self.create_uid == self.env.user or self.user_id == self.env.user or self.env.user.id == 1:
-            user_admin = True
-        else:
-            user_admin = False
-
-        print user_admin
-        return user_admin
-
     @api.multi
     def write(self, vals):
 
@@ -566,8 +554,6 @@ class ProjectTask(models.Model):
 
                 stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
 
-                if task.stage_id.default_done and not task._user_admin():
-                    raise UserError(_('Only managers can change stage done'))
 
                 if (vals.get('kanban_state', 'normal') == 'blocked' or task.kanban_state == 'blocked'):
                     raise UserError(_('You cannot change the state because task is blocked'))
@@ -846,6 +832,10 @@ class ProjectProject(models.Model):
                                'tasks': [(6, 0, tasks.ids)]})
 
         return new_project
+
+    def get_date_end(self):
+        self._get_date_end(self)
+
 
 class ProjectTaskType(models.Model):
     _inherit = 'project.task.type'

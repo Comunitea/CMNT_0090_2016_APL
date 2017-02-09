@@ -496,7 +496,7 @@
         </record>
 
         <record id="open_view_project_all_vista_tree" model="ir.actions.act_window">
-            <field name="name">ProjectsMasVistatree</field>
+            <field name="name">open.view.project_all</field>
             <field name="res_model">project.project</field>
             <field name="inherit_id" ref="project.open_view_project_all"/>
             <field name="arch" type="xml">
