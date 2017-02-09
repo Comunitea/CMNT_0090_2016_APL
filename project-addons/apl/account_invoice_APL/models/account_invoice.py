@@ -44,8 +44,8 @@ class AccountInvoice(models.Model):
     @api.onchange('project_id')
     def onchange_project_id(self):
 
-        self.planned_cost = self.project_id.planned_cost
-        self.date_end = self.project_id.date_end
+        #self.planned_cost = self.project_id.planned_cost
+        #self.date_end = self.project_id.date_end
         if self.type in ('out_refund','out_invoice'):
             self.partner_id = self.project_id.partner_id and self.project_id.partner_id or False
 
@@ -83,13 +83,11 @@ class ProjectProject(models.Model):
         self.ensure_one()
         form_view_ref = self.env.ref('account.invoice_supplier_form', False)
         tree_view_ref = self.env.ref('account.invoice_supplier_tree', False)
-        name = 'Supplier Invoices'
+        name = _('Supplier Invoices')
         search_view_ref = self.env.ref('account.view_account_invoice_filter', False)
         ctx = dict(self.env.context)
         ctx.update({'project_id': self.id,
                     'default_partner_id': self.partner_id.id,
-                    'default_date_end_estimated': self.date_end,
-                    'default_planned_cost': self.planned_cost,
                     'default_project_id': self.id,
                     'default_search_project_id': self.id})
 
@@ -111,13 +109,11 @@ class ProjectProject(models.Model):
         self.ensure_one()
         form_view_ref = self.env.ref('account.invoice_form', False)
         tree_view_ref = self.env.ref('account.invoice_tree', False)
-        name = 'Supplier Invoices'
+        name = _('Invoices')
         search_view_ref = self.env.ref('account.view_account_invoice_filter', False)
         ctx = dict(self.env.context)
         ctx.update({'project_id': self.id,
                     'default_partner_id': self.partner_id.id,
-                    'default_date_end_estimated': self.date_end,
-                    'default_planned_cost': self.planned_cost,
                     'default_project_id': self.id,
                     'default_search_project_id': self.id})
 
