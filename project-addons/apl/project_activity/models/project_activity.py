@@ -171,7 +171,7 @@ class ProjectActivity(models.Model):
     sequence = fields.Integer(string='Sequence', index=True, default=1,
                               help="Gives the sequence order when displaying a list of activities.")
     task_count = fields.Integer(compute='_compute_task_count', string="Tasks count")
-    project_id = fields.Many2one('project.project', string='Project', copy=True)
+    project_id = fields.Many2one('project.project', string='Project', copy=True, required=True)
     task_ids = fields.One2many('project.task', 'activity_id', string="Tasks", copy = False)#, domain = "[('project_id', '=', project_id)]")
     tag_ids = fields.Many2many('project.tags', string='Tags', oldname='categ_ids')
     date_start = fields.Datetime(string='Start Date', compute="_get_date_start")
@@ -180,8 +180,8 @@ class ProjectActivity(models.Model):
     #                           string='Manager',
     #                           default=_get_default_user_id,
     #                           index=True, track_visibility='always')
-    user_id = fields.Many2one('res.users', string='Assigned to',
-                              index=True, track_visibility='always')
+    user_id = fields.Many2one('res.users', string='Assigned to',default = _get_default_user_id,
+                              index=True, track_visibility='always', required=True)
 
 
     color = fields.Integer(string='Color Index', related="stage_id.color")
@@ -229,6 +229,7 @@ class ProjectActivity(models.Model):
         default_code = self.env['ir.sequence'].next_by_code('project.activity.sequence')
         contextual_self = self.with_context(default_code=default_code, default_user_id=default_user_id)
         return super(ProjectActivity, contextual_self).default_get(default_fields)
+
 
     @api.onchange('master_activity_id')
     def onchange_master_activity_id(self):
@@ -446,7 +447,7 @@ class ProjectTask(models.Model):
         ('error', 'Error'),
     ], compute = "_get_task_state", store=True)
 
-    activity_id = fields.Many2one("project.activity", string ="Activity")
+    activity_id = fields.Many2one("project.activity", string ="Activity", domain=[('project_id', '=', 'project_id.id')])
     color = fields.Integer(related="stage_id.color")
     planned_cost = fields.Float ("Planned Cost", help="Planned cost", required=True)
     real_cost = fields.Float("Real Cost", help ="Real cost (after task finish)")
@@ -468,27 +469,23 @@ class ProjectTask(models.Model):
                                       domain =[('is_template','=', True)])
     new_activity_created =  fields.Many2one("project.activity", string="Related activity", help ="New activity created from this task")
     is_template = fields.Boolean(related='activity_id.is_template')
-    user_id = fields.Many2one('res.users', string='Assigned to',
+    user_id = fields.Many2one('res.users', string='Responsable',
                               index=True, track_visibility='always')
     default_draft = fields.Boolean(related='stage_id.default_draft')
     default_done = fields.Boolean(related='stage_id.default_done')
-    # _sql_constraints = [
-    #     ('check_planned_cost', "CHECK (planned_cost > 0.00)", 'Planned cost should be > 0.'),
-    #     ('check_real_cost', "CHECK (real_cost > 0.00)", 'Real cost should be > 0.'),
-    #     ('check_dates', "CHECK (date_start <= date_end)", 'Ohhh !! Can you end before you start ????')
-    # ]
 
-    @api.model
-    def default_get(self, default_fields):
+    @api.onchange('project_id')
+    def _onchange_project(self):
+        super(ProjectTask,self)._onchange_project()
 
-        default_user_id = self.env.uid
-        if self.env.context.get('default_activity_id', False):
-            default_activity_id = self.env.context.get('default_activity_id', False)
-            default_user_id = self.env['project.activity'].browse(default_activity_id).user_id.id or self.env.uid
+        if self.activity_id.project_id.id != self.project_id.id:
+            self.activity_id = False
+        x = True
+        if self.project_id:
+            x = {'domain': {'activity_id': [('project_id', '=', self.project_id.id)]},
+                 }
 
-        default_code = self.env['ir.sequence'].next_by_code('project.activity.sequence')
-        contextual_self = self.with_context(default_code=default_code, default_user_id=default_user_id)
-        return super(ProjectActivity, contextual_self).default_get(default_fields)
+        return x
 
     @api.constrains('planned_cost')
     def _check_costs(self):
@@ -509,17 +506,11 @@ class ProjectTask(models.Model):
         if self.real_cost == 0.00:
             self.real_cost = self.planned_cost
 
-    @api.onchange('user_id')
-    def _onchange_user(self):
-        if self.user_id:
-            self.date_assign = fields.Datetime.now()
 
     @api.onchange('date_start')
     def _onchange_dates(self):
         self._onchange_planned_hours()
         return
-        #if not self._user_admin():
-        #    raise UserError(_('You have no enough permission to do this'))
 
     @api.model
     def default_get(self, default_fields):
@@ -542,25 +533,7 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
-
-
         for task in self:
-
-            #TODO Comprobar esta limitacion
-            #if not task._user_admin():
-            #    raise UserError(_('You have no enough permission to do this'))
-
-            if ('stage_id' in vals):
-
-                stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
-
-
-                if (vals.get('kanban_state', 'normal') == 'blocked' or task.kanban_state == 'blocked'):
-                    raise UserError(_('You cannot change the state because task is blocked'))
-
-                if stage_id.default_running and not task.no_schedule and not task.user_ids:
-                    raise UserError(_('You need assign this task to somebody'))
-
             if vals.get('project_id'):
                 stage_id = self.env['project.project'].browse(vals.get('project_id')).get_draft_stage()
                 vals['stage_id']=stage_id
@@ -599,6 +572,9 @@ class ProjectTask(models.Model):
         if not self.project_id:
             raise UserError(_('You need set "project_id"'))
 
+        if self.env.user not in self.user_ids:
+            raise UserError(_('Not asigned user'))
+
         if not self.new_activity_id:
             if len(self.user_ids)>1:
                 raise UserError(_('More than one assigned user'))
@@ -609,12 +585,15 @@ class ProjectTask(models.Model):
                 'name': "%s/%s/%s"%(self.project_id.code, self.activity_id.code, self.code),
                 'parent_task_id': self.id
 
-                }
-            new_activity = self.new_activity_id.create(default)
-            self.new_activity_created = new_activity
-            self.new_activity_id = False
 
-            self.stage_id = self.project_id.get_done_stage()
+                }
+            new_activity = self.sudo().new_activity_id.create(default)
+            #self.sudo.new_activity_created = new_activity
+            #self.sudo.new_activity_id = False
+
+            self.sudo().write({'new_activity_created': new_activity.id,
+                             'new_activity_id':False})
+            #self.stage_id = self.project_id.get_done_stage()
 
             return {'type': 'ir.actions.act_window',
                     'view_mode': 'form',
@@ -622,6 +601,8 @@ class ProjectTask(models.Model):
                     'res_model': 'project.activity',
                     'res_id': new_activity.id,
                     }
+        if self.new_activity_id:
+            raise UserError(_('Template activities not implemented'))
 
         if not self.new_activity_id.is_template:
             raise UserError(_('"New activity from task" must be template activity'))
@@ -647,11 +628,6 @@ class ProjectTask(models.Model):
         self.stage_id = self.project_id.get_done_stage()
 
         return True
-
-
-    @api.model
-    def search(self, args, offset=0, limit=None, order=None, count=False):
-        return super(ProjectTask, self).search(args, offset, limit, order, count=count)
 
 class ProjectAplType(models.Model):
     _name="project.type.apl"

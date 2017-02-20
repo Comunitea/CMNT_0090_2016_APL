@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 10.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-30 10:15+0000\n"
-"PO-Revision-Date: 2016-12-30 10:15+0000\n"
+"POT-Creation-Date: 2017-02-16 19:41+0000\n"
+"PO-Revision-Date: 2017-02-16 19:41+0000\n"
 "Last-Translator: <>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -17,12 +17,79 @@ msgstr ""
 
 #. module: apl_maintenance
 #: model:ir.model.fields,field_description:apl_maintenance.field_maintenance_equipment_allowed_user_ids
-#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_allowed_user_ids
 msgid "Allowed Users"
 msgstr "Usuarios Autorizados"
 
 #. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_user_ids
+msgid "Asigned to"
+msgstr "Asignada a"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_user_id
+msgid "Assigned to"
+msgstr "Responsable"
+
+#. module: apl_maintenance
+#: model:ir.ui.view,arch_db:apl_maintenance.view_task_form2_add_equipment
+msgid "Calcular"
+msgstr "Calcular"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_error
+msgid "Concurrence type"
+msgstr "Tipo de Incidencia"
+
+#. module: apl_maintenance
+#: model:ir.ui.view,arch_db:apl_maintenance.view_concurrent_task
+#: model:ir.ui.view,arch_db:apl_maintenance.view_concurrent_task_form
+msgid "Concurrent"
+msgstr "Incidencia"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_task_id
+msgid "Concurrent Task"
+msgstr "Tarea con incidencia"
+
+#. module: apl_maintenance
+#: model:ir.model,name:apl_maintenance.model_project_task_concurrent
+#: model:ir.ui.view,arch_db:apl_maintenance.view_task_concurrent_calendar
+msgid "Concurrent Tasks"
+msgstr "tareas con incidencias"
+
+#. module: apl_maintenance
+#: model:ir.ui.view,arch_db:apl_maintenance.view_concurrent_task
+msgid "Confirm"
+msgstr "Confirmar"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_create_uid
+msgid "Created by"
+msgstr "Creado por"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_create_date
+msgid "Created on"
+msgstr "Creado el"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_maintenance_equipment_no_equipment
+msgid "Default no equipment"
+msgstr "Sin equipo por defecto."
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_display_name
+msgid "Display Name"
+msgstr "Nombre a mostrar"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_date_end
+msgid "Ending Date"
+msgstr "Fecha de fin"
+
+#. module: apl_maintenance
 #: model:ir.model,name:apl_maintenance.model_maintenance_equipment
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_equipment_id
 #: model:ir.model.fields,field_description:apl_maintenance.field_project_task_equipment_id
 #: model:ir.model.fields,field_description:apl_maintenance.field_report_project_task_user_equipment_id
 #: model:ir.ui.view,arch_db:apl_maintenance.view_task_search_form_with_equipment
@@ -35,9 +102,70 @@ msgid "Equipments"
 msgstr "Equipos"
 
 #. module: apl_maintenance
+#: code:addons/apl/apl_maintenance/models/maintenance.py:143
+#: code:addons/apl_maintenance/models/maintenance.py:143
+#, python-format
+msgid "Error ! Task with equiment must be assigned."
+msgstr "Error ! Las tareas con equipo deben de estar asignadas."
+
+#. module: apl_maintenance
+#: code:addons/apl/apl_maintenance/models/maintenance.py:242
+#: code:addons/apl_maintenance/models/maintenance.py:242
+#, python-format
+msgid "Error ! Your task is 2 days long"
+msgstr "Error ! Solo se comprueba las tareas en el mismo dia."
+
+#. module: apl_maintenance
+#: code:addons/apl/apl_maintenance/models/maintenance.py:481
+#: code:addons/apl_maintenance/models/maintenance.py:481
+#, python-format
+msgid "Error stage. Concurrent Task Error"
+msgstr "Error de estado. Tarea con incidencia"
+
+#. module: apl_maintenance
 #: model:ir.actions.act_window,help:apl_maintenance.filter_task_from_maintenance
 msgid "Here, you can create new tasks"
 msgstr "Aquí, puedes crear nuevas tareas"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_id
+msgid "ID"
+msgstr "ID"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_error_color
+msgid "Kanban Color"
+msgstr "Kanban Color"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent___last_update
+msgid "Last Modified on"
+msgstr "Última modificación en"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_write_uid
+msgid "Last Updated by"
+msgstr "Última actualización por"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_write_date
+msgid "Last Updated on"
+msgstr "Última actualización el"
+
+#. module: apl_maintenance
+#: model:ir.model,name:apl_maintenance.model_maintenance_request
+msgid "Maintenance Requests"
+msgstr "Peticiones de mantenimiento"
+
+#. module: apl_maintenance
+#: model:ir.ui.view,arch_db:apl_maintenance.view_task_search_form_with_user_ids
+msgid "My Tasks"
+msgstr "Mis tareas"
+
+#. module: apl_maintenance
+#: model:ir.ui.view,arch_db:apl_maintenance.view_task_search_form_with_user_ids
+msgid "No asigned to"
+msgstr "Sin asignar"
 
 #. module: apl_maintenance
 #: model:ir.model.fields,field_description:apl_maintenance.field_maintenance_equipment_ok_calendar
@@ -51,9 +179,29 @@ msgid "Resolver"
 msgstr "Resolver"
 
 #. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_date_start
+msgid "Starting Date"
+msgstr "Fecha de inicio"
+
+#. module: apl_maintenance
 #: model:ir.model,name:apl_maintenance.model_project_task
 msgid "Task"
 msgstr "Tarea"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_origin_task_id
+msgid "Task Reference(Actual)"
+msgstr "Tarea de referencia"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_name
+msgid "Task Title"
+msgstr "Título de tarea"
+
+#. module: apl_maintenance
+#: model:ir.model.fields,help:apl_maintenance.field_project_task_concurrent_task_id
+msgid "Task concurrent with reference task"
+msgstr "Tarea conincidencia respecto a la tarea"
 
 #. module: apl_maintenance
 #: model:ir.actions.act_window,name:apl_maintenance.filter_task_from_maintenance
@@ -64,7 +212,7 @@ msgstr "Tareas"
 #. module: apl_maintenance
 #: model:ir.model,name:apl_maintenance.model_report_project_task_user
 msgid "Tasks by user and project"
-msgstr "Tareas por usuario y proyecto"
+msgstr "Tareas por responsable y proyecto"
 
 #. module: apl_maintenance
 #: model:ir.model.fields,field_description:apl_maintenance.field_maintenance_equipment_active_tasks
@@ -77,25 +225,38 @@ msgid "Tasks:"
 msgstr "Tareas:"
 
 #. module: apl_maintenance
+#: model:ir.model.fields,help:apl_maintenance.field_project_task_concurrent_origin_task_id
+msgid "This task generate concurrent tasks"
+msgstr "Esta tarea genera incidencias."
+
+#. module: apl_maintenance
+#: code:addons/apl/apl_maintenance/models/maintenance.py:157
+#: code:addons/apl_maintenance/models/maintenance.py:157
+#, python-format
+msgid "Warning"
+msgstr "Aviso"
+
+#. module: apl_maintenance
+#: code:addons/apl/apl_maintenance/models/maintenance.py:158
+#: code:addons/apl_maintenance/models/maintenance.py:158
+#, python-format
+msgid "You are changing equipment in wrong stage."
+msgstr "Mo puedes cambiar el equipo en este estado."
+
+#. module: apl_maintenance
 #: model:ir.actions.act_window,help:apl_maintenance.filter_task_from_maintenance
 msgid "You can now manage your tasks in order to get things done efficiently. Track progress, discuss, attach documents, etc."
 msgstr "Puede gestionar sus tareas para realizar las cosas de forma eficiente. Seguir el progreso, discusiones, adjuntar documentos, etc."
 
 #. module: apl_maintenance
-#: code:addons/apl_maintenance/models/project_activity.py:163
+#: code:addons/apl/apl_maintenance/models/maintenance.py:467
+#: code:addons/apl_maintenance/models/maintenance.py:467
 #, python-format
-msgid "You cannot chane the state because task is blocked"
-msgstr "No puedes cambiar la etapa de la tarea porque esta bloqueada"
+msgid "You must assigned employees"
+msgstr "Debes asignar empleados"
 
 #. module: apl_maintenance
-#: code:addons/apl_maintenance/models/project_activity.py:137
-#, python-format
-msgid "You cannot open new sheet because you have one"
-msgstr "You cannot open new sheet because you have one"
-
-#. module: apl_maintenance
-#: code:addons/apl_maintenance/models/project_activity.py:130
-#, python-format
-msgid "You cannot start the task while is blocked kanban state"
-msgstr "No puedes iniciar una tarea si esta bloqueada en el estado Kanban"
+#: model:ir.model.fields,field_description:apl_maintenance.field_project_task_concurrent_is_reference
+msgid "is reference task"
+msgstr "Es tarea de referencia"
 

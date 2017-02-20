@@ -5,7 +5,7 @@
         <record id="project.open_view_project_all" model="ir.actions.act_window">
             <field name="view_mode">kanban,tree,form</field>
         </record>
-      
+
         <record id="task_type_edit" model="ir.ui.view">
         <field name="name">project.task.type.form.inherit</field>
         <field name="model">project.task.type</field>
@@ -269,6 +269,9 @@
                 <xpath expr="//filter[@name='project']" position="after">
                     <filter string="Activity" name="activity" context="{'group_by':'activity_id'}"/>
                 </xpath>
+                 <xpath expr="//filter[@name='User']" position="replace">
+                    <filter string="Responsable" name="User" context="{'group_by':'user_id'}"/>
+                </xpath>
 
             </field>
         </record>
@@ -304,15 +307,15 @@
                 </field>
 
                 <field name="project_id" position="after">
-                    <field name="activity_id" required="1"/>
+                    <field name="activity_id" required="1" domain="[('project_id', '=', project_id)]"/>
                 </field>
                 <xpath expr="//field[@name='project_id']" position="attributes">
                     <attribute name="required">1</attribute>
                 </xpath>
                 <field name="legend_blocked" position="before">
                     <field name="no_schedule" />
-                    <field name="new_activity_id" string="Plantilla de solicitud"
-                           attrs="{'invisible':['|',('new_activity_created','!=',False) ,('no_schedule','=',False)]}"/>
+                    <!--<field name="new_activity_id" string="Plantilla de solicitud"
+                           attrs="{'invisible':['|',('new_activity_created','!=',False) ,('no_schedule','=',False)]}"/>-->
                     <field name="new_activity_created" string="Actividad relacionada" attrs="{'invisible':[('new_activity_created','=',False)]}"/>
 
                 </field>
@@ -723,6 +726,22 @@
        </record>
 
         <menuitem action="action_task_calendar_menu" id="menu_task_calendar" sequence="10"/>
-        
+
+
+        <record id="view_task_project_user_search_with_tags" model="ir.ui.view">
+            <field name="name">report.project.task.user.search.tags</field>
+            <field name="model">report.project.task.user</field>
+            <field name="inherit_id" ref="project.view_task_project_user_search"/>
+            <field name="arch" type="xml">
+            <field name="user_id" position="after">
+                <field name="tags"/>
+            </field>
+            <xpath expr="//filter[@name='User']" position="after">
+                <filter string="Tags" name="Tags" context="{'group_by':'tags'}"/>
+            </xpath>
+
+            </field>
+        </record>
+
     </data>
 </openerp>

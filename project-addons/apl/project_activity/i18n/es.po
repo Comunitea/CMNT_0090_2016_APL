@@ -175,7 +175,7 @@ msgstr "Tareas con incidencias"
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_concurring_tasks
 msgid "Concurring Tasks"
-msgstr "Tareas conincidencias"
+msgstr "Tareas coincidentes"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_report_project_task_user_real_cost
@@ -713,7 +713,7 @@ msgstr "Total de coste de tarea."
 #. module: project_activity
 #: model:ir.model,name:project_activity.model_report_project_task_user
 msgid "Tasks by user and project"
-msgstr "Tareas por usuario y proyecto"
+msgstr "Tareas por responsable y proyecto"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_task_count

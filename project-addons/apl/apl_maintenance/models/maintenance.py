@@ -129,7 +129,7 @@ class ProjectTask(models.Model):
     #allowed_user_ids = fields.Many2many(related="equipment_id.allowed_user_ids", string= "Allowed Users")
         #sobreescribo el campo user_id para eliminar el asignado por defecto y añadir el dominioo
     user_ids = fields.Many2many('res.users',
-                              string='Asigned to',
+                              string='Asiganda a',
                               index=True, track_visibility='always', required=True)
                               #domain="[('id', '!=', allowed_user_ids and  allowed_user_ids[0][2])]")
                               #domain="[('id','in', allowed_user_ids and allowed_user_ids[0][2] or [])]")
@@ -189,7 +189,7 @@ class ProjectTask(models.Model):
         if equipment_id:
             domain = [('equipment_id', '=', equipment_id),
                       ('equipment_id.no_equipment','!=', True),
-                      ('stage_id.default_done','!=', True),
+                      ('stage_id.default_running','=', True),
                       ('id','!=', self_id)]
             pool_tasks = self.env['project.task'].search(domain)
             for task in pool_tasks:
@@ -208,14 +208,14 @@ class ProjectTask(models.Model):
                     add_reference=True
         if user_ids:
 
-            domain = [('stage_id.default_done', '!=', True), ('id','!=',self_id),
+            domain = [('stage_id.default_running', '=', True), ('id','!=',self_id),
                       '|',
                       '&', ('date_start', '<', date_end), ('date_end', '>', date_end),
                       '&', ('date_start', '<', date_start), ('date_end', '>', date_start)
             ]
 
             pool_tasks = self.env['project.task'].search(domain)
-            #import ipdb; ipdb.set_trace()
+
             for task in pool_tasks:
                 if user_ids:
                 #if (task.date_start < date_start < task.date_end) \
