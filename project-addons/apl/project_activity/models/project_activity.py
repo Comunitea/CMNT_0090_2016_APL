@@ -364,7 +364,7 @@ class ProjectActivity(models.Model):
 
     @api.multi
     def write(self, vals):
-        import ipdb; ipdb.set_trace()
+        
         for activity in self:
             if 'stage_id' and activity.parent_task_id and False:
                 activity.parent_task_id.write({'date_start': fields.Datetime.now(),
