@@ -199,7 +199,7 @@ class ProjectActivity(models.Model):
     planned_cost = fields.Float("Planned Cost", help="Planned cost: Sum planned task cost", compute ="_compute_planned_task_cost")
     real_cost = fields.Float("Real Cost", help="Activity Cost")
     task_cost = fields.Float("Task Cost", help = "Task Cost: Sum real task cost",compute="_compute_task_cost")
-
+    budget_price = fields.Float("Importe presupuestado")
     use_tasks = fields.Boolean(related="project_id.use_tasks")
     code = fields.Char("Code", copy=False)
     long_code = fields.Char("Complete Id", compute="_get_long_code")
@@ -364,7 +364,7 @@ class ProjectActivity(models.Model):
 
     @api.multi
     def write(self, vals):
-        
+
         for activity in self:
             if 'stage_id' and activity.parent_task_id and False:
                 activity.parent_task_id.write({'date_start': fields.Datetime.now(),

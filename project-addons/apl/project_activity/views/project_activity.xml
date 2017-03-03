@@ -1,10 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-
-        <record id="project.open_view_project_all" model="ir.actions.act_window">
-            <field name="view_mode">kanban,tree,form</field>
+        <record id="open_view_project_all" model="ir.actions.act_window">
+            <field name="name">Projects</field>
+            <field name="res_model">project.project</field>
+            <field name="view_type">form</field>
+            <field name="domain">[]</field>
+            <field name="view_mode">kanban,form,tree</field>
+            <field name="search_view_id" ref="project.view_project_project_filter"/>
+            <field name="target">main</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to create a new project.<br/>
+                    <i>Or <a type="action" name="%(project.activate_sample_project)d">activate a sample project</a> to play with.</i>
+                </p>
+            </field>
         </record>
+
+
 
         <record id="task_type_edit" model="ir.ui.view">
         <field name="name">project.task.type.form.inherit</field>
@@ -146,8 +159,7 @@
         <record id="view_project_finance_apl" model="ir.ui.view">
             <field name="name">view.project.finance.apl</field>
             <field name="model">project.finance.apl</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
+
              <field name="arch" type="xml">
                 <form string="Project finance">
                     <group>
@@ -198,6 +210,7 @@
                     </group>
                     <group>
                         <group  string="Costs">
+                            <field name="budget_price"/>
                             <field name="planned_cost"/>
                             <field name="real_cost" invisible="1"/>
                             <field name="task_cost"/>
@@ -503,16 +516,7 @@
             </field>
         </record>
 
-        <record id="open_view_project_all_vista_tree" model="ir.actions.act_window">
-            <field name="name">open.view.project_all</field>
-            <field name="res_model">project.project</field>
-            <field name="inherit_id" ref="project.open_view_project_all"/>
-            <field name="arch" type="xml">
-                <field name="view_mode" position="replace">
-                    <field name="view_mode">kanban,tree,form</field>
-                </field>
-            </field>
-        </record>
+
 
 
        <record id="view_project_project_activity_kanban" model="ir.ui.view">

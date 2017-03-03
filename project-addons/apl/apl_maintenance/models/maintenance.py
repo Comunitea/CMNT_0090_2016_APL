@@ -244,7 +244,7 @@ class ProjectTask(models.Model):
                 employee = self.env['hr.employee'].search([('user_id', '=', user_id.id)])
                 calendar = employee.calendar_id
 
-                if employee and calendar:
+                if start_dt != end_dt and employee and calendar:
                     #mio si trabaja ese dia
                     domain_resource = [('user_id', '=', user_id.id)]
                     resource = self.env['resource.resource'].search(domain_resource)
