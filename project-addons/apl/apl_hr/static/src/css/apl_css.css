@@ -1,0 +1,55 @@
+            #apl table, td {
+                border: solid 1px black;
+                border-collapse: collapse;
+                align: center;
+                margin: auto;
+            }
+            #apl tr{
+                min-height: 100px;}
+
+            #apl td {padding: 10px;}
+            #apl div {margin: 10px;}
+            .apl_table {
+                border: solid 1px black;
+                border-collapse: collapse;
+                margin: 10px;
+                }
+
+
+
+            .apl_td{
+                padding: 10px}
+            .apl_w_100 {
+                width: 100%}
+            .apl_w_80 {
+                width: 80%}
+            .apl_w_50 {
+                width: 50%}
+
+            .apl_w_33 {
+                width: 33%}
+
+
+            .border_yes {
+                border: solid 1px black}
+            .border_no {
+                border: solid 0px}
+
+
+            .td_yellow{
+                background-color: yellow;
+                width: 30%;
+                border-style: solid 1px black;
+             }
+            .apl_text12 {
+                font-size: 12px}
+            .apl_text10 {
+                font-size: 10px}
+            .apl_text8 {
+                font-size: 8px}
+            .apl_center {
+                text-align: center}
+            .apl_left {
+                text-align: left}
+            .apl_right {
+                text-align: right}
