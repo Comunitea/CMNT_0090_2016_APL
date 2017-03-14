@@ -11,14 +11,18 @@
     'license': 'AGPL-3',
     'description': 'Modulo con cambios necesarios para integraciond e hr_employee',
     'depends': [
-        'base', 'hr'
+        'base', 'hr', 'hr_holidays'
     ],
     'contributors': [
         "Comunitea",
         "Kiko Sanchez<kiko@comunitea.com>",    ],
     "data": [
         'views/hr_employee.xml',
+        'report/solicitud_ausencia_report.xml'
+
     ],
+
+
     "demo": [
 
     ],

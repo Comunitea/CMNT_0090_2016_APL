@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <template id="my_layout" inherit_id="report.assets_pdf">
+            <xpath expr="//link[1]" position="after">
+                <link rel="stylesheet" href="/apl_hr/static/src/css/apl_css.css"/>
+
+            </xpath>
+        </template>
+
+
+        <template id="solicitud_ausencia_report">
+
+            <!-- docs es una instancia siempre-->
+            <div class="page">
+                <t t-foreach="docs" t-as="o">
+
+
+
+                    <!-- Por cada palé hay una tabla, las tablas extras salen al principio de la nueva página
+                     ya que ocultamos los div con la clase first-page -->
+                    <div id="container">
+                        <div>
+                            <table class="apl_w_100 border_no">
+                                    <tr>
+                                        <td class="apl_w_33 border_no">
+                                            <img src="/apl_hr/static/src/img/logoaula.jpeg" style="height: 120px;width:400px"/>
+                                        </td>
+                                        <td class="apl_w_33 border_no"></td>
+                                        <td class="apl_w_33 border_no">
+                                            <img src="/apl_hr/static/src/img/logousc.jpeg" style="height: 120px;width:400px"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                        </div>
+                        <div id="apl">
+
+                                <table class="apl_100 border_yes apl_table">
+                                    <tr>
+                                        <td class="td_yellow apl_table">EMPLEADO</td>
+                                        <td class="apl_td border_yes" ><span t-field="o.employee_id.name"/></td>
+                                    </tr><tr>
+                                        <td class="td_yellow border_yes">CORREO-E</td>
+                                        <td class="apl_td border_yes" ><span t-field="o.employee_id.work_email"/></td>
+                                    </tr><tr>
+                                        <td class="td_yellow border_yes">TELEFONO</td>
+                                        <td class="apl_td border_yes">
+                                            <t t-if="o.employee_id.mobile_phone">
+                                                <p><span t-field="o.employee_id.mobile_phone"/></p>
+                                            </t>
+                                            <t t-if="o.employee_id.work_phone">
+                                                <p><span t-field="o.employee_id.work_phone"/></p>
+                                            </t>
+
+
+                                        </td>
+                                    </tr><tr>
+                                        <td class="td_yellow">CENTRO DE TRABAJO</td>
+
+                                        <td class="apl_td">
+                                            <span>AULA DE PRODUCTOS LACTEOS Y TECNOLOGIAS ALIMENTARIAS</span>
+                                            <span>UNIVERSIDAD DE SANTIAGO DE COMPOSTELA</span>
+
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div style="font-size: 14px; padding-top: 20px;">
+                                    <em>
+                                        SOLICITA que le sea concendido lo siguiente
+                                    </em>
+                                </div>
+                                <table class="apl_w_80">
+                                    <tr><td class ="apl_w_33 ">Motivo de ausencia</td>
+                                        <td>
+                                            <t t-if="o.name">
+                                                <span t-field="o.name"/><br/>
+                                            </t>
+                                            <span t-field="o.holiday_status_id.name"/>
+                                        </td></tr>
+                                    <tr><td >Fecha de inicio</td><td><span t-field="o.date_from"/></td></tr>
+                                    <tr><td >Fecha de fin</td><td><span t-field="o.date_to"/></td></tr>
+                                    <tr><td >Numero de dias</td><td><span t-field="o.number_of_days_temp"/></td></tr>
+                                    <!--<tr><td class ="apl_w_50">Numero de dias</td><td><span t-field="o.number_of_days_formatted"/></td></tr>-->
+                                    <!--<tr><td class ="apl_w_50">Dias Restantes</td><td><span t-field="o.employee_id.remaining_leaves"/></td></tr>-->
+                                    <t t-if="o.holiday_status_id.limit == False">
+                                         <tr><td >Dias Restantes</td><td><span t-field="o.remaining_leaves_by_type"/></td></tr>
+                                    </t>
+                                </table>
+                                <div><span style="font-size: 8px">
+                                    (1) La solicitudde vacaciones se deberá presentarse en el servicio o unidad en la que se presten los servicios, para que este remita la
+
+propuesta a Gerencia.
+                                </span></div>
+                                <div><span style="font-size: 8px">
+                                (2) La solicitud de días por asuntos particulares se deberá presentar en el servicio o unidad en la que se presten los servicios. La
+
+concesión de estos días estará condicionada a las necesidades del servicio y será autorizada por el jefe del servicio/unidad
+
+correspondiente.
+                                </span></div>
+                                <div ><span>
+                                    En LUGO a
+                                    <span t-esc="datetime.datetime.strptime(o.create_date, '%Y-%m-%d %H:%M:%S').strftime('%d de %B de %Y')"/>.
+                                </span></div>
+
+                                <table class="apl_table">
+                                    <tr>
+                                        <td class="apl_w_50">
+                                            <span >
+                                                Se informa favorablemente a la solicitud
+                                            </span>
+                                        </td>
+                                        <td >
+                                            <span >
+                                                Visto el informe anterior, se estima procedente la concesión del permiso solicitado
+                                            </span>
+                                        </td>
+                                    </tr><tr>
+                                     <td >
+                                            <span >
+                                                En LUGO, a ___  de ______________ de 2017.
+                                            </span>
+                                        </td>
+                                        <td >
+                                            <span >
+                                                En LUGO, a ___  de ______________ de 2017.
+                                            </span>
+                                        </td>
+
+                                        </tr><tr style="height: 200px">
+                                     <td >
+                                            <span >
+                                               Firmado:
+                                            </span>
+                                        </td>
+                                        <td >
+                                            <span >
+                                               Firmado:
+                                            </span>
+                                        </td>
+                                    </tr><tr>
+                                     <td  colspan="2">
+                                            <span >
+                                                Sr/a.
+                                            </span>
+                                        </td>
+
+
+
+                                    </tr>
+                                </table>
+                        </div>
+
+                    </div>
+
+                 </t>
+            </div>
+        </template>
+
+
+
+    </data>
+</openerp>

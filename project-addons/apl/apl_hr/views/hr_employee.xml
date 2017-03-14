@@ -14,6 +14,16 @@
 
             </field>
         </record>
+
+
+    <report
+          string="Solicitud de Ausencia"
+          id="report_print_solicitud_ausencia"
+          model="hr.holidays"
+          report_type="qweb-pdf"
+          name="apl_hr.solicitud_ausencia_report"
+          file="apl_hr.solictud_ausencia_report"
+    />
     </data>
 </openerp>
 
