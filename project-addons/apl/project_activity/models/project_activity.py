@@ -37,6 +37,8 @@ class ProjectActivity(models.Model):
     _inherit = ['mail.thread', 'ir.needaction_mixin']
     _order = 'code ASC'
 
+    @api.multi
+    @api.depends('task_ids.real_cost')
     def _compute_task_cost(self):
         for activity in self:
             if activity.real_cost:
@@ -44,7 +46,10 @@ class ProjectActivity(models.Model):
             else:
                 activity.task_cost = 0
                 for task in activity.task_ids:
-                    activity.task_cost += task.real_cost or task.amount_cost_ids
+                    if task.new_activity_created:
+                        activity.task_cost += task.new_activity_created.task_cost
+                    else:
+                        activity.task_cost += task.real_cost
 
     def _compute_planned_task_cost(self):
         for activity in self:
@@ -229,6 +234,10 @@ class ProjectActivity(models.Model):
         default_code = self.env['ir.sequence'].next_by_code('project.activity.sequence')
         contextual_self = self.with_context(default_code=default_code, default_user_id=default_user_id)
         return super(ProjectActivity, contextual_self).default_get(default_fields)
+
+    @api.multi
+    def compute_task_cost(self):
+        self._compute_task_cost()
 
 
     @api.onchange('master_activity_id')
@@ -467,7 +476,7 @@ class ProjectTask(models.Model):
     no_schedule = fields.Boolean("No schedule", help='if check, task manager will created a new activity from this task', default = False)
     new_activity_id = fields.Many2one("project.activity", string="Activity template", help ="New activity will be created from this task when done",
                                       domain =[('is_template','=', True)])
-    new_activity_created =  fields.Many2one("project.activity", string="Related activity", help ="New activity created from this task")
+    new_activity_created = fields.Many2one("project.activity", string="Related activity", help ="New activity created from this task")
     is_template = fields.Boolean(related='activity_id.is_template')
     user_id = fields.Many2one('res.users', string='Responsable',
                               index=True, track_visibility='always')
@@ -476,15 +485,13 @@ class ProjectTask(models.Model):
 
     @api.onchange('project_id')
     def _onchange_project(self):
-        super(ProjectTask,self)._onchange_project()
+        x = super(ProjectTask,self)._onchange_project()
 
-        if self.activity_id.project_id.id != self.project_id.id:
-            self.activity_id = False
-        x = True
         if self.project_id:
             x = {'domain': {'activity_id': [('project_id', '=', self.project_id.id)]},
                  }
-
+            if self.activity_id.project_id.id != self.project_id.id:
+                self.activity_id = False
         return x
 
     @api.constrains('planned_cost')
@@ -503,7 +510,7 @@ class ProjectTask(models.Model):
 
     @api.onchange('planned_cost')
     def _onchange_planned_cost(self):
-        if self.real_cost == 0.00:
+        if self.real_cost == 0.00 and not self.new_activity_created:
             self.real_cost = self.planned_cost
 
 
@@ -665,7 +672,9 @@ class ProjectProject(models.Model):
                 project.task_cost = project.real_cost
             else:
                 for activity in project.activity_ids:
-                    project.task_cost += activity.task_cost
+                    for task in activity.task_ids:
+                        project.task_cost += task.real_cost
+
 
     def _compute_planned_activity_cost(self):
         for project in self:
@@ -723,6 +732,9 @@ class ProjectProject(models.Model):
 
     color_stage = fields.Integer(string='Color Index', related="stage_id.color")
     stage_id = fields.Many2one('project.task.type', compute="_compute_stage_id", string='Project Stage')
+    user_ids = fields.Many2one("res.users", "Usuarios Restringidos")
+
+
 
     @api.model
     def default_get(self, default_fields):

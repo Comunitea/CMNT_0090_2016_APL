@@ -19,7 +19,6 @@ class AccountInvoice(models.Model):
             for activity in account.project_id.activity_ids:
                 account.planned_cost += activity.planned_cost
 
-
     @api.model
     def _get_date_end(self):
         if self.project_id:
@@ -27,7 +26,7 @@ class AccountInvoice(models.Model):
             task = self.env['project.task'].search(search_domain, order="date_end desc", limit=1)
             self.date_end = task.date_end if task else False
         else:
-            self.date_end=False
+            self.date_end = False
 
     project_id = fields.Many2one('project.project', string="Related Project")
     date_end = fields.Datetime('Estimated end date')
@@ -62,10 +61,10 @@ class AccountInvoiceLine(models.Model):
 
 class ProjectProject(models.Model):
 
-    _inherit ='project.project'
+    _inherit = 'project.project'
 
     def _get_purchase_invoice_count(self):
-        domain = [('project_id','=',self.id),('type','in',('out_refund','out_invoice'))]
+        domain = [('project_id','=',self.id), ('type','in',('out_refund','out_invoice'))]
         self.purchase_invoice_count = len(self.env['account.invoice'].search(domain))
 
 

@@ -262,22 +262,21 @@
             <field name="inherit_id" ref="project.view_task_search_form"/>
              <field name="arch" type="xml">
                 <xpath expr="//field[@name='project_id']" position="after">
-                    <field name="activity_id"/>
+                    <field name="activity_id" string="Mistring"/>
                     <field name="ok_calendar"/>
                     <field name="no_schedule"/>
-                    <field name="is_template"/>
-
                 </xpath>
-                <xpath expr="//filter[@name='my_tasks']" position="after">
-                    <separator/>
-                    <filter string="Templates" name="my_tasks" domain="[('is_template','=',True)]"/>
-                 </xpath>
-                 <xpath expr="//filter[@name='unassigned']" position="after">
+
+                <xpath expr="//filter[@name='unassigned']" position="after">
                      <separator/>
+                     <filter string="Programadas" name="programadas"
+                             domain="[('stage_id', '!=', 'Borrador')]"/>
                      <filter string="Concurrents" name="concurrents"
-                             domain="[('is_template','=',False),('ok_calendar', '=', False), '|',('user_id','=',uid),('user_ids','in',uid)]"/>
+                             domain="[('ok_calendar', '=', False)]"/>
                      <filter string="No schedules" name="no_schedule"
-                             domain="[('is_template','=',False),('no_schedule', '=',True), '|',('user_id','=',uid),('user_ids','in',uid)]"/>
+                             domain="[('no_schedule', '=',True)]"/>
+                    <filter string="Genera Actividad" name="new_activity_created"
+                             domain="[('new_activity_created', '!=',False)"/>
                 </xpath>
                 <xpath expr="//filter[@name='project']" position="after">
                     <filter string="Activity" name="activity" context="{'group_by':'activity_id'}"/>
@@ -364,7 +363,7 @@
                     <group>
                         <group>
                             <field name="planned_cost" required="1"/>
-                            <field name="real_cost"  />
+                            <field name="real_cost"  attrs="{'readonly': [('new_activity_created','!=', False)]}"/>
                         </group>
 
                         <group>
@@ -436,10 +435,8 @@
                     <field name="name" string="Activity"/>
                     <field name="stage_id" string="Stage"/>
                     <field name="progress" string="progress"/>
-                    <field name="is_template" string="Is template"/>
-
                     <filter string="My Activities" name="my_activities" domain="[('is_template','=',False),('user_id','=',uid)]"/>
-                    <filter string="Templates" name="templates" domain="[('is_template','=',True)]"/>
+
                     <separator/>
                     <filter string="Draft" name="draft" domain="[('is_template','=',False),('stage_id', '=', 'Borrador')]"/>
 
@@ -615,15 +612,16 @@
                         <group>
                                 <field name="user_id" string="Project Manager" attrs="{'readonly':[('active','=',False)]}"/>
                                 <field name="privacy_visibility" widget="radio"/>
+                                <field name="user_ids"/>
                                 <field name="partner_id" string="Customer"/>
-                            </group>
+                        </group>
                         <group>
                             <field name="project_type_apl_id"/>
                             <field name="finance_type"/>
                                 <label for="project_finance_apl_id" string=" " class="oe_inline"/>
                                 <field name="project_finance_apl_id" nolabel="1" class="oe_inline"  domain="[('type', '=', finance_type)]"/>
 
-                            </group>
+                        </group>
                     </group>
                 </xpath>
                 <xpath expr="//notebook/page[1]" position="after">
@@ -711,7 +709,8 @@
             <field name="name">Task Calendar Global</field>
             <field name="model">project.task</field>
             <field name="arch" type="xml">
-            <calendar string="Tasks" date_start="date_start" date_stop="date_end" display="[name]" attendee="user_ids" color="equipment_id">
+            <calendar string="Tasks" date_start="date_start" date_stop="date_end" display="[name]"
+                      attendee="user_ids" color="equipment_id">
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="equipment_id"/>
@@ -727,6 +726,11 @@
             <field name="view_mode">calendar,tree,form</field>
             <field name="view_type">form</field>
             <field name="view_id" ref="view_task_calendar_global"/>
+            <field name="context"> {
+                'search_default_programadas': 1,
+                'search_default_my_tasks': 1
+                }
+                 </field>
        </record>
 
         <menuitem action="action_task_calendar_menu" id="menu_task_calendar" sequence="10"/>

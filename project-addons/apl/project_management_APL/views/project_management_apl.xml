@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+         <record id="view_project_apl_managnement" model="ir.ui.view">
+            <field name="name">view.project.apl.managnement</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.view_project"/>
+            <field name="arch" type="xml">
+                <field name="partner_id" position="after">
+                    <field name = "to_invoice"/>
+                    <field name = "to_manage"/>
+                    <field name = "last_invoice_date"/>
+                </field>
+
+            </field>
+        </record>
+
+        <record id="view_project_form_apl_managnement" model="ir.ui.view">
+            <field name="name">view.project.form.apl.managnement</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook/page[1]" position="after">
+                    <page string="Seguimiento Economico">
+                        <group>
+
+                            <group>
+                                <field name = "to_invoice"/>
+                                <field name="date_DE"/>
+                                <field name="date_CITT"/>
+                                <field name="date_resumen"/>
+                                <field name="date_aperture"/>
+                                <h2><field name = "last_invoice_date"/></h2>
+                            </group>
+                            <group>
+                                <field name = "to_manage"/>
+                                <field name="register"/>
+                                <field name="amount"/>
+                                <field name="ci_per_cent"/>
+                                <field name="apl_state"/>
+                            </group>
+                        </group>
+                        <group string="Facturacion">
+                            <field name="invoice_ids" nolabel="1">
+                                <tree editable="top" create="0">
+                                    <field name="number" readonly="1"/>
+                                    <field name="estimated_date"/>
+                                    <field name="amount_untaxed"/>
+                                    <field name="date_invoice" readonly="1"/>
+                                    <field name="amount_total" widget="monetary"/>
+                                    <field name="payment_date"/>
+                                    <field name="amount_paid"/>
+                                    <field name="endowment_date" />
+                                    <field name="endowment_amount"/>
+
+                                </tree>
+                            </field>
+
+
+                        </group>
+                            <group class="oe_subtotal_footer oe_right">
+
+                                <field name="total_invoiced"/>
+                                <field name="total_base"/>
+                                <field name="total_paid" class="oe_subtotal_footer_separator"/>
+                                <field name="total_endowment" class="oe_subtotal_footer_separator"/>
+                            </group>
+
+
+                    </page>
+
+
+                </xpath>
+
+            </field>
+        </record>
+
+
+
+        <record id="invoice_form_apl_management" model="ir.ui.view">
+            <field name="name">invoice.form.apl.management</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_form" />
+            <field name="arch" type="xml">
+                <field name="move_id" position="after">
+                       <field name="analytic_account_id" groups="analytic.group_analytic_accounting"/>/>
+                </field>
+
+            </field>
+        </record>
+
+
+
+
+
+    </data>
+</openerp>
+
