@@ -219,7 +219,7 @@ class ProjectTask(models.Model):
 
         if user_ids:
             # Compruebo que los usuarios no esten en dos tareas al mismo tiempo
-            import ipdb; ipdb.set_trace()
+
             new_date_end = Datetime.from_string(date_end) - timedelta(minutes=1)
             new_date_end = Datetime.to_string(new_date_end)
             new_date_start = Datetime.from_string(date_start) + timedelta(minutes=1)
@@ -264,7 +264,6 @@ class ProjectTask(models.Model):
 
                     if is_work_day:
                         print "--------Trabaja ese dia"
-                        import ipdb; ipdb.set_trace()
                         employee = self.env['hr.employee'].search([('user_id', '=', user_id.id)])
                         calendar = employee.calendar_id
                         intervals = calendar.get_working_intervals_of_day(start_dt=start_dt,
