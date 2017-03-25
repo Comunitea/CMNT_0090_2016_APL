@@ -38,10 +38,10 @@ class AccountInvoiceAPL(models.Model):
     analytic_account_id = fields.Many2one('account.analytic.account',
                                       'Analytic Account')
 
-    estimated_date = fields.Datetime("Fecha prevista")
-    payment_date = fields.Datetime("Fecha pago", compute=_get_payment)
+    estimated_date = fields.Date("Fecha prevista")
+    payment_date = fields.Date("Fecha pago", compute=_get_payment)
     amount_paid = fields.Float("Importe Pagado", digits=dp.get_precision('Account'), compute=_get_payment)
-    endowment_date = fields.Datetime("Fecha dotacion")
+    endowment_date = fields.Date("Fecha dotacion")
     endowment_amount = fields.Float("Importe dotacion", digits=dp.get_precision('Account'))
 
 
@@ -86,13 +86,13 @@ class ProjectProjectAPL(models.Model):
 
     to_invoice = fields.Boolean('Facturable', default=False)
     to_manage = fields.Boolean('Gestionable', default=False)
-    last_invoice_date = fields.Datetime("Ultima factura", compute=_get_last_invoice_date)
+    last_invoice_date = fields.Date("Ultima factura", compute=_get_last_invoice_date)
 
 
-    date_DE= fields.Datetime("Fecha DE")
-    date_CITT = fields.Datetime("Fecha CITT")
-    date_resumen = fields.Datetime("Fecha resumen")
-    date_aperture = fields.Datetime("Fecha apertura")
+    date_DE= fields.Date("Fecha DE")
+    date_CITT = fields.Date("Fecha CITT")
+    date_resumen = fields.Date("Fecha resumen")
+    date_aperture = fields.Date("Fecha apertura")
     register = fields.Char("Registro")
     ci_per_cent = fields.Float("% CI", default="21")
     amount = fields.Float("Importe", digits=dp.get_precision('Account'))
