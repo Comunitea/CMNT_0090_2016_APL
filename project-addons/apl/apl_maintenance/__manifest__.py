@@ -14,14 +14,15 @@
         """,
     'license': 'AGPL-3',
     'depends': [
-        'base', 'project', 'maintenance'
+        'base', 'project', 'maintenance', 'hr', 'hr_holidays', 'project_activity'
     ],
     'contributors': [
         "Comunitea",
         "Kiko Sanchez<kiko@comunitea.com>",],
     "data": [
         'views/maintenance.xml',
-        'views/project.xml'
+        'views/project.xml',
+        'views/hr.xml'
     ],
     "demo": [
 

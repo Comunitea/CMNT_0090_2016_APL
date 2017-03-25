@@ -23,10 +23,11 @@
                     <attribute name="domain">[('id', 'in', get_user_id_domain)]</attribute>
                 </xpath>
                 -->
-
-
-
+                <xpath expr="//field[@name='project_id']" position="attributes">
+                    <attribute name="attrs">{'readonly': 1}</attribute>
+                </xpath>
             </field>
+
         </record>
         <!-- SOBRE ESCRIBO LA ORIGINAL-->
         <record id="view_task_calendar" model="ir.ui.view">
@@ -51,7 +52,6 @@
             <field name="inherit_id" ref="project.view_task_search_form"/>
              <field name="arch" type="xml">
                 <xpath expr="//field[@name='project_id']" position="after">
-                    <field name="equipment_id"/>
                     <field name="user_ids"/>
                 </xpath>
                 <xpath expr="//filter[@name='my_tasks']" position="replace">

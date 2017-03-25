@@ -76,53 +76,6 @@ class ProjectActivity(models.Model):
         progress = contador * 100
         self.progress = progress / (len(self.task_ids) or 1.0)
 
-    @api.depends('task_ids', 'task_ids.stage_id', 'project_id')
-    def _compute_stage_id(self):
-        return
-
-        for activity in self:
-            if activity.project_id:
-                done =0
-                draft=0
-
-                activity.stage_id = activity.project_id.get_draft_stage()
-                for task in activity.task_ids:
-
-                    if task.stage_id.default_done:
-                        done=+1
-                    elif task.stage_id.default_draft:
-                        draft += 1
-
-                if done == len(activity.task_ids):
-                    pass
-
-
-            else:
-                activity.stage_id = False
-
-
-    @api.depends('task_ids.stage_id', 'project_id.state')
-    def _compute_state(self):
-        return
-        for activity in self:
-
-            if activity.project_id.state=="closed":
-                activity.state="closed"
-
-            elif activity.progress ==1:
-                activity.state = "done"
-
-
-            else:
-                activity.state="draft"
-
-                for task in activity.task_ids:
-                    if task.stage_id.default_error:
-                        activity.state="error"
-
-                        break
-                    if task.stage_id.default_running:
-                        activity.state="progress"
 
     @api.model
     def _read_group_stage_ids(self, stages, domain, order):
@@ -540,6 +493,17 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
+
+
+        if self.user_id.id != self.env.user.id and self.env.user.id != 1:
+            if 'date_start' in vals or \
+                            'date_end' in vals:
+                raise ValidationError ("No tienes permiso para hacer esto")
+
+
+
+
+
         for task in self:
             if vals.get('project_id'):
                 stage_id = self.env['project.project'].browse(vals.get('project_id')).get_draft_stage()
@@ -548,8 +512,6 @@ class ProjectTask(models.Model):
         result = super(ProjectTask, self).write(vals)
 
         return result
-
-
 
     @api.multi
     def copy(self, default):

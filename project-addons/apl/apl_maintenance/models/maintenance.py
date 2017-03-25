@@ -8,7 +8,7 @@ from odoo import fields, models, tools, api, _
 
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
-from odoo.fields import Datetime
+from odoo.fields import Datetime, Date
 import pytz
 
 class MaintenanceRequest(models.Model):
@@ -92,8 +92,10 @@ class MaintenanceEquipment(models.Model):
         return super(MaintenanceEquipment, self).write(vals)
 
 class ConcurrentTask(models.Model):
-    _name="project.task.concurrent"
+
+    _name = "project.task.concurrent"
     _description = "Concurrent Tasks"
+
 
     origin_task_id = fields.Many2one("project.task", string="Task Reference(Actual)", help="This task generate concurrent tasks")
     date_end = fields.Datetime(string='Ending Date')
@@ -109,7 +111,7 @@ class ConcurrentTask(models.Model):
     user_id = fields.Many2one('res.users', string="Assigned to")
     error = fields.Char("Concurrence type")
     error_color = fields.Integer("Kanban Color")
-    is_reference=fields.Boolean('is reference task', default=False)
+    is_reference = fields.Boolean('is reference task', default=False)
 
 
     def open_task_view(self):
@@ -126,14 +128,10 @@ class ProjectTask(models.Model):
     _inherit ="project.task"
 
     equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
-    #allowed_user_ids = fields.Many2many(related="equipment_id.allowed_user_ids", string= "Allowed Users")
-        #sobreescribo el campo user_id para eliminar el asignado por defecto y añadir el dominioo
-    user_ids = fields.Many2many('res.users',
-                              string='Asiganda a',
-                              index=True, track_visibility='always', required=True)
-                              #domain="[('id', '!=', allowed_user_ids and  allowed_user_ids[0][2])]")
-                              #domain="[('id','in', allowed_user_ids and allowed_user_ids[0][2] or [])]")
+    user_ids = fields.Many2many('res.users', string='Asiganda a',
+                                index=True, track_visibility='always', required=True)
     ok_calendar = fields.Boolean ("Ok Calendar", default=True)
+    task_day = fields.Datetime("task day")
 
     @api.constrains('equipment_id', 'user_ids')
     def _check_user_ids(self):
@@ -141,7 +139,6 @@ class ProjectTask(models.Model):
         if self.equipment_id and not self.equipment_id.no_equipment and not self.user_ids:
             if not self.stage_id.default_draft :
                 raise ValidationError(_('Error ! Task with equiment must be assigned.'))
-
 
     @api.onchange('equipment_id')#, 'date_start', 'date_end', 'user_ids')
     def get_user_ids_domain(self):
@@ -154,12 +151,27 @@ class ProjectTask(models.Model):
                  'value': {'user_ids': []}}
 
         if self.stage_id.id and not self.stage_id.default_draft:
-            x['warning'] =  {'title': _('Warning'),
-                             'message': _('You are changing equipment in wrong stage.')}
+            x['warning'] = {'title': _('Warning'),
+                            'message': _('You are changing equipment in wrong stage.')}
         return x
 
-    def get_concurrent(self, user_ids = False, equipment_id = False,
-                       date_start = False, date_end = False, self_id = False):
+    def get_concurrent(self, user_ids=False, equipment_id=False,
+                       date_start=False, date_end=False, self_id=False):
+
+        def new_concurrent(origin_task_id, task_id, user_id, date_start, date_end, equipment_id, error, error_color, is_reference= False):
+            vals = {
+                'origin_task_id': origin_task_id,
+                'task_id': task_id,
+                'user_id': user_id,
+                'date_start': date_start,
+                'date_end': date_end,
+                'equipment_id': equipment_id,
+                'error': error,
+                'error_color': error_color,
+                'is_reference': is_reference
+            }
+            new_task = self.env['project.task.concurrent'].create(vals)
+            return new_task.id
 
         if not self_id:
             if isinstance(self.id, models.NewId):
@@ -168,187 +180,150 @@ class ProjectTask(models.Model):
                 self_id = self.id
 
         equipment_id = equipment_id or self.equipment_id.id
-
         date_start = date_start or self.date_start
         date_end = date_end or self.date_end
-
-
 
         if user_ids:
             user_ids = self.env['res.users'].browse(user_ids)
         else:
             user_ids = self.user_ids
-
-
         concurrent_task_ids = []
-        domain = [('origin_task_id','=',self_id)]
-        borrar = self.env['project.task.concurrent'].search(domain)
-        borrar.unlink()
-        add_reference = False
 
+        # Borro las tareas concurrentes
+        domain = [('origin_task_id', '=', self_id)]
+        to_unlink = self.env['project.task.concurrent'].search(domain)
+        to_unlink.unlink()
+        add_reference = False
+        pool_tasks_equipment = False
         if equipment_id:
+            # Compruebo que el equipo no este en dos tareas al mismo tiempo
+
             domain = [('equipment_id', '=', equipment_id),
                       ('equipment_id.no_equipment','!=', True),
                       ('stage_id.default_running','=', True),
                       ('id','!=', self_id)]
-            pool_tasks = self.env['project.task'].search(domain)
-            for task in pool_tasks:
+            pool_tasks_equipment = self.env['project.task'].search(domain)
+            for task in pool_tasks_equipment:
                 if (task.date_start < date_start < task.date_end) \
                         or (task.date_start< date_end < task.date_end):
-                    vals ={
-                        'origin_task_id': self_id,
-                        'task_id': task.id,
-                        'date_start': task.date_start,
-                        'date_end': task.date_end,
-                        'equipment_id': task.equipment_id.id,
-                        'error': "Concurrent equipment",
-                        'error_color':1
-                    }
-                    concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
-                    add_reference=True
+
+                    new_id = new_concurrent(self_id, task.id, False, task.date_start, task.date_end,
+                                            task.equipment_id.id, "Equipamiento no disponible", 1,
+                                            is_reference=False)
+
+                    concurrent_task_ids += [new_id]
+                    add_reference = True
+
+        if not equipment_id and not pool_tasks_equipment:
+            print "---------Equipamiento OK"
+
         if user_ids:
-
-            domain = [('stage_id.default_running', '=', True), ('id','!=',self_id),
+            # Compruebo que los usuarios no esten en dos tareas al mismo tiempo
+            new_date_end = Datetime.from_string(date_end) - timedelta(minutes=1)
+            new_date_end = Datetime.to_string(new_date_end)
+            new_date_start = Datetime.from_string(date_start) + timedelta(minutes=1)
+            new_date_start = Datetime.to_string(new_date_start)
+            domain = [('no_schedule', '=', False), ('stage_id.default_running', '=', True), ('id', '!=', self_id),
                       '|',
-                      '&', ('date_start', '<', date_end), ('date_end', '>', date_end),
-                      '&', ('date_start', '<', date_start), ('date_end', '>', date_start)
-            ]
+                      '&', ('date_start', '<=', new_date_end), ('date_end', '>=', new_date_start),
+                      '&', ('date_start', '<=', new_date_start), ('date_end', '>=', new_date_start),
 
+                     ]
+
+            print domain
             pool_tasks = self.env['project.task'].search(domain)
 
+            new_id = False
             for task in pool_tasks:
-                if user_ids:
-                #if (task.date_start < date_start < task.date_end) \
-                #        or (task.date_start < date_end < task.date_end) or \
-                #        (date_start < task.date_start and date_end > task.date_end):
+                print task.name
+                for user_id in user_ids:
+                    print user_id.name
+                    if user_id in task.user_ids:
+                        new_id = new_concurrent(self_id, task.id, user_id.id, task.date_start, task.date_end,
+                                                False, "Usuario Ocupado", 1,
+                                                is_reference=False)
+                        concurrent_task_ids += [new_id]
+                        add_reference = True
 
-                    for user_id in user_ids:
-                        if user_id in task.user_ids:
-                            vals ={
-                                'origin_task_id': self_id,
-                                'task_id': task.id,
-                                'user_id': user_id.id,
-                                'date_start': task.date_start,
-                                'date_end': task.date_end,
-                                'error': "Concurrent user",
-                                'error_color': 2
-                        }
-                            concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
-                            add_reference = True
+            if not new_id:
+                print "---------Tareas OK"
+
             start_dt = Datetime.from_string(date_start)
             end_dt = Datetime.from_string(date_end)
-
+            start_d = Date.from_string(date_start)
             if start_dt.replace(hour=0, minute=0, second=0).date() != end_dt.replace(hour=23, minute=59, second=59).date():
                 raise ValidationError(_('Error ! Your task is 2 days long'))
+
             for user_id in user_ids:
-                employee = self.env['hr.employee'].search([('user_id', '=', user_id.id)])
-                calendar = employee.calendar_id
+                # compruebo si trabaja ese dia.
+                domain_resource = [('user_id', '=', user_id.id)]
+                resource = self.env['resource.resource'].search(domain_resource)
+                if resource and start_dt != end_dt:
+                    is_work_day = resource.is_work_day(start_dt)
 
-                if start_dt != end_dt and employee and calendar:
-                    #mio si trabaja ese dia
-                    domain_resource = [('user_id', '=', user_id.id)]
-                    resource = self.env['resource.resource'].search(domain_resource)
-                    is_work_day = resource._is_work_day(start_dt)
                     if is_work_day:
-
+                        print "--------Trabaja ese dia"
+                        employee = self.env['hr.employee'].search([('user_id', '=', user_id.id)])
                         calendar = employee.calendar_id
                         intervals = calendar.get_working_intervals_of_day(start_dt=start_dt,
-                                                                     end_dt=end_dt,
-                                                                     leaves=None,
-                                                                     compute_leaves=True,
-                                                                     resource_id=resource.id,
-                                                                     default_interval=None)
-
+                                                                          end_dt=end_dt,
+                                                                          compute_leaves=True,
+                                                                          resource_id=resource.id)
                         duracion_interval = 0
-                        day_interval = calendar.get_working_intervals_of_day(
-                            start_dt=start_dt.replace(hour=0, minute=0, second=0))
-                        if day_interval:
-                            day_hours = ''
-                            for i in day_interval:
-                                i1 = fields.Datetime.context_timestamp(self, i[0])
-                                i2 = fields.Datetime.context_timestamp(self, i[1])
-                                duracion_interval += (i1 - i2).seconds
-                                if day_hours:
-                                    day_hours = "%s | %s:%s - %s:%s" % (day_hours, i1.hour, i1.minute, i2.hour, i2.minute)
-                                else:
-                                    day_hours = "%s:%s - %s:%s" % (i1.hour, i1.minute, i2.hour, i2.minute)
-                        else:
-                            day_hours="No calendar"
+
 
                         if intervals:
-                            for interval in intervals:
-                                if not (start_dt >= interval[0] and end_dt <= interval[1]):
-                                    vals = {
-                                        'origin_task_id': self_id,
-                                        'task_id': self_id,
-                                        'user_id': user_id.id,
-                                        'date_start': date_start,
-                                        'date_end': date_end,
-                                        'error': "Task out of calendar: %s"%day_hours,
-                                        'error_color': 3
-                                        }
-                                    concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
-                                    #hago un break para evitar añadir 2 en caso de mañana y ttarde
-                                    break
-                            duracion_tarea = (end_dt - start_dt).seconds
+                            work_sec = (intervals[0][1]-intervals[0][0]).seconds
+                            task_sec = (end_dt - start_dt).seconds
+                            if task_sec > work_sec:
+                                day_interval = calendar.get_working_intervals_of_day(
+                                    start_dt=start_dt.replace(hour=0, minute=0, second=0),
+                                    compute_leaves=True, resource_id=resource.id)
+                                day_hours = ''
+                                for work_interval in day_interval:
 
-                            #TODO COMPROBAR SI ESTO ES NECESARIO
-                            #compruebo si da tiempo a realizarlo dentro de la jornada
+                                    i1 = fields.Datetime.context_timestamp(self, work_interval[0])
+                                    i2 = fields.Datetime.context_timestamp(self, work_interval[1])
+                                    duracion_interval += (i1 - i2).seconds
 
-                            if duracion_tarea > duracion_interval:
-                                horario = 'Task: %s - Calendar: %s (minutes)'%(duracion_tarea/60, duracion_interval/60)
-                                vals = {
-                                    'origin_task_id': self_id,
-                                    'task_id': self_id,
-                                    'user_id': user_id.id,
-                                    'date_start': date_start,
-                                    'date_end': date_end,
-                                    'error': "No time: %s" % horario,
-                                    'error_color': 4
-                                }
-                                concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+                                    day_hours += "%02d:%02d - %02d:%02d " % (i1.hour, i1.minute, i2.hour, i2.minute)
+
+                                print "-------Fuera de horario ese dia"
+                                new_id = new_concurrent(self_id, self_id, user_id.id, date_start,
+                                                        date_end,
+                                                        False, "Fuera de horario. Disponible %s" % day_hours, 3,
+                                                        is_reference=False)
+
+                                concurrent_task_ids += [new_id]
 
                         else:
-                            #Si no hay intervalos
-                            vals = {
-                                'origin_task_id': self_id,
-                                'task_id': self_id,
-                                'user_id': user_id.id,
-                                'date_start': date_start,
-                                'date_end': date_end,
-                                'error': "Task out of calendar: %s" % day_hours,
-                                'error_color': 1
-                            }
-                            concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
-                    else:
-                        #si no trbabaja ese dia is_working_day = False
-                        vals = {
-                            'origin_task_id': self_id,
-                            'task_id': self_id,
-                            'user_id': user_id.id,
-                            'date_start': date_start,
-                            'date_end': date_end,
-                            'error': "%s don't work this day"%user_id.name,
-                            'error_color': 5
-                        }
-                        concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+                            print "-------No trabaja ese dia"
+                            new_id = new_concurrent(self_id, self_id, user_id.id, date_start,
+                                                    date_end,
+                                                    False, "Fuera de horario", 1,
+                                                    is_reference=False)
 
+                            concurrent_task_ids += [new_id]
+
+                    else:
+                        print "-------No trabaja ese dia"
+                        new_id = new_concurrent(self_id, self_id, user_id.id, False, False,
+                                                False, "No trabaja el dia %s"%start_d, 3,is_reference=False)
+
+                        concurrent_task_ids += [new_id]
+
+
+                else:
+                    continue
 
         if concurrent_task_ids:
             ok_calendar = False
             if add_reference:
-            #si hay tareas concurrentes añado la original para poder visualizar en el calendario de concurrentes
-                vals ={
-                    'origin_task_id': self_id,
-                    'task_id': self_id,
-                    'date_start': date_start,
-                    'date_end': date_end,
-                    'equipment_id': equipment_id,
-                    'error': "Reference Task",
-                    'error_color':0,
-                    'is_reference':True
-                }
-                concurrent_task_ids += self.env['project.task.concurrent'].create(vals)
+                new_id = new_concurrent(self_id, self_id, False, date_start,
+                                        date_end,
+                                        False, "Tarea de referencia", 0,
+                                        is_reference=True)
+                concurrent_task_ids += [new_id]
         else:
             ok_calendar = True
         return ok_calendar
@@ -359,7 +334,7 @@ class ProjectTask(models.Model):
                 'name': 'open.concurring.tasks',
                 'res_model': 'project.task.concurrent',
                 'view_mode': 'tree,form,calendar',
-                'domain': [('origin_task_id','=',self.id)]}
+                'domain': [('origin_task_id', '=', self.id)]}
 
     def calc_ok(self):
         self.get_concurrent()
@@ -433,11 +408,11 @@ class ProjectTask(models.Model):
     def create(self, vals):
 
         res = super(ProjectTask, self).create(vals)
+
         if 'user_ids' in vals:
             userf_ids = vals['user_ids'][0][2]
-
             vals['message_follower_ids'] = res.refresh_follower_ids(new_follower_ids=userf_ids)
-            vals2={'message_follower_ids': vals['message_follower_ids'] }
+            vals2 = {'message_follower_ids': vals['message_follower_ids'] }
             res.write(vals2)
         return res
 
@@ -447,8 +422,15 @@ class ProjectTask(models.Model):
     @api.multi
     def write(self, vals):
 
-        for task in self:
+        if self.user_id.id != self.env.user.id and self.env.user.id != 1:
+            if 'stage_id' in vals:
+                new_vals = {'stage_id': vals['stage_id']}
+                return super(ProjectTask, self).write(new_vals)
+            else:
+                raise ValidationError ("No tienes permisos para cambiar esta tarea")
 
+
+        for task in self:
             project_id = task.getval(vals, 'project_id', 'm2o')
             equipment_id = task.getval(vals, 'equipment_id', 'm2o')
             no_schedule = task.getval(vals, 'no_schedule')
@@ -458,6 +440,8 @@ class ProjectTask(models.Model):
             user_ids = task.getval(vals, 'user_ids', 'o2m')
             new_activity_created = task.getval(vals, 'new_activity_created', 'm2o')
             activity_id = task.getval(vals, 'activity_id', 'm2o')
+
+            vals['task_day'] = fields.Date.from_string(date_start)
 
             if 'user_ids' in vals:
                 userf_ids = vals['user_ids'][0][2]

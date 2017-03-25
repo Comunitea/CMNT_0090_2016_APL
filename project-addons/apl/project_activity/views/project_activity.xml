@@ -262,7 +262,7 @@
             <field name="inherit_id" ref="project.view_task_search_form"/>
              <field name="arch" type="xml">
                 <xpath expr="//field[@name='project_id']" position="after">
-                    <field name="activity_id" string="Mistring"/>
+                    <field name="activity_id" string="Actividad"/>
                     <field name="ok_calendar"/>
                     <field name="no_schedule"/>
                 </xpath>
@@ -276,7 +276,7 @@
                      <filter string="No schedules" name="no_schedule"
                              domain="[('no_schedule', '=',True)]"/>
                     <filter string="Genera Actividad" name="new_activity_created"
-                             domain="[('new_activity_created', '!=',False)"/>
+                             domain="[('new_activity_created','!=',[])"/>
                 </xpath>
                 <xpath expr="//filter[@name='project']" position="after">
                     <filter string="Activity" name="activity" context="{'group_by':'activity_id'}"/>
@@ -302,19 +302,8 @@
                             attrs="{'invisible': [('no_schedule', '=', False)]}">
                     </button>
                 </xpath>
-                <xpath expr="//h1" position="after">
-                    <div>
-                        <group>
-                            <group>
 
-                            </group>
-                            <group>
-
-                            </group>
-                        </group>
-                    </div>
-                </xpath>
-                <field name="project_id" position="before">
+                <field name="project_id" position="after">
                     <field name="long_code" readonly="1" invisible="1"/>
                 </field>
 

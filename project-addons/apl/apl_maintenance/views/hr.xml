@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="edit_holiday_new_apl" model="ir.ui.view">
+            <field name="name">edit.holiday.new.apl</field>
+            <field name="model">hr.holidays</field>
+            <field name="inherit_id" ref="hr_holidays.edit_holiday_new"/>
+            <field name="arch" type="xml">
+                <field name="holiday_status_id" position="after">
+                    <field name="all_day" />
+                </field>
+            </field>
+        </record>
+    </data>
+</openerp>
