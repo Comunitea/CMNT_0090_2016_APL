@@ -19,14 +19,7 @@
                     <button type="object" name="calc_ok" string="Calcular" class="oe_stat_button" icon="fa-list" invisible="1">
                     </button>
                 </xpath>
-                <!--<xpath expr="//field[@name='user_id']" position="attributes">
-                    <attribute name="domain">[('id', 'in', get_user_id_domain)]</attribute>
-                </xpath>
-                -->
-                <xpath expr="//field[@name='project_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': 1}</attribute>
-                </xpath>
-            </field>
+             </field>
 
         </record>
         <!-- SOBRE ESCRIBO LA ORIGINAL-->

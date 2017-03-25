@@ -10,7 +10,7 @@
     "category": "",
     'license': 'AGPL-3',
     'depends': [
-        'base', 'project'
+        'base', 'project','apl_maintenance'
     ],
     'contributors': [
         "Comunitea",

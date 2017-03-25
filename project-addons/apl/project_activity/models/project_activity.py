@@ -76,6 +76,53 @@ class ProjectActivity(models.Model):
         progress = contador * 100
         self.progress = progress / (len(self.task_ids) or 1.0)
 
+    @api.depends('task_ids', 'task_ids.stage_id', 'project_id')
+    def _compute_stage_id(self):
+        return
+
+        for activity in self:
+            if activity.project_id:
+                done =0
+                draft=0
+
+                activity.stage_id = activity.project_id.get_draft_stage()
+                for task in activity.task_ids:
+
+                    if task.stage_id.default_done:
+                        done=+1
+                    elif task.stage_id.default_draft:
+                        draft += 1
+
+                if done == len(activity.task_ids):
+                    pass
+
+
+            else:
+                activity.stage_id = False
+
+
+    @api.depends('task_ids.stage_id', 'project_id.state')
+    def _compute_state(self):
+        return
+        for activity in self:
+
+            if activity.project_id.state=="closed":
+                activity.state="closed"
+
+            elif activity.progress ==1:
+                activity.state = "done"
+
+
+            else:
+                activity.state="draft"
+
+                for task in activity.task_ids:
+                    if task.stage_id.default_error:
+                        activity.state="error"
+
+                        break
+                    if task.stage_id.default_running:
+                        activity.state="progress"
 
     @api.model
     def _read_group_stage_ids(self, stages, domain, order):
@@ -123,7 +170,6 @@ class ProjectActivity(models.Model):
             pass
         self.long_code = self.code
 
-
     active = fields.Boolean("Active", default= True)
     name = fields.Char('name', required=True)
     sequence = fields.Integer(string='Sequence', index=True, default=1,
@@ -141,7 +187,6 @@ class ProjectActivity(models.Model):
     user_id = fields.Many2one('res.users', string='Assigned to',default = _get_default_user_id,
                               index=True, track_visibility='always', required=True)
 
-
     color = fields.Integer(string='Color Index', related="stage_id.color")
     progress = fields.Integer(compute='_progress_get', string='Tasks done')
     date_deadline = fields.Date(string='Deadline', compute="_compute_dead_line")
@@ -153,6 +198,7 @@ class ProjectActivity(models.Model):
         ('error', 'Error')
     ], compute="_compute_state")
     #stage_id = fields.Many2one("project.task.type", compute="_compute_stage_id", store=True )
+
     default_error = fields.Boolean(related="stage_id.default_error")
     planned_cost = fields.Float("Planned Cost", help="Planned cost: Sum planned task cost", compute ="_compute_planned_task_cost")
     real_cost = fields.Float("Real Cost", help="Activity Cost")
@@ -175,6 +221,7 @@ class ProjectActivity(models.Model):
     parent_task_id = fields.Many2one('project.task', string="Parent task",
                                      help="This activity was created from this task")
 
+
     @api.model
     def default_get(self, default_fields):
 
@@ -182,7 +229,6 @@ class ProjectActivity(models.Model):
         if self.env.context.get('default_project_id', False):
             default_project_id = self.env.context.get('default_project_id', False)
             default_user_id = self.env['project.project'].browse(default_project_id).user_id.id or self.env.uid
-
 
         default_code = self.env['ir.sequence'].next_by_code('project.activity.sequence')
         contextual_self = self.with_context(default_code=default_code, default_user_id=default_user_id)
@@ -435,6 +481,7 @@ class ProjectTask(models.Model):
                               index=True, track_visibility='always')
     default_draft = fields.Boolean(related='stage_id.default_draft')
     default_done = fields.Boolean(related='stage_id.default_done')
+    ok_calendar = fields.Boolean("Ok Calendar", default=True)
 
     @api.onchange('project_id')
     def _onchange_project(self):

@@ -14,7 +14,7 @@
         """,
     'license': 'AGPL-3',
     'depends': [
-        'base', 'project', 'maintenance', 'hr', 'hr_holidays', 'project_activity'
+        'base', 'project', 'maintenance', 'hr', 'hr_holidays'
     ],
     'contributors': [
         "Comunitea",
