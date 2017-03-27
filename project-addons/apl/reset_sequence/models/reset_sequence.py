@@ -20,7 +20,6 @@ class IrSequences(models.Model):
         domain = [('name','=',sequence_name)]
         sequence = self.env['ir.sequence'].search(domain, limit=1)
         if sequence:
-            print "   >>> Reset de %s" % sequence.name
             res = sequence.write({'number_next': next_number})
 
 

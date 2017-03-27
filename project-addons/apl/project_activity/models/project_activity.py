@@ -180,6 +180,7 @@ class ProjectActivity(models.Model):
     tag_ids = fields.Many2many('project.tags', string='Tags', oldname='categ_ids')
     date_start = fields.Datetime(string='Start Date', compute="_get_date_start")
     date_end = fields.Datetime(string='Ending Date', compute="_get_date_end")
+
     # user_id = fields.Many2one('res.users',
     #                           string='Manager',
     #                           default=_get_default_user_id,
@@ -257,7 +258,7 @@ class ProjectActivity(models.Model):
                         'activity_id': self.id,
                         'name': task.name,
                         'stage_id': default_stage and default_stage.id or False}
-            print defaults
+
             new_task = task.copy(defaults)
             costs = self.env['project.task.cost']
             for cost in task.cost_ids:
@@ -329,7 +330,7 @@ class ProjectActivity(models.Model):
                             'activity_id': new_activity.id,
                             'name': task.name,
                             'stage_id': default_stage_id and default_stage_id.id or False}
-                print defaults
+
                 new_task = task.copy(defaults)
                 costs = self.env['project.task.cost']
                 for cost in task.cost_ids:
@@ -344,7 +345,7 @@ class ProjectActivity(models.Model):
             tasks2 += tasks
             #new_project.write({'tasks': [(6, 0, tasks.ids)]})
             new_activity.write({'task_ids': [(6, 0, tasks2.ids)]})
-            print tasks.ids
+
 
         return ({'activity_ids': [(6, 0, activities.ids)],
                            'tasks': [(6, 0, tasks2.ids)]})
@@ -482,6 +483,7 @@ class ProjectTask(models.Model):
     default_draft = fields.Boolean(related='stage_id.default_draft')
     default_done = fields.Boolean(related='stage_id.default_done')
     ok_calendar = fields.Boolean("Ok Calendar", default=True)
+    date_st_day = fields.Date(string="Dia de la tarea")
 
     @api.onchange('project_id')
     def _onchange_project(self):
@@ -548,7 +550,7 @@ class ProjectTask(models.Model):
                 raise ValidationError ("No tienes permiso para hacer esto")
 
 
-
+        vals['date_st_day']=vals.get('date_start', False)
 
 
         for task in self:

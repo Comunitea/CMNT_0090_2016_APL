@@ -231,14 +231,13 @@ class ProjectTask(models.Model):
 
                      ]
 
-            print domain
+            
             pool_tasks = self.env['project.task'].search(domain)
 
             new_id = False
             for task in pool_tasks:
-                print task.name
+
                 for user_id in user_ids:
-                    print user_id.name
                     if user_id in task.user_ids:
                         new_id = new_concurrent(self_id, task.id, user_id.id, task.date_start, task.date_end,
                                                 False, "Usuario Ocupado", 1,

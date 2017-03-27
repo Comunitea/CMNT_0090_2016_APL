@@ -44,7 +44,6 @@ class APLHolidays(models.Model):
         tz = self.env.user.tz
 
         date_to = fields2.Datetime.to_string(date_)
-        print date_from + ' to ' + date_to
         res['date_from'] = date_from
         res['date_to'] = date_to
 
