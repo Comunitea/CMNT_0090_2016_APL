@@ -601,7 +601,7 @@
                         <group>
                                 <field name="user_id" string="Project Manager" attrs="{'readonly':[('active','=',False)]}"/>
                                 <field name="privacy_visibility" widget="radio"/>
-                                <field name="user_ids"/>
+                                <field name="user_ids" widget="many2many_tags"/>
                                 <field name="partner_id" string="Customer"/>
                         </group>
                         <group>
@@ -616,28 +616,6 @@
                 <xpath expr="//notebook/page[1]" position="after">
 
                     <page string="Activities">
-                        <!--field name="activity_ids" context="{'default_project_id': id}">
-                            <tree create="true" editable="bottom" delete="true" string="Activities"
-                                  default_order="name"
-                                  decoration-warning="task_count==0"
-                                  decoration-danger="date_end and (date_end&lt;current_date) and (progress&lt;100)"
-                                  decoration-success="progress&gt;99">
-                                <field name ="sequence" invisible="1"/>
-                                <field name="master_activity_id" invisible="1"/>
-                                <field name="name"/>
-                                <field name="user_id" invisible="1"/>
-                                <field name="planned_cost"/>
-                                <field name="task_cost"/>
-                                <field name="task_count"/-->
-                                <!--<field name="date_start"/>-->
-                                <!--field name="date_end" invisible="1"/>
-                                <field name="progress" widget="progressbar"/>
-                                <field name="stage_id" invisible="1"/>
-
-
-
-                            </tree>
-                        </field-->
                         <group string="Costes">
                             <group>
                                 <field name="planned_cost"/>
@@ -650,17 +628,6 @@
                             </group>
                         </group>
                     </page>
-                    <!--page string="Project Tasks">
-                        <field name="task_ids" context="{'default_project_id': id}">
-                            <tree string="Tasks">
-                                <field name="name"/>
-                                <field name="user_id"/>
-                                <field name="stage_id"/>
-                                <field name="real_cost_cal" invisible="1"/>
-
-                            </tree>
-                        </field>
-                    </page-->
                 </xpath>
             </field>
 

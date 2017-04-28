@@ -9,7 +9,7 @@
                 <field name="partner_id" position="after">
                     <field name = "to_invoice"/>
                     <field name = "to_manage"/>
-                    <field name = "last_invoice_date"/>
+                    <!--<field name = "last_invoice_date" groups="project.group_project_manager"/>-->
                 </field>
 
             </field>
@@ -21,7 +21,7 @@
             <field name="inherit_id" ref="project.edit_project"/>
             <field name="arch" type="xml">
                 <xpath expr="//notebook/page[1]" position="after">
-                    <page string="Seguimiento Economico">
+                    <page string="Seguimiento Economico" groups="project.group_project_manager">
                         <group>
 
                             <group>
@@ -40,10 +40,15 @@
                                 <field name="apl_state"/>
                             </group>
                         </group>
-                        <group string="Facturacion">
-                            <field name="invoice_ids" nolabel="1">
-                                <tree editable="top" create="0">
+                        <group string="Facturacion" >
+                            <field name="invoice_ids" nolabel="1" >
+                                <tree editable="top" create="0"
+                                      decoration-muted = "state=='draft'"
+                                      decoration-success = "state=='paid'"
+                                      decoration-warning = "state=='cancel'"
+                                      decoration-bf = "endowment_amount &gt; 0"  >
                                     <field name="number" readonly="1"/>
+                                    <field name="state"/>
                                     <field name="estimated_date"/>
                                     <field name="amount_untaxed"/>
                                     <field name="date_invoice" readonly="1"/>
@@ -71,20 +76,6 @@
 
 
                 </xpath>
-
-            </field>
-        </record>
-
-
-
-        <record id="invoice_form_apl_management" model="ir.ui.view">
-            <field name="name">invoice.form.apl.management</field>
-            <field name="model">account.invoice</field>
-            <field name="inherit_id" ref="account.invoice_form" />
-            <field name="arch" type="xml">
-                <field name="move_id" position="after">
-                       <field name="analytic_account_id" groups="analytic.group_analytic_accounting"/>/>
-                </field>
 
             </field>
         </record>

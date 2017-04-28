@@ -9,15 +9,15 @@
                 <field name="date_invoice" position="before">
                     <field name="project_id"/>
                 </field>
-                <xpath expr="//field[@name='invoice_line_ids']" position="attributes">
-                    <attribute name="context">{'type': type, 'journal_id': journal_id, 'default_invoice_id': id, 'default_account_analytic_id': account_analytic_id}</attribute>
-                </xpath>
+
                 <xpath expr="//notebook" posicion="inside">
                     <page string ="Project" attrs="{'invisible': [('project_id','=', False)]}">
                         <group>
                             <group>
-                                <field name="account_analytic_id" readonly="1"/>
                                 <field name="project_user_id" readonly="1"/>
+                                <field name="endowment_date"/>
+                                <field name="endowment_amount"/>
+
                             </group>
                             <group>
                                 <field name="date_end"/>
@@ -29,7 +29,7 @@
                 </xpath>
             </field>
         </record>
-         <record id="account_invoice_supplier_form_APL" model="ir.ui.view">
+        <record id="account_invoice_supplier_form_APL" model="ir.ui.view">
             <field name="name">account.invoice.invoice.form.APL</field>
             <field name="model">account.invoice</field>
             <field name="inherit_id" ref="account.invoice_supplier_form"/>
@@ -39,13 +39,14 @@
                     <field name="project_id"/>
                 </field>
                 <xpath expr="//field[@name='invoice_line_ids']" position="attributes">
-                    <attribute name="context">{'type': type, 'journal_id': journal_id, 'default_invoice_id': id, 'default_account_analytic_id': account_analytic_id}</attribute>
+                    <attribute name="context">
+                        {'type': type, 'journal_id': journal_id}
+                    </attribute>
                 </xpath>
                 <xpath expr="//notebook" posicion="inside">
                     <page string ="Project" attrs="{'invisible': [('project_id','=', False)]}">
                         <group>
                             <group>
-                                <field name="account_analytic_id" readonly="1"/>
                                 <field name="project_user_id" readonly="1"/>
                             </group>
                             <group>
@@ -60,21 +61,38 @@
             </field>
         </record>
 
+        <record id="action_view_customer_invoices" model="ir.actions.act_window">
+            <field name="name">Customer Invoices</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_mode">tree,form,calendar,pivot,kanban,graph</field>
+            <field name="view_id" ref="account.invoice_tree"/>
 
+            <field name="context">{
+                'search_default_project_id': [active_id],
+                'default_project_id': active_id,
+            }</field>
+            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="help" type="html">
+                <p>
+                    Odoo's project management allows you to manage project and activitties.
+                </p>
+            </field>
+
+        </record>
         <record id="project_form_invoices_buttoms" model="ir.ui.view">
             <field name="name">project.form.invoices.buttoms</field>
             <field name="model">project.project</field>
             <field name="inherit_id" ref="project.edit_project"/>
 
             <field name="arch" type="xml">
-
                 <xpath expr="//button[@name='toggle_active']" position="after">
                      <button class="oe_stat_button" type="object"
-                            name="show_invoice" icon="fa-pencil-square-o" groups="account.group_account_user">
+                            icon="fa-pencil-square-o"
+                            name="show_invoice" groups="project.group_project_manager">
                             <field string="Invoices" name="invoice_count" widget="statinfo"/>
                     </button>
                     <button class="oe_stat_button" type="object"
-                            name="show_invoice_purchase" icon="fa-pencil-square-o" groups="account.group_account_user">
+                            name="show_invoice_purchase" icon="fa-pencil-square-o" groups="project.group_project_manager">
                             <field string="Purchase invoices" name="purchase_invoice_count" widget="statinfo"/>
                     </button>
                 </xpath>
@@ -82,6 +100,7 @@
 
             </field>
         </record>
+
         <record id="account_invoice_tree_with_project" model="ir.ui.view">
             <field name="name">account.invoice.tree.with.project</field>
             <field name="model">account.invoice</field>
@@ -114,15 +133,13 @@
                 </field>
             </field>
         </record>
-
-
         <record id="view_account_invoice_filter_project" model="ir.ui.view">
             <field name="name">account_payment_partner.account_invoice_search.project</field>
             <field name="model">account.invoice</field>
             <field name="inherit_id" ref="account.view_account_invoice_filter"/>
             <field name="arch" type="xml">
                 <field name="partner_id" position="before">
-                    <field name="project_id" operator="child_of"/>
+                    <field name="project_id"/>
                     <field name="project_user_id" string="Asigned to"/>
                     <field name="date_end"/>
                     <separator/>
@@ -142,4 +159,5 @@
 
     </data>
 </openerp>
+
 

@@ -24,11 +24,11 @@
                             <table class="apl_w_100 border_no">
                                     <tr>
                                         <td class="apl_w_33 border_no">
-                                            <img src="/apl_hr/static/src/img/logoaula.jpeg" style="height: 120px;width:400px"/>
+                                            <img src="/apl_hr/static/src/img/logoaula.jpeg" style="width:400px"/>
                                         </td>
                                         <td class="apl_w_33 border_no"></td>
                                         <td class="apl_w_33 border_no">
-                                            <img src="/apl_hr/static/src/img/logousc.jpeg" style="height: 120px;width:400px"/>
+                                            <img src="/apl_hr/static/src/img/logousc.jpeg" style="width:400px"/>
                                         </td>
                                     </tr>
                                 </table>
@@ -87,7 +87,7 @@
                                     </t>
                                 </table>
                                 <div><span style="font-size: 8px">
-                                    (1) La solicitudde vacaciones se deberá presentarse en el servicio o unidad en la que se presten los servicios, para que este remita la
+                                    (1) La solicitud de vacaciones se deberá presentarse en el servicio o unidad en la que se presten los servicios, para que este remita la
 
 propuesta a Gerencia.
                                 </span></div>
@@ -127,7 +127,7 @@ correspondiente.
                                             </span>
                                         </td>
 
-                                        </tr><tr style="height: 200px">
+                                        </tr><tr style="height: 160px">
                                      <td >
                                             <span >
                                                Firmado:

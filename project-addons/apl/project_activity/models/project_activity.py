@@ -543,7 +543,7 @@ class ProjectTask(models.Model):
     @api.multi
     def write(self, vals):
 
-
+        import ipdb; ipdb.set_trace()
         if self.user_id.id != self.env.user.id and self.env.user.id != 1:
             if 'date_start' in vals or \
                             'date_end' in vals:
@@ -588,30 +588,33 @@ class ProjectTask(models.Model):
     def new_activity_from_task(self):
 
         if not self.project_id:
-            raise UserError(_('You need set "project_id"'))
+            raise UserError(_('You need set a project for this task'))
 
         if self.env.user not in self.user_ids:
             raise UserError(_('Not asigned user'))
 
-        if not self.new_activity_id:
-            if len(self.user_ids)>1:
-                raise UserError(_('More than one assigned user'))
+        if self.no_schedule:
+            raise UserError(_('Task must be no_schedule'))
+
+        if len(self.user_ids) > 1:
+            raise UserError(_('More than one assigned user'))
+
+        if self.new_activity_created:
+            raise UserError(_("You have one activites from this task: %s")%self.new_activity_created.name)
+
+        if not self.new_activity_created:
             default = {
                 'project_id': self.project_id.id,
                 'is_template': False,
                 'user_id': self.user_ids and self.user_ids[0].id or self.user_id.id,
                 'name': "%s/%s/%s"%(self.project_id.code, self.activity_id.code, self.code),
                 'parent_task_id': self.id
-
-
                 }
-            new_activity = self.sudo().new_activity_id.create(default)
-            #self.sudo.new_activity_created = new_activity
-            #self.sudo.new_activity_id = False
 
+            new_activity = self.sudo().new_activity_id.create(default)
             self.sudo().write({'new_activity_created': new_activity.id,
-                             'new_activity_id':False})
-            #self.stage_id = self.project_id.get_done_stage()
+                               'new_activity_id': False,
+                               'stage_id': self.project_id.get_done_stage()})
 
             return {'type': 'ir.actions.act_window',
                     'view_mode': 'form',
@@ -619,31 +622,6 @@ class ProjectTask(models.Model):
                     'res_model': 'project.activity',
                     'res_id': new_activity.id,
                     }
-        if self.new_activity_id:
-            raise UserError(_('Template activities not implemented'))
-
-        if not self.new_activity_id.is_template:
-            raise UserError(_('"New activity from task" must be template activity'))
-        if not self.project_id:
-            raise UserError(_('You need set "project_id"'))
-        self = self.with_context(show_template=True)
-
-        default={
-            'project_id': self.project_id.id,
-            'is_template': False
-        }
-
-        new_activity = self.new_activity_id.copy(default)
-        tasks = []
-        vals = {
-                'no_schedule': False,
-                'project_id': self.project_id.id
-        }
-        new_activity.task_ids.write(vals)
-
-        self.new_activity_created = new_activity
-        self.new_activity_id = False
-        self.stage_id = self.project_id.get_done_stage()
 
         return True
 
@@ -743,7 +721,8 @@ class ProjectProject(models.Model):
 
     color_stage = fields.Integer(string='Color Index', related="stage_id.color")
     stage_id = fields.Many2one('project.task.type', compute="_compute_stage_id", string='Project Stage')
-    user_ids = fields.Many2one("res.users", "Usuarios Restringidos")
+    user_ids = fields.Many2many('res.users', string='Externos Permitidos',
+                                index=True, track_visibility='always')
 
 
 

@@ -128,7 +128,7 @@ class ProjectTask(models.Model):
     _inherit ="project.task"
 
     equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
-    user_ids = fields.Many2many('res.users', string='Asiganda a',
+    user_ids = fields.Many2many('res.users', string='Asignada a',
                                 index=True, track_visibility='always', required=True)
     ok_calendar = fields.Boolean ("Ok Calendar", default=True)
     task_day = fields.Datetime("task day")
@@ -231,7 +231,7 @@ class ProjectTask(models.Model):
 
                      ]
 
-            
+
             pool_tasks = self.env['project.task'].search(domain)
 
             new_id = False
@@ -421,7 +421,7 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
-
+        import ipdb; ipdb.set_trace()
         if self.user_id.id != self.env.user.id and self.env.user.id != 1:
             if 'stage_id' in vals:
                 new_vals = {'stage_id': vals['stage_id']}
