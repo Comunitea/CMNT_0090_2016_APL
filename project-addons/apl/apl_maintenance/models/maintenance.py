@@ -421,7 +421,7 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
-        import ipdb; ipdb.set_trace()
+
         if self.user_id.id != self.env.user.id and self.env.user.id != 1:
             if 'stage_id' in vals:
                 new_vals = {'stage_id': vals['stage_id']}

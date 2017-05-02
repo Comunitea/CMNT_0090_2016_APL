@@ -38,23 +38,22 @@ class ProjectActivity(models.Model):
     _order = 'code ASC'
 
     @api.multi
-    @api.depends('task_ids.real_cost')
     def _compute_task_cost(self):
+        #import ipdb; ipdb.set_trace()
         for activity in self:
-            if activity.real_cost:
-                activity.task_cost = activity.real_cost
-            else:
-                activity.task_cost = 0
-                for task in activity.task_ids:
-                    if task.new_activity_created:
-                        activity.task_cost += task.new_activity_created.task_cost
-                    else:
-                        activity.task_cost += task.real_cost
+            activity.task_cost = 0
+            for task in activity.task_ids:
+                activity.task_cost += task.real_cost
 
+
+
+    @api.multi
     def _compute_planned_task_cost(self):
         for activity in self:
+            activity.planned_cost = 0
             for task in activity.task_ids:
                 activity.planned_cost += task.planned_cost
+
 
     def _compute_task_count(self):
         for project in self:
@@ -512,8 +511,18 @@ class ProjectTask(models.Model):
 
     @api.onchange('planned_cost')
     def _onchange_planned_cost(self):
+
+        if self.activity_id.parent_task_id:
+            self.activity_id.parent_task_id.planned_cost = self.activity_id.planned_cost
+
         if self.real_cost == 0.00 and not self.new_activity_created:
             self.real_cost = self.planned_cost
+
+    @api.onchange('real_cost')
+    def _onchange_real(self):
+
+        if self.activity_id.parent_task_id:
+            self.activity_id.parent_task_id.real_cost = self.activity_id.task_cost
 
 
     @api.onchange('date_start')
@@ -543,7 +552,7 @@ class ProjectTask(models.Model):
     @api.multi
     def write(self, vals):
 
-        import ipdb; ipdb.set_trace()
+
         if self.user_id.id != self.env.user.id and self.env.user.id != 1:
             if 'date_start' in vals or \
                             'date_end' in vals:
@@ -588,19 +597,16 @@ class ProjectTask(models.Model):
     def new_activity_from_task(self):
 
         if not self.project_id:
-            raise UserError(_('You need set a project for this task'))
+            raise UserError('Necesitas indicar un projecto')
 
-        if self.env.user not in self.user_ids:
-            raise UserError(_('Not asigned user'))
-
-        if self.no_schedule:
-            raise UserError(_('Task must be no_schedule'))
+        if self.env.user not in self.user_ids and self.env.user.id != 1:
+            raise UserError('Not asigned user')
 
         if len(self.user_ids) > 1:
-            raise UserError(_('More than one assigned user'))
+            raise UserError('Solo puedes asignar un usuario')
 
         if self.new_activity_created:
-            raise UserError(_("You have one activites from this task: %s")%self.new_activity_created.name)
+            raise UserError(_("Ya has creado una actividad desde esta tarea: %s")%self.new_activity_created.name)
 
         if not self.new_activity_created:
             default = {
@@ -656,19 +662,25 @@ class ProjectProject(models.Model):
         return ids
 
     def _compute_activity_cost(self):
+
         for project in self:
-            if project.real_cost:
+            project.task_cost = 0
+            if project.real_cost != 0:
                 project.task_cost = project.real_cost
             else:
                 for activity in project.activity_ids:
-                    for task in activity.task_ids:
-                        project.task_cost += task.real_cost
+                    if not activity.parent_task_id:
+                        project.task_cost += activity.task_cost
 
 
     def _compute_planned_activity_cost(self):
+
         for project in self:
+            project.planned_cost = 0
             for activity in project.activity_ids:
-                project.planned_cost += activity.planned_cost
+                if not activity.parent_task_id:
+                    project.planned_cost += activity.planned_cost
+
 
     def _compute_dead_line(self):
         for project in self:
