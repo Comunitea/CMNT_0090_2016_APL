@@ -38,22 +38,24 @@ class ProjectActivity(models.Model):
     _order = 'code ASC'
 
     @api.multi
+    @api.depends('task_ids.real_cost')
     def _compute_task_cost(self):
-        #import ipdb; ipdb.set_trace()
+
         for activity in self:
             activity.task_cost = 0
             for task in activity.task_ids:
-                activity.task_cost += task.real_cost
-
+                if not task.new_activity_created:
+                    activity.task_cost += task.real_cost
 
 
     @api.multi
+    @api.depends('task_ids.planned_cost')
     def _compute_planned_task_cost(self):
         for activity in self:
             activity.planned_cost = 0
             for task in activity.task_ids:
-                activity.planned_cost += task.planned_cost
-
+                if not task.new_activity_created:
+                    activity.planned_cost += task.planned_cost
 
     def _compute_task_count(self):
         for project in self:
@@ -457,8 +459,11 @@ class ProjectTask(models.Model):
 
     activity_id = fields.Many2one("project.activity", string ="Activity", domain=[('project_id', '=', 'project_id.id')])
     color = fields.Integer(related="stage_id.color")
+
     planned_cost = fields.Float ("Planned Cost", help="Planned cost", required=True)
+    planned_cost_2 = fields.Float(related="new_activity_created.planned_cost", string="Coste previsto")
     real_cost = fields.Float("Real Cost", help ="Real cost (after task finish)")
+    real_cost_2 = fields.Float(related="new_activity_created.task_cost", string="Coste real")
     real_cost_cal = fields.Float("Real Cost Cal", help="Real cost or amount_cost_ids",
                                  compute='_get_real_cost_cal')
     cost_ids = fields.One2many("project.task.cost", "task_id", string="Tasks Costs")
@@ -512,18 +517,19 @@ class ProjectTask(models.Model):
     @api.onchange('planned_cost')
     def _onchange_planned_cost(self):
 
-        if self.activity_id.parent_task_id:
-            self.activity_id.parent_task_id.planned_cost = self.activity_id.planned_cost
-
         if self.real_cost == 0.00 and not self.new_activity_created:
             self.real_cost = self.planned_cost
 
+        if self.activity_id.parent_task_id:
+            self.activity_id._compute_planned_task_cost()
+            self.activity_id.parent_task_id.planned_cost = self.activity_id.planned_cost
+
     @api.onchange('real_cost')
-    def _onchange_real(self):
+    def _onchange_real_cost(self):
 
         if self.activity_id.parent_task_id:
-            self.activity_id.parent_task_id.real_cost = self.activity_id.task_cost
-
+            self.activity_id._compute_task_cost()
+            self.activity_id.parent_task_id.real_cost = self.activity_id.real_cost
 
     @api.onchange('date_start')
     def _onchange_dates(self):
@@ -559,13 +565,20 @@ class ProjectTask(models.Model):
                 raise ValidationError ("No tienes permiso para hacer esto")
 
 
-        vals['date_st_day']=vals.get('date_start', False)
+        vals['date_st_day'] = vals.get('date_start', False)
 
+        if vals.get('real_cost', False):
+            if self.activity_id.parent_task_id:
+                self.activity_id.parent_task_id.real_cost = self.activity_id.task_cost
+
+        if vals.get('planned_cost', False):
+            if self.activity_id.parent_task_id:
+                self.activity_id.parent_task_id.planned_cost = self.activity_id.planned_cost
 
         for task in self:
             if vals.get('project_id'):
                 stage_id = self.env['project.project'].browse(vals.get('project_id')).get_draft_stage()
-                vals['stage_id']=stage_id
+                vals['stage_id'] = stage_id
 
         result = super(ProjectTask, self).write(vals)
 
@@ -669,8 +682,7 @@ class ProjectProject(models.Model):
                 project.task_cost = project.real_cost
             else:
                 for activity in project.activity_ids:
-                    if not activity.parent_task_id:
-                        project.task_cost += activity.task_cost
+                    project.task_cost += activity.task_cost
 
 
     def _compute_planned_activity_cost(self):
@@ -678,8 +690,7 @@ class ProjectProject(models.Model):
         for project in self:
             project.planned_cost = 0
             for activity in project.activity_ids:
-                if not activity.parent_task_id:
-                    project.planned_cost += activity.planned_cost
+                project.planned_cost += activity.planned_cost
 
 
     def _compute_dead_line(self):
@@ -851,6 +862,21 @@ class AccountAnalyticLine(models.Model):
     _inherit = 'account.analytic.line'
 
 
+
+class ReportProjectActivityTaskUser(models.Model):
+    _inherit = "report.project.task.user"
+
+    new_activity_created = fields.Many2one("project.activity.", 'Solicitud', group_operator='avg', readonly=True)
+
+    def _select(self):
+        return super(ReportProjectActivityTaskUser, self)._select() + """,
+            new_activity_created as new_activity_created
+            """
+
+    def _group_by(self):
+        return super(ReportProjectActivityTaskUser, self)._group_by() + """,
+            new_activity_created
+            """
 
 
 

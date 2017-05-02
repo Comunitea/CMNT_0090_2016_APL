@@ -351,8 +351,11 @@
                     </field>
                     <group>
                         <group>
-                            <field name="planned_cost" required="1"/>
-                            <field name="real_cost"  attrs="{'readonly': [('new_activity_created','!=', False)]}"/>
+                            <field name="planned_cost" attrs="{'invisible': [('new_activity_created','!=', False)]}"/>
+                            <field name="real_cost"  attrs="{'invisible': [('new_activity_created','!=', False)]}"/>
+                            <field name="planned_cost_2" attrs="{'invisible': [('new_activity_created','=', False)]}"/>
+                            <field name="real_cost_2"  attrs="{'invisible': [('new_activity_created','=', False)]}"/>
+
                         </group>
 
                         <group>
