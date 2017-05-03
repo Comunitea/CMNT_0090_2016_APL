@@ -30,13 +30,13 @@
                                 <field name="date_CITT"/>
                                 <field name="date_resumen"/>
                                 <field name="date_aperture"/>
-                                <h2><field name = "last_invoice_date"/></h2>
+                                <h3><label for="last_invoice_date" string="Fecha de ultima factura:"/><field name = "last_invoice_date"/></h3>
                             </group>
                             <group>
                                 <field name = "to_manage"/>
                                 <field name="register"/>
                                 <field name="amount"/>
-                                <field name="ci_per_cent"/>
+                                <field name="ci_per_cent" invisible="1"/>
                                 <field name="apl_state"/>
                             </group>
                         </group>

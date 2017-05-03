@@ -11,7 +11,7 @@
     'license': 'AGPL-3',
     'description': 'Modulo con cambios necesarios para integrar proyectos en facturas',
     'depends': [
-        'base', 'account', 'project'
+        'base', 'account', 'project','l10n_es_account_invoice_sequence'
     ],
     'contributors': [
         "Comunitea",

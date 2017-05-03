@@ -9,7 +9,9 @@
                 <field name="date_invoice" position="before">
                     <field name="project_id"/>
                 </field>
-
+                <field name="number" position="replace">
+                    <field name="invoice_number"/>
+                </field>
                 <xpath expr="//notebook" posicion="inside">
                     <page string ="Project" attrs="{'invisible': [('project_id','=', False)]}">
                         <group>
@@ -29,14 +31,17 @@
                 </xpath>
             </field>
         </record>
+
         <record id="account_invoice_supplier_form_APL" model="ir.ui.view">
             <field name="name">account.invoice.invoice.form.APL</field>
             <field name="model">account.invoice</field>
             <field name="inherit_id" ref="account.invoice_supplier_form"/>
-
             <field name="arch" type="xml">
                 <field name="date_invoice" position="before">
                     <field name="project_id"/>
+                </field>
+                <field name="number" position="replace">
+                    <field name="invoice_number"/>
                 </field>
                 <xpath expr="//field[@name='invoice_line_ids']" position="attributes">
                     <attribute name="context">
@@ -79,6 +84,7 @@
             </field>
 
         </record>
+
         <record id="project_form_invoices_buttoms" model="ir.ui.view">
             <field name="name">project.form.invoices.buttoms</field>
             <field name="model">project.project</field>
@@ -117,6 +123,7 @@
                 </field>
             </field>
         </record>
+
         <record id="account_invoice_supplier_tree_with_project" model="ir.ui.view">
             <field name="name">account.invoice.supplier.tree.with.project</field>
             <field name="model">account.invoice</field>
@@ -133,6 +140,7 @@
                 </field>
             </field>
         </record>
+
         <record id="view_account_invoice_filter_project" model="ir.ui.view">
             <field name="name">account_payment_partner.account_invoice_search.project</field>
             <field name="model">account.invoice</field>
