@@ -142,7 +142,6 @@ class ProjectTask(models.Model):
 
     @api.onchange('equipment_id')#, 'date_start', 'date_end', 'user_ids')
     def get_user_ids_domain(self):
-
         if self.equipment_id:
             x = {'domain': {'user_ids': [('id', 'in', [x.id for x in self.equipment_id.allowed_user_ids])]},
                  'value': {'user_ids': []}}
@@ -339,16 +338,6 @@ class ProjectTask(models.Model):
     def calc_ok(self):
         self.get_concurrent()
 
-    def act_vals(self, vals):
-        if vals.get('date_start'):
-            self.date_start = vals.get('date_start')
-        if vals.get('date_end'):
-            self.date_end = vals.get('date_end')
-        if vals.get('equipment_id'):
-            self.equipment_id = vals.get('equipment_id')
-        if vals.get('user_ids'):
-            self.user_ids = vals.get('user_ids')
-
     def getval(self, vals, field, type = False):
         if field in vals:
             if type =='o2m' or type== 'm2m':
@@ -403,7 +392,6 @@ class ProjectTask(models.Model):
 
             return message_follower_ids
 
-
     @api.model
     def create(self, vals):
 
@@ -421,8 +409,9 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
+        if self.user_id.id != self.env.user.id and self.env.user.id != 1 and \
+                not (self.new_activity_created and self.env.user in self.user_ids):
 
-        if self.user_id.id != self.env.user.id and self.env.user.id != 1:
             if 'stage_id' in vals:
                 new_vals = {'stage_id': vals['stage_id']}
                 return super(ProjectTask, self).write(new_vals)
@@ -447,9 +436,6 @@ class ProjectTask(models.Model):
                 userf_ids = vals['user_ids'][0][2]
                 vals['message_follower_ids'] = task.refresh_follower_ids(new_follower_ids = userf_ids)
 
-            if not user_ids:
-                raise UserError(_('You must assigned employees'))
-
             if no_schedule:
                 ok_calendar = True
             else:
@@ -458,7 +444,6 @@ class ProjectTask(models.Model):
             vals['ok_calendar'] = ok_calendar
 
             if 'stage_id' in vals:
-
                 stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
                 if not ok_calendar and not stage_id.default_draft:
                         raise ValidationError(

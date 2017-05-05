@@ -275,8 +275,8 @@
                              domain="[('ok_calendar', '=', False)]"/>
                      <filter string="No schedules" name="no_schedule"
                              domain="[('no_schedule', '=',True)]"/>
-                    <filter string="Genera Actividad" name="new_activity_created"
-                             domain="[('new_activity_created','!=',[])"/>
+                    <filter string="Solicitudes" name="new_activity_created"
+                             domain="[('new_activity_created','!=',False)]"/>
                 </xpath>
                 <xpath expr="//filter[@name='project']" position="after">
                     <filter string="Activity" name="activity" context="{'group_by':'activity_id'}"/>

@@ -487,7 +487,7 @@ class ProjectTask(models.Model):
     default_draft = fields.Boolean(related='stage_id.default_draft')
     default_done = fields.Boolean(related='stage_id.default_done')
     ok_calendar = fields.Boolean("Ok Calendar", default=True)
-    date_st_day = fields.Date(string="Dia de la tarea")
+    #date_st_day = fields.Date(string="Dia de la tarea")
 
     @api.onchange('project_id')
     def _onchange_project(self):
@@ -564,8 +564,7 @@ class ProjectTask(models.Model):
                             'date_end' in vals:
                 raise ValidationError ("No tienes permiso para hacer esto")
 
-
-        vals['date_st_day'] = vals.get('date_start', False)
+        #vals['date_st_day'] = vals.get('date_start', False)
 
         if vals.get('real_cost', False):
             if self.activity_id.parent_task_id:
