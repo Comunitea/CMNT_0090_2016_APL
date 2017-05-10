@@ -64,7 +64,7 @@ class ProjectProject(models.Model):
     to_invoice = fields.Boolean('Facturable', default=False)
     to_manage = fields.Boolean('Gestionable', default=False)
     last_invoice_date = fields.Date("Ultima factura", compute=_get_last_invoice_date)
-
+    invoice_ids = fields.One2many("account.invoice", "project_id", string="Facturas asociadas")
     date_DE = fields.Date("Fecha DE")
     date_CITT = fields.Date("Fecha CITT")
     date_resumen = fields.Date("Fecha resumen")
