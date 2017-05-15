@@ -411,11 +411,11 @@ class ProjectTask(models.Model):
     def write(self, vals):
         if self.user_id.id != self.env.user.id and self.env.user.id != 1 and \
                 not (self.new_activity_created and self.env.user in self.user_ids):
-
-            if 'stage_id' in vals:
+            import ipdb; ipdb.set_trace()
+            if 'stage_id' in vals :
                 new_vals = {'stage_id': vals['stage_id']}
                 return super(ProjectTask, self).write(new_vals)
-            else:
+            elif vals.keys() != ['description']:
                 raise ValidationError ("No tienes permisos para cambiar esta tarea")
 
 
