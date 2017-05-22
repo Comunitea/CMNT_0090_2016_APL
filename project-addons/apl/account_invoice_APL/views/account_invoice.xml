@@ -8,6 +8,7 @@
             <field name="arch" type="xml">
                 <field name="date_invoice" position="before">
                     <field name="project_id"/>
+                    <field name="estimated_date"/>
                 </field>
                 <field name="number" position="replace">
                     <field name="invoice_number"/>
@@ -39,6 +40,7 @@
             <field name="arch" type="xml">
                 <field name="date_invoice" position="before">
                     <field name="project_id"/>
+
                 </field>
                 <field name="number" position="replace">
                     <field name="invoice_number"/>

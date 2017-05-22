@@ -53,7 +53,7 @@ class ProjectProject(models.Model):
     def _get_last_invoice_date(self):
         for project in self:
 
-            domain = [('project_id', '=', project.id), ('state', 'in', ('open', 'paid')), ('type', '=', 'in_invoice')]
+            domain = [('project_id', '=', project.id), ('state', 'in', ('open', 'paid')), ('type', '=', 'out_invoice')]
             last_invoice = self.env['account.invoice'].search(domain, limit=1, order='date_invoice desc')
             if last_invoice:
                 project.last_invoice_date = last_invoice.date_invoice

@@ -26,7 +26,7 @@ class AccountInvoice(models.Model):
             invoice.amount_paid = 0.00
             if invoice.payment_ids:
                 for payment in invoice.payment_ids:
-                    invoice.paid_date = payment.payment_date
+                    invoice.payment_date = payment.payment_date
                     invoice.amount_paid += payment.amount
 
     def _compute_planned_activity_cost(self):
