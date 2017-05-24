@@ -20,8 +20,19 @@
             <field name="model">project.project</field>
             <field name="inherit_id" ref="project.edit_project"/>
             <field name="arch" type="xml">
+                 <xpath expr="//button[@name='toggle_active']" position="after">
+                     <button class="oe_stat_button" type="object"
+                            icon="fa-pencil-square-o"
+                            name="show_invoice" groups="account.group_account_user">
+                            <field string="Invoices" name="invoice_count" widget="statinfo"/>
+                    </button>
+                    <button class="oe_stat_button" type="object"
+                            name="show_invoice_purchase" icon="fa-pencil-square-o" groups="account.group_account_user">
+                            <field string="Purchase invoices" name="purchase_invoice_count" widget="statinfo"/>
+                    </button>
+                </xpath>
                 <xpath expr="//notebook/page[1]" position="after">
-                    <page string="Seguimiento Economico" groups="project.group_project_manager">
+                    <page string="Seguimiento Economico" groups="account.group_account_user">
                         <group>
 
                             <group>
@@ -63,13 +74,13 @@
 
 
                         </group>
-                            <group class="oe_subtotal_footer oe_right">
+                        <group class="oe_subtotal_footer oe_right">
 
-                                <field name="total_invoiced"/>
-                                <field name="total_base"/>
-                                <field name="total_paid" class="oe_subtotal_footer_separator"/>
-                                <field name="total_endowment" class="oe_subtotal_footer_separator"/>
-                            </group>
+                            <field name="total_invoiced"/>
+                            <field name="total_base"/>
+                            <field name="total_paid" class="oe_subtotal_footer_separator"/>
+                            <field name="total_endowment" class="oe_subtotal_footer_separator"/>
+                        </group>
 
 
                     </page>

@@ -33,6 +33,7 @@ class ProjectProject(models.Model):
     @api.multi
     def _get_total_amounts(self):
 
+
         for project in self:
             project.total_paid = 0
             project.total_endowment = 0
@@ -58,13 +59,13 @@ class ProjectProject(models.Model):
             if last_invoice:
                 project.last_invoice_date = last_invoice.date_invoice
 
-    purchase_invoice_count = fields.Integer ('Purchase Invoices', compute = "_get_purchase_invoice_count", groups='account.group_account_user')
-    invoice_count = fields.Integer('Purchase Invoices', compute="_get_invoice_count", groups='account.group_account_user')
+    purchase_invoice_count = fields.Integer ('Purchase Invoices', compute = "_get_purchase_invoice_count", groups="account.group_account_user")
+    invoice_count = fields.Integer('Purchase Invoices', compute="_get_invoice_count", groups="account.group_account_user")
 
     to_invoice = fields.Boolean('Facturable', default=False)
     to_manage = fields.Boolean('Gestionable', default=False)
-    last_invoice_date = fields.Date("Ultima factura", compute=_get_last_invoice_date)
-    invoice_ids = fields.One2many("account.invoice", "project_id", string="Facturas asociadas")
+    last_invoice_date = fields.Date("Ultima factura", compute=_get_last_invoice_date, groups="account.group_account_user")
+    invoice_ids = fields.One2many("account.invoice", "project_id", string="Facturas asociadas", groups="account.group_account_user")
     date_DE = fields.Date("Fecha DE")
     date_CITT = fields.Date("Fecha CITT")
     date_resumen = fields.Date("Fecha resumen")
@@ -73,16 +74,19 @@ class ProjectProject(models.Model):
     ci_per_cent = fields.Float("% CI", default="21")
     amount = fields.Float("Importe", digits=dp.get_precision('Account'))
 
-    total_endowment = fields.Float("Importe dotaciones", digits=dp.get_precision('Account'), compute=_get_total_amounts)
-    total_invoiced = fields.Float("Importe emitido", digits=dp.get_precision('Account'), compute=_get_total_amounts)
-    total_paid = fields.Float("Importe pagado", digits=dp.get_precision('Account'), compute=_get_total_amounts)
-    total_base = fields.Float("Importe previsto", digits=dp.get_precision('Account'), compute=_get_total_amounts)
+    total_endowment = fields.Float("Importe dotaciones", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
+    total_invoiced = fields.Float("Importe emitido", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
+    total_paid = fields.Float("Importe pagado", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
+    total_base = fields.Float("Importe previsto", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
 
     apl_state = fields.Many2one("project.aplstate", "Estado")
 
 
     @api.multi
     def show_invoice_purchase(self):
+
+
+        self.env['res']
         self.ensure_one()
         form_view_ref = self.env.ref('account.invoice_supplier_form', False)
         tree_view_ref = self.env.ref('account.invoice_supplier_tree', False)

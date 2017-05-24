@@ -87,27 +87,6 @@
 
         </record>
 
-        <record id="project_form_invoices_buttoms" model="ir.ui.view">
-            <field name="name">project.form.invoices.buttoms</field>
-            <field name="model">project.project</field>
-            <field name="inherit_id" ref="project.edit_project"/>
-
-            <field name="arch" type="xml">
-                <xpath expr="//button[@name='toggle_active']" position="after">
-                     <button class="oe_stat_button" type="object"
-                            icon="fa-pencil-square-o"
-                            name="show_invoice" groups="project.group_project_manager">
-                            <field string="Invoices" name="invoice_count" widget="statinfo"/>
-                    </button>
-                    <button class="oe_stat_button" type="object"
-                            name="show_invoice_purchase" icon="fa-pencil-square-o" groups="project.group_project_manager">
-                            <field string="Purchase invoices" name="purchase_invoice_count" widget="statinfo"/>
-                    </button>
-                </xpath>
-
-
-            </field>
-        </record>
 
         <record id="account_invoice_tree_with_project" model="ir.ui.view">
             <field name="name">account.invoice.tree.with.project</field>
