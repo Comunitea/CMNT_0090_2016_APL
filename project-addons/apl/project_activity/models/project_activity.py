@@ -559,10 +559,10 @@ class ProjectTask(models.Model):
     def write(self, vals):
 
 
-        if self.user_id.id != self.env.user.id and self.env.user.id != 1:
-            if 'date_start' in vals or \
-                            'date_end' in vals:
-                raise ValidationError ("No tienes permiso para hacer esto")
+        #if self.user_id.id != self.env.user.id and self.env.user.id != 1:
+        #    if 'date_start' in vals or \
+        #                    'date_end' in vals:
+        #        raise ValidationError ("No tienes permiso para hacer esto")
 
         #vals['date_st_day'] = vals.get('date_start', False)
 
