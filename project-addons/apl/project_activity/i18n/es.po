@@ -706,6 +706,11 @@ msgid "Tasks Costs"
 msgstr "Costes de tarea"
 
 #. module: project_activity
+#: model:ir.model.fields,field_description:project_activity.field_project_task_user_id
+msgid "Assigned To"
+msgstr "Responsable"
+
+#. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_task_amount_cost_ids
 msgid "Tasks Costs Amount"
 msgstr "Total de coste de tarea."
@@ -775,7 +780,7 @@ msgstr "Usar tareas como"
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.view_activity_filter
 msgid "User"
-msgstr "Usuario"
+msgstr "Responsable"
 
 #. module: project_activity
 #: model:ir.ui.view,arch_db:project_activity.layout_header

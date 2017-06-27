@@ -412,11 +412,11 @@ class ProjectTask(models.Model):
         if self.user_id.id != self.env.user.id and self.env.user.id != 1 and \
                 not (self.new_activity_created and self.env.user in self.user_ids):
 
-            if 'stage_id' in vals :
+            if 'stage_id' in vals:
                 new_vals = {'stage_id': vals['stage_id']}
                 return super(ProjectTask, self).write(new_vals)
-            elif vals.keys() != ['description']:
-                raise ValidationError ("No tienes permisos para cambiar esta tarea")
+            #elif vals.keys() != ['description']:
+            #    raise ValidationError ("No tienes permisos para cambiar esta tarea")
 
 
         for task in self:
@@ -429,9 +429,7 @@ class ProjectTask(models.Model):
             user_ids = task.getval(vals, 'user_ids', 'o2m')
             new_activity_created = task.getval(vals, 'new_activity_created', 'm2o')
             activity_id = task.getval(vals, 'activity_id', 'm2o')
-
             vals['task_day'] = fields.Date.from_string(date_start)
-
             if 'user_ids' in vals:
                 userf_ids = vals['user_ids'][0][2]
                 vals['message_follower_ids'] = task.refresh_follower_ids(new_follower_ids = userf_ids)
@@ -440,15 +438,12 @@ class ProjectTask(models.Model):
                 ok_calendar = True
             else:
                 ok_calendar = task.get_concurrent(user_ids, equipment_id, date_start, date_end)
-
             vals['ok_calendar'] = ok_calendar
-
             if 'stage_id' in vals:
                 stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
                 if not ok_calendar and not stage_id.default_draft:
                         raise ValidationError(
                             _('Error stage. Concurrent Task Error'))
-
 
         result = super(ProjectTask, self).write(vals)
         return result

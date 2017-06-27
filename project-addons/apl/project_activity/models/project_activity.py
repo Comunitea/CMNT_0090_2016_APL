@@ -381,10 +381,10 @@ class ProjectActivity(models.Model):
                                                'date_end': fields.Datetime.now(),
                                                'stage_id': activity.project_id.get_draft_stage()})
 
-
             if vals.get('project_id') and vals['project_id'] != activity.project_id.id:
                 stage_id = self.env['project.project'].browse(vals['project_id']).get_draft_stage()
-                activity.task_ids.write({'project_id': vals['project_id'],})
+                for task in activity.task_ids:
+                    task.project_id = vals['project_id']
 
         res = super(ProjectActivity, self).write(vals)
         return res
@@ -611,9 +611,11 @@ class ProjectTask(models.Model):
         if not self.project_id:
             raise UserError('Necesitas indicar un projecto')
 
-        if self.env.user not in self.user_ids and self.env.user.id != 1:
-            raise UserError('Not asigned user')
-
+        if self.env.user != self.user_id and \
+                        self.env.user not in self.user_ids and \
+                        self.env.user.id != 1:
+            raise UserError('No tienes permisos para esto. '
+                            'No eres responsable ni estás asignado')
         if len(self.user_ids) > 1:
             raise UserError('Solo puedes asignar un usuario')
 

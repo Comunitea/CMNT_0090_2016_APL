@@ -261,7 +261,7 @@
             <field name="model">project.task</field>
             <field name="inherit_id" ref="project.view_task_search_form"/>
              <field name="arch" type="xml">
-                <xpath expr="//field[@name='project_id']" position="after">
+                <xpath expr="//field[@name='project_id']" position="after">Not asigned user
                     <field name="activity_id" string="Actividad"/>
                     <field name="ok_calendar"/>
                     <field name="no_schedule"/>
@@ -299,7 +299,7 @@
                 </field>
                 <xpath expr="//button[@name='toggle_active']" position="before">
                     <button type="object" name="new_activity_from_task" string="New Activity" class="oe_stat_button" icon="fa-list"
-                            attrs="{'invisible': [('no_schedule', '=', False)]}">
+                            attrs="{'invisible': ['|', ('new_activity_created','!=', False), ('no_schedule', '=', False)]}">
                     </button>
                 </xpath>
 
@@ -388,6 +388,10 @@
                     </attribute>
 
                 </xpath>
+                <field name="user_id" position="replace">
+                    <field name="user_id" string="Responsable" invisible="context.get('user_invisible', False)"/>
+                </field>
+
                 <field name="project_id" position="after">
                     <field name="activity_id" invisible="context.get('user_invisible', False)"/>
                     <field name="real_cost" />
