@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <template id="my_layout" inherit_id="report.assets_pdf">
+            <xpath expr="//link[1]" position="after">
+                <link rel="stylesheet" href="/apl_hr/static/src/css/apl_css.css"/>
+
+            </xpath>
+        </template>
+        <template id="apl_task_report">
+            <t t-foreach="docs" t-as="o">
+            <div class="page">
+
+
+                    <div id="container">
+                        <div>
+                            <table class="apl_w_100 border_no">
+                                    <tr>
+                                        <td class="apl_w_33 border_no">
+                                            <img src="/apl_hr/static/src/img/logoaula.jpeg" style="width:400px"/>
+                                        </td>
+                                        <td class="apl_w_33 border_no"></td>
+                                        <td class="apl_w_33 border_no">
+                                            <img src="/apl_hr/static/src/img/logousc.jpeg" style="width:400px"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                        </div>
+                        <div id="apl">
+
+                                <table class="apl_100 border_yes apl_table">
+                                    <tr>
+                                        <td colspan="2">
+                                            TAREA:
+                                            <h3>
+                                            <span t-field="o.name"/>
+                                            [<span t-field="o.code"/>]
+                                            </h3>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <table class="apl_100 border_no apl_table">
+                                    <tr>
+                                        <td>Fecha programada: <span t-field="o.date_start"/></td>
+                                        <td>Proyecto: <span t-field="o.project_id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Duración:
+                                            <span t-field="o.planned_hours"/>
+                                            <strong><span t-field="o.state"/></strong>
+                                        </td>
+                                        <td>Actividad: <span t-field="o.activity_id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Responsable:
+                                            <table><tr><td>
+                                                <span t-field="o.user_id"/>
+                                            </td></tr></table>
+                                            Equipamiento
+                                            <table><tr><td>
+                                                <span t-field="o.equipment_id"/>
+                                            </td></tr></table>
+
+                                            <table><tr><td>
+                                                <span t-if="o.no_schedule">Sin agenda</span>
+                                            </td></tr></table>
+                                        </td>
+                                        <td>Asignado a:
+                                            <table>
+
+                                            <t t-foreach="o.user_ids" t-as="user_id">
+                                                <tr><td>
+                                                    <span t-field="user_id.name"/>
+                                                </td></tr>
+                                            </t>
+
+                                            </table>
+
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div style="font-size: 14px; padding-top: 20px;">
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <h3>Descripción</h3>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" class="border_yes">
+                                            <span t-field="o.description"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                                </div>
+
+
+                        </div>
+
+                    </div>
+
+
+
+
+        </div>  </t>
+</template>
+
+    </data>
+</openerp>

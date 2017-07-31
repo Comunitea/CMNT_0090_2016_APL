@@ -20,6 +20,7 @@
         'views/report_activity.xml',
         'wizard/project_activity_templates.xml',
         'data/project_activity_sequence.xml',
+        'report/task_report.xml',
     'security/ir.model.access.csv',
     ],
     "demo": [

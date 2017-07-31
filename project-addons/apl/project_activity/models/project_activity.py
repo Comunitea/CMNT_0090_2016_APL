@@ -9,7 +9,8 @@ from odoo.exceptions import UserError, ValidationError
 
 
 class TaskCosts(models.Model):
-    _name="project.task.cost"
+
+    _name = "project.task.cost"
 
     def _get_task_line_cost (self):
         for line in self:
@@ -22,7 +23,7 @@ class TaskCosts(models.Model):
                               string='Assigned to',
                               default=lambda self: self.env.uid,
                               index=True, track_visibility='always', copy = False)
-    quantity= fields.Float("Quantity")
+    quantity = fields.Float("Quantity")
     unit_cost = fields.Float("Unit Cost")
     line_cost = fields.Float("Line Cost", compute="_get_task_line_cost")
     template_cost = fields.Boolean("Template Cost", help="If true, this cost will be copied from template task")
@@ -37,25 +38,23 @@ class ProjectActivity(models.Model):
     _inherit = ['mail.thread', 'ir.needaction_mixin']
     _order = 'code ASC'
 
-    @api.multi
+    @api.one
     @api.depends('task_ids.real_cost')
     def _compute_task_cost(self):
 
-        for activity in self:
-            activity.task_cost = 0
-            for task in activity.task_ids:
-                if not task.new_activity_created:
-                    activity.task_cost += task.real_cost
-
+        self.task_cost = 0
+        for task in self.task_ids:
+                #if not task.new_activity_created:
+            self.task_cost += task.real_cost
 
     @api.multi
     @api.depends('task_ids.planned_cost')
     def _compute_planned_task_cost(self):
+        import ipdb; ipdb.set_trace()
         for activity in self:
             activity.planned_cost = 0
             for task in activity.task_ids:
-                if not task.new_activity_created:
-                    activity.planned_cost += task.planned_cost
+                activity.planned_cost += task.planned_cost
 
     def _compute_task_count(self):
         for project in self:
@@ -64,83 +63,15 @@ class ProjectActivity(models.Model):
     def _compute_dead_line(self):
         for activity in self:
             domain = [('activity_id', '=', activity.id), ('date_deadline', '!=', False)]
-            activity.date_deadline = self.env['project.task'].search(domain, order="date_deadline desc", limit = 1).date_deadline
+            activity.date_deadline = self.env['project.task'].\
+                search(domain, order="date_deadline desc", limit=1).date_deadline
 
     @api.one
     def _progress_get(self):
 
-        contador = 0
-        for task in self.task_ids:
-            if task.stage_id.default_done:
-                contador += 1
-
+        contador = len(self.task_ids.filtered(lambda x: x.default_done))
         progress = contador * 100
         self.progress = progress / (len(self.task_ids) or 1.0)
-
-    @api.depends('task_ids', 'task_ids.stage_id', 'project_id')
-    def _compute_stage_id(self):
-        return
-
-        for activity in self:
-            if activity.project_id:
-                done =0
-                draft=0
-
-                activity.stage_id = activity.project_id.get_draft_stage()
-                for task in activity.task_ids:
-
-                    if task.stage_id.default_done:
-                        done=+1
-                    elif task.stage_id.default_draft:
-                        draft += 1
-
-                if done == len(activity.task_ids):
-                    pass
-
-
-            else:
-                activity.stage_id = False
-
-
-    @api.depends('task_ids.stage_id', 'project_id.state')
-    def _compute_state(self):
-        return
-        for activity in self:
-
-            if activity.project_id.state=="closed":
-                activity.state="closed"
-
-            elif activity.progress ==1:
-                activity.state = "done"
-
-
-            else:
-                activity.state="draft"
-
-                for task in activity.task_ids:
-                    if task.stage_id.default_error:
-                        activity.state="error"
-
-                        break
-                    if task.stage_id.default_running:
-                        activity.state="progress"
-
-    @api.model
-    def _read_group_stage_ids(self, stages, domain, order):
-        search_domain = [('id', 'in', stages.ids)]
-        if 'default_project_id' in self.env.context:
-            search_domain = ['|', ('project_ids', '=', self.env.context['default_project_id'])] + search_domain
-        stage_ids = stages._search(search_domain, order=order, access_rights_uid=SUPERUSER_ID)
-        return stages.browse(stage_ids)
-
-    def _get_default_stage_id(self):
-        """ Gives default stage_id """
-
-        project_id = self.env.context.get('default_project_id')
-        if not project_id:
-            return False
-        stage_id = self.stage_find(project_id, [('fold', '=', False)])
-        return stage_id
 
     @api.one
     def _get_date_end(self):
@@ -151,21 +82,20 @@ class ProjectActivity(models.Model):
 
     @api.one
     def _get_default_user_id(self):
-
         self.user_id = self.project_id and self.project_id.user_id or self.env.user
 
     @api.one
     def _get_date_start(self):
 
-        search_domain = [('activity_id','=',self.id), ('date_start', '!=', False)]
-        task = self.env['project.task'].search(search_domain, order="date_start asc", limit = 1)
+        search_domain = [('activity_id', '=', self.id), ('date_start', '!=', False)]
+        task = self.env['project.task'].search(search_domain, order="date_start asc", limit=1)
         self.date_start = task.date_start if task else False
 
     @api.one
     def _get_long_code(self):
         try:
             if self.project_id:
-                self.long_code = "%s-%s"%(self.project_id.code , self.code)
+                self.long_code = "%s-%s"%(self.project_id.code, self.code)
                 return
         except:
             pass
@@ -189,19 +119,9 @@ class ProjectActivity(models.Model):
     user_id = fields.Many2one('res.users', string='Assigned to',default = _get_default_user_id,
                               index=True, track_visibility='always', required=True)
 
-    color = fields.Integer(string='Color Index', related="stage_id.color")
     progress = fields.Integer(compute='_progress_get', string='Tasks done')
     date_deadline = fields.Date(string='Deadline', compute="_compute_dead_line")
-    state = fields.Selection([
-        ('draft', 'Draft'),
-        ('progress', 'In Progress'),
-        ('done', 'Done'),
-        ('closed', 'Closed'),
-        ('error', 'Error')
-    ], compute="_compute_state")
-    #stage_id = fields.Many2one("project.task.type", compute="_compute_stage_id", store=True )
 
-    default_error = fields.Boolean(related="stage_id.default_error")
     planned_cost = fields.Float("Planned Cost", help="Planned cost: Sum planned task cost", compute ="_compute_planned_task_cost")
     real_cost = fields.Float("Real Cost", help="Activity Cost")
     task_cost = fields.Float("Task Cost", help = "Task Cost: Sum real task cost",compute="_compute_task_cost")
@@ -211,15 +131,7 @@ class ProjectActivity(models.Model):
     long_code = fields.Char("Complete Id", compute="_get_long_code")
     label_tasks = fields.Char(related="project_id.label_tasks")
     alias_id = fields.Many2one(related="project_id.alias_id")
-
-    stage_id = fields.Many2one('project.task.type', string='Stage', track_visibility='onchange', index=True,
-                               default=_get_default_stage_id, group_expand='_read_group_stage_ids',
-                               domain="[('project_ids', '=', project_id)]", copy=False,
-                               compute='_compute_stage_id', store=True)
-
     description = fields.Html(string='Description')
-    master_activity_id = fields.Many2one('project.activity', string="Template Activity", domain=[('is_template', '=', True)], copy= False)
-    is_template = fields.Boolean('Template activity', copy=True)
     parent_task_id = fields.Many2one('project.task', string="Parent task",
                                      help="This activity was created from this task")
 
@@ -240,47 +152,6 @@ class ProjectActivity(models.Model):
     def compute_task_cost(self):
         self._compute_task_cost()
 
-
-    @api.onchange('master_activity_id')
-    def onchange_master_activity_id(self):
-        if not self.master_activity_id:
-            return
-
-        #buscamos el default_stage para el projecto
-        domain=[('project_id','=', self.project_id), ('default_draft', '=', True)]
-        default_stage = self.env['project.task.type'].search(domain, limit =1)
-
-
-
-        tasks = self.env['project.task']
-
-        for task in self.master_activity_id.task_ids:
-            defaults = {'project_id': self.project_id.id,
-                        'activity_id': self.id,
-                        'name': task.name,
-                        'stage_id': default_stage and default_stage.id or False}
-
-            new_task = task.copy(defaults)
-            costs = self.env['project.task.cost']
-            for cost in task.cost_ids:
-                if cost.template_cost:
-                    defaults = {'task_id': new_task.id}
-                    new_cost = cost.copy(defaults)
-                    costs += new_cost
-
-            tasks += new_task
-            new_task.write({'cost_ids': [(6, 0, costs.ids)]})
-        # new_project.write({'tasks': [(6, 0, tasks.ids)]})
-        vals = {'stage_id': default_stage.id,
-                'project_id': self.project_id.id,
-                'name': self.master_activity_id.name,
-                'tag_ids': [(6, 0, self.master_activity_id.tag_ids)],
-                'task_ids': [(6, 0, tasks.ids)]}
-
-        self.write(vals)
-
-        return self
-
     @api.multi
     def copy(self, default):
         self.ensure_one()
@@ -297,7 +168,6 @@ class ProjectActivity(models.Model):
                                     timedelta(hours=int(task.planned_hours)),
                         'project_id': project_id}
             new_task = task.copy(defaults)
-            #new_task.name = "%s.%s"%(task.name, new_task.code.split('.')[1])
             tasks += new_task
 
         new_activity.write({'task_ids': [(6,0,[x.id for x in tasks])]})
@@ -309,7 +179,6 @@ class ProjectActivity(models.Model):
         activities = self.env['project.activity']
         tasks2 = self.env['project.task']
         new_project = self.browse(new_project_id)
-        default_stage_id = False
         min_sequence = 100
 
 
@@ -317,10 +186,9 @@ class ProjectActivity(models.Model):
             if activity.project_id:
                 default_stage_id = activity.project_id.get_first_stage()
 
-            default_activity= {
+            default_activity = {
                 'name':activity.name,
                 'project_id': new_project_id,
-                'state': 'draft',
             }
             new_activity = activity.copy(default_activity)
             activities += new_activity
@@ -336,56 +204,26 @@ class ProjectActivity(models.Model):
                 costs = self.env['project.task.cost']
                 for cost in task.cost_ids:
                     if cost.template_cost:
-                        defaults={'task_id': new_task.id}
+                        defaults = {'task_id': new_task.id}
                         new_cost = cost.copy(defaults)
                         costs += new_cost
 
                 tasks += new_task
-                new_task.write({'cost_ids': [(6,0,costs.ids)]})
+                new_task.write({'cost_ids': [(6, 0, costs.ids)]})
 
             tasks2 += tasks
-            #new_project.write({'tasks': [(6, 0, tasks.ids)]})
             new_activity.write({'task_ids': [(6, 0, tasks2.ids)]})
-
-
         return ({'activity_ids': [(6, 0, activities.ids)],
                            'tasks': [(6, 0, tasks2.ids)]})
 
-    def stage_find(self, section_id, domain=[], order='sequence'):
-        """ Override of the base.stage method
-            Parameter of the stage search taken from the lead:
-            - section_id: if set, stages must belong to this section or
-              be a default stage; if not set, stages must be default
-              stages
-        """
-        # collect all section_ids
-        section_ids = []
-        if section_id:
-            section_ids.append(section_id)
-        section_ids.extend(self.mapped('project_id').ids)
-        search_domain = []
-        if section_ids:
-            search_domain = [('|')] * (len(section_ids) - 1)
-            for section_id in section_ids:
-                search_domain.append(('project_ids', '=', section_id))
-        search_domain += list(domain)
-        # perform search, return the first found
-        return self.env['project.task.type'].search(search_domain, order=order, limit=1).id
 
     @api.multi
     def write(self, vals):
 
         for activity in self:
-            if 'stage_id' and activity.parent_task_id and False:
-                activity.parent_task_id.write({'date_start': fields.Datetime.now(),
-                                               'date_end': fields.Datetime.now(),
-                                               'stage_id': activity.project_id.get_draft_stage()})
-
-            if vals.get('project_id') and vals['project_id'] != activity.project_id.id:
-                stage_id = self.env['project.project'].browse(vals['project_id']).get_draft_stage()
+            if vals.get('project_id', False) != activity.project_id.id:
                 for task in activity.task_ids:
                     task.project_id = vals['project_id']
-
         res = super(ProjectActivity, self).write(vals)
         return res
 
@@ -394,7 +232,6 @@ class ProjectActivity(models.Model):
         for activity in self:
             for task in activity.task_ids:
                 task.unlink()
-
         return super(ProjectActivity, self).unlink()
 
 class ProjectTask(models.Model):
@@ -478,10 +315,9 @@ class ProjectTask(models.Model):
     code = fields.Char("Code", copy=False)
     long_code = fields.Char("Complete Id", compute="_get_long_code")
     no_schedule = fields.Boolean("No schedule", help='if check, task manager will created a new activity from this task', default = False)
-    new_activity_id = fields.Many2one("project.activity", string="Activity template", help ="New activity will be created from this task when done",
-                                      domain =[('is_template','=', True)])
+    new_activity_id = fields.Many2one("project.activity", string="Activity template", help ="New activity will be created from this task when done")
+
     new_activity_created = fields.Many2one("project.activity", string="Related activity", help ="New activity created from this task")
-    is_template = fields.Boolean(related='activity_id.is_template')
     user_id = fields.Many2one('res.users', string='Responsable',
                               index=True, track_visibility='always')
     default_draft = fields.Boolean(related='stage_id.default_draft')
@@ -517,19 +353,22 @@ class ProjectTask(models.Model):
     @api.onchange('planned_cost')
     def _onchange_planned_cost(self):
 
+        import ipdb; ipdb.set_trace()
+
         if self.real_cost == 0.00 and not self.new_activity_created:
             self.real_cost = self.planned_cost
 
+        self.activity_id._compute_planned_task_cost()
         if self.activity_id.parent_task_id:
-            self.activity_id._compute_planned_task_cost()
             self.activity_id.parent_task_id.planned_cost = self.activity_id.planned_cost
+            self.activity_id.parent_task_id.activity_id._compute_planned_task_cost()
 
     @api.onchange('real_cost')
     def _onchange_real_cost(self):
-
+        self.activity_id._compute_task_cost()
         if self.activity_id.parent_task_id:
-            self.activity_id._compute_task_cost()
             self.activity_id.parent_task_id.real_cost = self.activity_id.real_cost
+            self.activity_id.parent_task_id.activity_id._compute_task_cost()
 
     @api.onchange('date_start')
     def _onchange_dates(self):
@@ -625,7 +464,6 @@ class ProjectTask(models.Model):
         if not self.new_activity_created:
             default = {
                 'project_id': self.project_id.id,
-                'is_template': False,
                 'user_id': self.user_ids and self.user_ids[0].id or self.user_id.id,
                 'name': "%s/%s/%s"%(self.project_id.code, self.activity_id.code, self.code),
                 'parent_task_id': self.id
@@ -682,16 +520,16 @@ class ProjectProject(models.Model):
             if project.real_cost != 0:
                 project.task_cost = project.real_cost
             else:
-                for activity in project.activity_ids:
-                    project.task_cost += activity.task_cost
+                for task in project.task_ids:
+                    project.task_cost += task.real_cost
 
 
     def _compute_planned_activity_cost(self):
 
         for project in self:
             project.planned_cost = 0
-            for activity in project.activity_ids:
-                project.planned_cost += activity.planned_cost
+            for task in project.task_ids:
+                project.planned_cost += task.planned_cost
 
 
     def _compute_dead_line(self):
@@ -762,24 +600,23 @@ class ProjectProject(models.Model):
             task.user_id =self.user_id
 
 
-    @api.depends('activity_ids', 'activity_ids.stage_id')
+    @api.depends('task_ids', 'task_ids.stage_id')
     def _compute_stage_id(self):
 
         for project in self:
-
             start_stage_id = project.get_first_stage()
             last_stage_id = project.get_last_stage()
             run = False
             project.stage_id = start_stage_id
-            for activity in project.activity_ids:
-                if activity.stage_id.default_error:
-                    project.stage_id = activity.stage_id
+            for task in project.task_ids:
+                if task.stage_id.default_error:
+                    project.stage_id = task.stage_id
                     break
-                elif activity.stage_id.default_running:
-                    project.stage_id = activity.stage_id
+                elif task.stage_id.default_running:
+                    project.stage_id = task.stage_id
                     run = True
-                elif activity.stage_id == last_stage_id and not run:
-                    project.stage_id = activity.stage_id
+                elif task.stage_id == last_stage_id and not run:
+                    project.stage_id = task.stage_id
 
     def get_first_stage(self):
         domain = [('id', 'in', [v.id for v in self.type_ids])]
@@ -809,13 +646,8 @@ class ProjectProject(models.Model):
 
     @api.multi
     def copy(self, default=None):
-        if self.state != "template":
-            raise UserError(_('You only copy template project'))
-
 
         new_project = super(ProjectProject, self).copy(default)
-
-
         new_project.task_ids.unlink()
         new_project.activity_ids.unlink()
         activities = self.env['project.activity']
@@ -824,15 +656,12 @@ class ProjectProject(models.Model):
             default_activity = {
                 'name': activity.name,
                 'project_id': new_project.id,
-                'state': 'draft',
             }
             new_activity = activity.copy(default_activity)
             activities += new_activity
             tasks += new_activity.task_ids
-
             new_project.write({'activity_ids': [(6, 0, activities.ids)],
                                'tasks': [(6, 0, tasks.ids)]})
-
         return new_project
 
     def get_date_end(self):
@@ -847,21 +676,14 @@ class ProjectTaskType(models.Model):
         help='If you check this field, this stage will be proposed by default '
              'on each new project. It will not assign this stage to existing '
              'projects.')
-
     color = fields.Integer(
         string="Color",
         help="Choose your color"
     )
-
-
     default_error = fields.Boolean("Error stage", help="if check, this is an error stage")
     default_running = fields.Boolean("Runnning stage", help="if check, this is an running stage")
     default_draft = fields.Boolean("Draft stage", help="if check, this is a draft stage")
     default_done = fields.Boolean("Done stage", help="if check, this is an done stage")
-
-class AccountAnalyticLine(models.Model):
-    _inherit = 'account.analytic.line'
-
 
 
 class ReportProjectActivityTaskUser(models.Model):
@@ -873,7 +695,6 @@ class ReportProjectActivityTaskUser(models.Model):
         return super(ReportProjectActivityTaskUser, self)._select() + """,
             new_activity_created as new_activity_created
             """
-
     def _group_by(self):
         return super(ReportProjectActivityTaskUser, self)._group_by() + """,
             new_activity_created
