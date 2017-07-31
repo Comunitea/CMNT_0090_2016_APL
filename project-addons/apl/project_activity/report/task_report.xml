@@ -28,7 +28,7 @@
                         </div>
                         <div id="apl">
 
-                                <table class="apl_100 border_yes apl_table">
+                                <table width="100%" align="left" border="0" >
                                     <tr>
                                         <td colspan="2">
                                             TAREA:
@@ -39,7 +39,7 @@
                                         </td>
                                     </tr>
                                 </table>
-                                <table class="apl_100 border_no apl_table">
+                                <table width="100%" align="left" border="0">
                                     <tr>
                                         <td>Fecha programada: <span t-field="o.date_start"/></td>
                                         <td>Proyecto: <span t-field="o.project_id"/></td>
@@ -53,20 +53,20 @@
                                     </tr>
                                     <tr>
                                         <td>Responsable:
-                                            <table><tr><td>
+                                            <table border="0"><tr><td>
                                                 <span t-field="o.user_id"/>
                                             </td></tr></table>
                                             Equipamiento
-                                            <table><tr><td>
+                                            <table border="0"><tr><td>
                                                 <span t-field="o.equipment_id"/>
                                             </td></tr></table>
 
-                                            <table><tr><td>
+                                            <table border="0"><tr><td>
                                                 <span t-if="o.no_schedule">Sin agenda</span>
                                             </td></tr></table>
                                         </td>
                                         <td>Asignado a:
-                                            <table>
+                                            <table border="0">
 
                                             <t t-foreach="o.user_ids" t-as="user_id">
                                                 <tr><td>
@@ -80,7 +80,7 @@
                                     </tr>
                                 </table>
                                 <div style="font-size: 14px; padding-top: 20px;">
-                                <table>
+                                <table border="0" align="left" width="100%">
                                     <tr>
                                         <td>
                                             <h3>Descripción</h3>
