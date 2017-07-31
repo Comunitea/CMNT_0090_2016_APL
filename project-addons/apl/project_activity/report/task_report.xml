@@ -26,9 +26,10 @@
                                     </tr>
                                 </table>
                         </div>
+                        <div></div>
                         <div id="apl">
 
-                                <table width="100%" align="left" border="0" >
+                                <table width="100%" align="left" class="apl_w_100 border_no" >
                                     <tr>
                                         <td colspan="2">
                                             TAREA:
@@ -53,20 +54,20 @@
                                     </tr>
                                     <tr>
                                         <td>Responsable:
-                                            <table border="0"><tr><td>
+                                            <table class="border_no"><tr><td>
                                                 <span t-field="o.user_id"/>
                                             </td></tr></table>
                                             Equipamiento
-                                            <table border="0"><tr><td>
+                                            <table class="border_no"><tr><td>
                                                 <span t-field="o.equipment_id"/>
                                             </td></tr></table>
 
-                                            <table border="0"><tr><td>
+                                            <table class="border_no"><tr><td>
                                                 <span t-if="o.no_schedule">Sin agenda</span>
                                             </td></tr></table>
                                         </td>
                                         <td>Asignado a:
-                                            <table border="0">
+                                            <table class="border_no">
 
                                             <t t-foreach="o.user_ids" t-as="user_id">
                                                 <tr><td>
@@ -80,7 +81,7 @@
                                     </tr>
                                 </table>
                                 <div style="font-size: 14px; padding-top: 20px;">
-                                <table border="0" align="left" width="100%">
+                                <table class="apl_w_100 border_no">
                                     <tr>
                                         <td>
                                             <h3>Descripción</h3>
