@@ -9,102 +9,93 @@
         </template>
         <template id="apl_task_report">
             <t t-foreach="docs" t-as="o">
-            <div class="page">
-
-
+                <div class="page">
                     <div id="container">
                         <div>
-                            <table class="apl_w_100 border_no">
+                            <table class="apl_w_100">
                                     <tr>
-                                        <td class="apl_w_33 border_no">
-                                            <img src="/apl_hr/static/src/img/logoaula.jpeg" style="width:400px"/>
+                                        <td class="apl_w_33">
+                                            <img src="/project_activity/static/src/img/logoaula.jpeg" style="width:400px"/>
                                         </td>
-                                        <td class="apl_w_33 border_no"></td>
-                                        <td class="apl_w_33 border_no">
-                                            <img src="/apl_hr/static/src/img/logousc.jpeg" style="width:400px"/>
+                                        <td class="apl_w_33"></td>
+                                        <td class="apl_w_33">
+                                            <img src="/project_activity/static/src/img/logousc.jpeg" style="width:400px"/>
                                         </td>
                                     </tr>
                                 </table>
                         </div>
-                        <div></div>
-                        <div id="apl">
 
-                                <table width="100%" align="left" class="apl_w_100 border_no" >
-                                    <tr>
-                                        <td colspan="2">
-                                            TAREA:
-                                            <h3>
-                                            <span t-field="o.name"/>
-                                            [<span t-field="o.code"/>]
-                                            </h3>
-                                        </td>
-                                    </tr>
-                                </table>
-                                <table width="100%" align="left" border="0">
-                                    <tr>
-                                        <td>Fecha programada: <span t-field="o.date_start"/></td>
-                                        <td>Proyecto: <span t-field="o.project_id"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Duración:
-                                            <span t-field="o.planned_hours"/>
-                                            <strong><span t-field="o.state"/></strong>
-                                        </td>
-                                        <td>Actividad: <span t-field="o.activity_id"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Responsable:
-                                            <table class="border_no"><tr><td>
-                                                <span t-field="o.user_id"/>
-                                            </td></tr></table>
-                                            Equipamiento
-                                            <table class="border_no"><tr><td>
-                                                <span t-field="o.equipment_id"/>
-                                            </td></tr></table>
+                        <div>
+                            <table class="apl_w_100 border_yes" >
+                                <tr>
+                                    <td class="td_yellow">
+                                        TAREA:
+                                        <h3>
+                                        <span t-field="o.name"/>
+                                        [<span t-field="o.code"/>]
+                                        </h3>
+                                    </td>
+                                </tr>
+                            </table>
+                            <table class="apl_w_100">
+                                <tr>
+                                    <td>Fecha programada: <span t-field="o.date_start"/></td>
+                                    <td>Proyecto: <span t-field="o.project_id"/></td>
+                                </tr>
+                                <tr>
+                                    <td>Duración:
+                                        <span t-field="o.planned_hours"/>
+                                        <strong><span t-field="o.state"/></strong>
+                                    </td>
+                                    <td>Actividad: <span t-field="o.activity_id"/></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <table>
+                                            <tr><td>
+                                                Responsable:<span t-field="o.user_id"/>
+                                            </td></tr>
 
-                                            <table class="border_no"><tr><td>
+                                            <tr><td>
+                                                Equipamiento<span t-field="o.equipment_id"/>
+                                            </td></tr>
+                                            <tr><td>
                                                 <span t-if="o.no_schedule">Sin agenda</span>
-                                            </td></tr></table>
-                                        </td>
-                                        <td>Asignado a:
-                                            <table class="border_no">
-
+                                            </td></tr>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table>
+                                            <tr><td>
+                                                Asignado a:
+                                            </td></tr>
                                             <t t-foreach="o.user_ids" t-as="user_id">
-                                                <tr><td>
+                                                <tr><td align="right">
                                                     <span t-field="user_id.name"/>
                                                 </td></tr>
                                             </t>
-
-                                            </table>
-
-                                        </td>
-                                    </tr>
-                                </table>
-                                <div style="font-size: 14px; padding-top: 20px;">
-                                <table class="apl_w_100 border_no">
-                                    <tr>
-                                        <td>
-                                            <h3>Descripción</h3>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2" class="border_yes">
-                                            <span t-field="o.description"/>
-                                        </td>
-                                    </tr>
-                                </table>
-                                </div>
-
-
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div style="font-size: 14px; padding-top: 20px;"></div>
+                            <table class="apl_w_100">
+                                <tr>
+                                    <td>
+                                        <h3>Descripción</h3>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" class="border_yes">
+                                        <span t-field="o.description"/>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
-
                     </div>
+                </div>
+        </t>
+    </template>
 
-
-
-
-        </div>  </t>
-</template>
-
-    </data>
+</data>
 </openerp>

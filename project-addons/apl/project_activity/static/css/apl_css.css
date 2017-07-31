@@ -1,7 +1,5 @@
             #apl table, td {
-                border: solid 1px black;
                 border-collapse: collapse;
-                align: center;
                 margin: auto;
             }
             #apl tr{
@@ -10,7 +8,6 @@
             #apl td {padding: 10px;}
             #apl div {margin: 10px;}
             .apl_table {
-                border: solid 1px black;
                 border-collapse: collapse;
                 margin: 10px;
                 }
@@ -38,7 +35,6 @@
             .td_yellow{
                 background-color: #E9BC26;
                 width: 30%;
-                border-style: solid 1px black;
              }
             .apl_text12 {
                 font-size: 12px}
