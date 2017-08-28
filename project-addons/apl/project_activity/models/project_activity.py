@@ -50,7 +50,7 @@ class ProjectActivity(models.Model):
     @api.multi
     @api.depends('task_ids.planned_cost')
     def _compute_planned_task_cost(self):
-        import ipdb; ipdb.set_trace()
+    #    import ipdb; ipdb.set_trace()
         for activity in self:
             activity.planned_cost = 0
             for task in activity.task_ids:
@@ -353,7 +353,7 @@ class ProjectTask(models.Model):
     @api.onchange('planned_cost')
     def _onchange_planned_cost(self):
 
-        import ipdb; ipdb.set_trace()
+    #    import ipdb; ipdb.set_trace()
 
         if self.real_cost == 0.00 and not self.new_activity_created:
             self.real_cost = self.planned_cost
