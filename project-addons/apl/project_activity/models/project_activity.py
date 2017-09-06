@@ -221,9 +221,8 @@ class ProjectActivity(models.Model):
     def write(self, vals):
 
         for activity in self:
-            if vals.get('project_id', False) != activity.project_id.id:
-                for task in activity.task_ids:
-                    task.project_id = vals['project_id']
+            if vals.get('project_id', False):
+                activity.task_ids.write({'project_id', vals['project_id']})
         res = super(ProjectActivity, self).write(vals)
         return res
 
