@@ -44,14 +44,18 @@
             <field name="model">project.activity</field>
             <field eval="2" name="priority"/>
             <field name="arch" type="xml">
-                <tree
-                    string="Activities">
+                <tree string="Activities">
                     <field name="name"/>
                     <field name="project_id" invisible="context.get('user_invisible', False)"/>
+
                     <field name="progress" widget="progressbar" invisible="context.get('user_invisible', False)"/>
                     <field name="date_deadline" invisible="1"/>
                     <field name="date_start" invisible="0"/>
                     <field name="date_end" invisible="0"/>
+                    <field name="planned_cost" sum="Previsto"/>
+                    <field name="real_cost" sum="Real"/>
+                    <field name="budget_price" sum="Presupuestado"/>
+
 
                 </tree>
             </field>
@@ -193,8 +197,8 @@
                         <group  string="Costs">
                             <field name="budget_price"/>
                             <field name="planned_cost"/>
-                            <field name="real_cost" invisible="1"/>
-                            <field name="task_cost"/>
+                            <field name="real_cost"/>
+                            <field name="cost_balance"/>
                         </group>
                         <group string="Dates">
                             <field name="date_deadline" invisible="1"/>
@@ -282,9 +286,13 @@
                     <button type="object" name="new_activity_from_task" string="New Activity" class="oe_stat_button" icon="fa-list"
                             attrs="{'invisible': ['|', ('new_activity_created','!=', False), ('no_schedule', '=', False)]}">
                     </button>
+                     <button type="object" name="set_as_done" string="Realizada" class="oe_stat_button" icon="fa-check-square-o"
+                            attrs="{'invisible': [('default_running','!=', True)]}">
+                    </button>
                 </xpath>
 
                 <field name="project_id" position="after">
+                    <field name="default_running"/>
                     <field name="long_code" readonly="1" invisible="1"/>
                 </field>
 
@@ -332,18 +340,23 @@
                     </field>
                     <group>
                         <group>
+                            <field name="new_activity_planned_cost" invisible="1"/>
+                            <field name="new_activity_real_cost" invisible="1"/>
+                            <field name="task_planned_cost" attrs="{'invisible': [('new_activity_created','!=', False)]}"/>
+                            <field name="task_real_cost" attrs="{'invisible': [('new_activity_created','!=', False)]}"/>
+                            <field name="planned_cost" attrs="{'invisible': [('new_activity_created','==', False)]}"/>
+                            <field name="real_cost" attrs="{'invisible': [('new_activity_created','==', False)]}"/>
+                            <!--
+                            <field name="new_activity_planned_cost"/>
+                            <field name="new_activity_real_cost"/>
+                            <field name="task_planned_cost" attrs="{'invisible': [('new_activity_created','!=', False)]}"/>
+                            <field name="task_activity_real_cost" attrs="{'invisible': [('new_activity_created','!=', False)]}"/>
                             <field name="planned_cost" attrs="{'invisible': [('new_activity_created','!=', False)]}"/>
-                            <field name="real_cost"  attrs="{'invisible': [('new_activity_created','!=', False)]}"/>
-                            <field name="planned_cost_2" attrs="{'invisible': [('new_activity_created','=', False)]}"/>
-                            <field name="real_cost_2"  attrs="{'invisible': [('new_activity_created','=', False)]}"/>
-
+                            <field name="real_cost" attrs="{'invisible': [('new_activity_created','!=', False)]}"/>-->
                         </group>
-
                         <group>
                             <field name="real_cost_cal" invisible="1"/>
                         </group>
-
-
 
                     </group>
                     </page>
@@ -375,7 +388,8 @@
 
                 <field name="project_id" position="after">
                     <field name="activity_id" invisible="context.get('user_invisible', False)"/>
-                    <field name="real_cost" />
+                    <field name="real_cost" sum="Total Real"/>
+                    <field name="planned_cost" sum="Total previsto"/>
                     <field name="date_start"/>
                     <field name="date_end"/>
                     <field name="ok_calendar" invisible="1"/>
@@ -456,6 +470,22 @@
                 </p>
             </field>
        </record>
+       <record id="action_view_child_projects" model="ir.actions.act_window">
+            <field name="name">Project</field>
+            <field name="res_model">project.project</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('parent_project_id', '=', active_id)]</field>
+            <field name="context">{
+                'search_default_parent_project_id': [active_id],
+                'default_parent_project_id': active_id,
+            }</field>
+            <field name="search_view_id" ref="project.view_project_project_filter"/>
+            <field name="help" type="html">
+                <p>
+                    Odoo's project management allows you to manage project and activitties.
+                </p>
+            </field>
+       </record>
 
         <record id="open_form_project" model="ir.actions.act_window">
             <field name="name">open.form.project</field>
@@ -484,14 +514,9 @@
             <field name="arch" type="xml">
                 <field name="active" position="after">
                     <field name="code"/>
-
                 </field>
             </field>
         </record>
-
-
-
-
        <record id="view_project_project_activity_kanban" model="ir.ui.view">
             <field name="name">Project Kanban With Activity</field>
             <field name="model">project.project</field>
@@ -499,32 +524,37 @@
             <field name="arch" type="xml">
                 <field name="name" position="after">
                     <field name="activity_count" string ="Activity"/>
+                    <field name="child_project_ids_count" string ="Activity"/>
                     <field name="color_stage"/>
                     <field name="stage_id"/>
                     <field name="code"/>
 
                 </field>
                 <xpath expr="//div[@t-attf-class='#{kanban_color(record.color.raw_value)} oe_kanban_global_click']" position="attributes">
-                    <attribute name="t-attf-class">#{kanban_color(record.color_stage.raw_value)} oe_kanban_global_click</attribute>
+                    <attribute name="t-attf-class">
+                        #{kanban_color(record.color_stage.raw_value)} oe_kanban_global_click
+                    </attribute>
                 </xpath>
 
                 <xpath expr="//div[@class='o_kanban_primary_left']/div[1]" position="replace">
-
-                    <!--a name="%(open_form_project)d" type="action"-->
                         <div class="o_primary">
                             <span><t t-esc="record.code.value"/></span>
                             <span><t t-esc="record.name.value"/></span>
                         </div>
-                        <!--<div t-if="record.alias_name.value and record.alias_domain.value">
-                            <span><i class="fa fa-envelope"></i> <t t-esc="record.alias_id.value"/></span>
-                        </div>-->
-
                        <div class="text-muted">
                             <span ><t t-esc="record.stage_id.value"/></span>
-                        </div><!--/a-->
+                       </div>
                 </xpath>
-
-
+                <xpath expr="//div[@t-if='record.use_tasks.raw_value']" position="before">
+                    <div t-if="record.child_project_ids_count.raw_value &gt; 0" class="o_project_kanban_box">
+                        <div><span>
+                        <a name="%(action_view_child_projects)d" type="action">
+                            <span class="o_value"><t t-esc="record.child_project_ids_count.raw_value"/></span>
+                            <span class="o_label">Proyectos</span>
+                        </a></span>
+                        </div>
+                    </div>
+                </xpath>
                 <xpath expr="//div[@t-if='record.use_tasks.raw_value']" position="before">
                     <div class="o_project_kanban_box">
                         <div><span>
@@ -571,6 +601,10 @@
                             name="%(action_view_activity)d" icon="fa-tasks">
                             <field string="Activities" name="activity_count" widget="statinfo"/>
                     </button>
+                    <button class="oe_stat_button" type="action"
+                            name="%(action_view_child_projects)d" icon="fa-tasks">
+                            <field string="Sub projectos" name="child_project_ids_count" widget="statinfo"/>
+                    </button>
                 </xpath>
 
                 <xpath expr="//div[@class='oe_title']" position="after">
@@ -592,6 +626,8 @@
                                 <field name="partner_id" string="Customer"/>
                         </group>
                         <group>
+                            <field name="parent_project_id" readonly="1"/>
+                            <field name="child_project_ids" widget="many2many_tags" readonly="1"/>
                             <field name="project_type_apl_id"/>
                             <field name="finance_type"/>
                                 <label for="project_finance_apl_id" string=" " class="oe_inline"/>
@@ -600,27 +636,49 @@
                         </group>
                     </group>
                 </xpath>
+                <xpath expr="//group[@name='group_alias']/.." position="attributes">
+                    <attribute name="attrs">{'invisible': True}</attribute>
+                </xpath>
                 <xpath expr="//notebook/page[1]" position="after">
 
-                    <page string="Activities">
+                    <page string="Costes asociados">
                         <group string="Costes">
                             <group>
-                                <field name="planned_cost"/>
-
-
+                                <field name="project_budget_price" />
                             </group>
                             <group>
-                                <field name="task_cost"/>
-                                <field name="real_cost" />
+
                             </group>
                         </group>
+                        <group string="Costes asociados">
+                            <field name="child_project_ids_plus" nolabel="1">
+                                <tree>
+
+                                    <field name="name" string="Proyecto"/>
+                                    <field name="project_planned_cost"/>
+                                    <field name="project_real_cost" />
+                                    <field name="project_budget_price"/>
+                                    <field name="project_cost_balance"/>
+                                </tree>
+                            </field>
+                        </group>
+                         <group class="oe_subtotal_footer oe_right">
+                                <field name="planned_cost"/>
+                                <field name="real_cost"/>
+                                <field name="budget_price" />
+                                <field name="cost_balance" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </page>
+                    <page name="description_page" string="Notas">
+                            <field name="description" type="html"/>
+                            <div class="oe_clear"/>
                     </page>
                 </xpath>
             </field>
 
 
         </record>
-       <record id="view_task_kanban_with_activity" model="ir.ui.view">
+        <record id="view_task_kanban_with_activity" model="ir.ui.view">
             <field name="name">Task Kanban With Activity</field>
             <field name="model">project.task</field>
             <field name="inherit_id" ref="project.view_task_kanban"/>
@@ -641,7 +699,7 @@
                 </xpath>
 
             </field>
-       </record>
+        </record>
 
 
 

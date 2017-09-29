@@ -38,23 +38,26 @@ class ProjectActivity(models.Model):
     _inherit = ['mail.thread', 'ir.needaction_mixin']
     _order = 'code ASC'
 
-    @api.one
-    @api.depends('task_ids.real_cost')
-    def _compute_task_cost(self):
-
-        self.task_cost = 0
-        for task in self.task_ids:
-                #if not task.new_activity_created:
-            self.task_cost += task.real_cost
-
     @api.multi
-    @api.depends('task_ids.planned_cost')
-    def _compute_planned_task_cost(self):
-    #    import ipdb; ipdb.set_trace()
+    #@api.depends('task_ids.real_cost', 'task_ids.planned_cost', 'task_ids.stage_id', 'budget_price')
+    def _compute_costs(self):
         for activity in self:
-            activity.planned_cost = 0
+            real_cost = 0
+            planned_cost = 0
             for task in activity.task_ids:
-                activity.planned_cost += task.planned_cost
+                if task.stage_find(task.project_id.id, [('default_done', '=', True)]) == task.stage_id.id:
+                    real_cost += task.real_cost
+                if task.stage_id.id != task.stage_find(task.project_id.id, [('default_draft', '=', True)]):
+                    planned_cost += task.planned_cost
+
+            activity.real_cost = real_cost
+            activity.planned_cost = planned_cost
+            activity.cost_balance = activity.budget_price - real_cost
+
+    def compute_costs(self):
+        domain = [('task_ids', '!=', '[]')]
+        pool = self.env['project.activity'].search(domain)
+        pool._compute_costs()
 
     def _compute_task_count(self):
         for project in self:
@@ -122,16 +125,17 @@ class ProjectActivity(models.Model):
     progress = fields.Integer(compute='_progress_get', string='Tasks done')
     date_deadline = fields.Date(string='Deadline', compute="_compute_dead_line")
 
-    planned_cost = fields.Float("Planned Cost", help="Planned cost: Sum planned task cost", compute ="_compute_planned_task_cost")
-    real_cost = fields.Float("Real Cost", help="Activity Cost")
-    task_cost = fields.Float("Task Cost", help = "Task Cost: Sum real task cost",compute="_compute_task_cost")
+    planned_cost = fields.Float("Coste previsto", multi=True, help="Suma de los costes estimados de las tareas", compute ="_compute_costs")
+    real_cost = fields.Float("Coste real", multi=True, help="Suma de costes reales de las tareas",compute="_compute_costs")
     budget_price = fields.Float("Importe presupuestado")
+    cost_balance = fields.Float("Balance de costes", help="Coste presupuestado menos coste real",
+                                compute="_compute_costs", multi=True)
     use_tasks = fields.Boolean(related="project_id.use_tasks")
     code = fields.Char("Code", copy=False)
     long_code = fields.Char("Complete Id", compute="_get_long_code")
     label_tasks = fields.Char(related="project_id.label_tasks")
     alias_id = fields.Many2one(related="project_id.alias_id")
-    description = fields.Html(string='Description')
+    description = fields.Html(string='Notas del proyecto')
     parent_task_id = fields.Many2one('project.task', string="Parent task",
                                      help="This activity was created from this task")
 
@@ -149,8 +153,8 @@ class ProjectActivity(models.Model):
         return super(ProjectActivity, contextual_self).default_get(default_fields)
 
     @api.multi
-    def compute_task_cost(self):
-        self._compute_task_cost()
+    def compute_real_cost(self):
+        self._compute_real_cost()
 
     @api.multi
     def copy(self, default):
@@ -245,20 +249,30 @@ class ProjectTask(models.Model):
                 task.amount_cost_ids += cost.line_cost
 
     @api.multi
+    #@api.depends('real_cost', 'planned_cost', 'new_activity_created')
+    def _get_costs(self):
+        for task in self:
+            if task.new_activity_created:
+                task.planned_cost = task.new_activity_planned_cost
+                task.real_cost = task.new_activity_real_cost
+            else:
+                task.planned_cost = task.task_planned_cost
+                task.real_cost = task.task_real_cost
+
+    @api.multi
     @api.depends('real_cost', 'amount_cost_ids')
     def _get_real_cost_cal(self):
         for task in self:
             task.real_cost_cal = task.real_cost or task.amount_cost_ids
 
-    def _get_default_stage_id(self):
+
+    def _get_draft_stage_id(self):
         """ Gives default stage_id """
         #TODO Sobre escribo para
         project_id = self.env.context.get('default_project_id')
-        res = self.stage_find(project_id, [('fold', '=', False)])
-        stage = self.env['project.task.type'].browse(res).default_draft
-        if not stage:
-            res = self.env['project.task.type'].search([('default_draft','=',True)], order = 'sequence,id ASC', limit = 1).id
-        return res
+        if not project_id:
+            return False
+        return self.stage_find(project_id, [('default_draft', '=', True)])
 
     @api.multi
     @api.depends('stage_id')
@@ -266,13 +280,13 @@ class ProjectTask(models.Model):
 
         for task in self:
             if task.stage_id.default_draft:
-                task.state="draft"
+                task.state = "draft"
             if task.stage_id.default_error:
-                task.state="error"
+                task.state = "error"
             if task.stage_id.default_done:
-                task.state="done"
+                task.state = "done"
             if task.stage_id.default_running:
-                task.state="progress"
+                task.state = "progress"
 
     @api.one
     def _get_long_code(self):
@@ -293,24 +307,34 @@ class ProjectTask(models.Model):
         ('error', 'Error'),
     ], compute = "_get_task_state", store=True)
 
-    activity_id = fields.Many2one("project.activity", string ="Activity", domain=[('project_id', '=', 'project_id.id')])
+    activity_id = fields.Many2one("project.activity", string="Activity", domain=[('project_id', '=', 'project_id.id')])
     color = fields.Integer(related="stage_id.color")
 
-    planned_cost = fields.Float ("Planned Cost", help="Planned cost", required=True)
-    planned_cost_2 = fields.Float(related="new_activity_created.planned_cost", string="Coste previsto")
-    real_cost = fields.Float("Real Cost", help ="Real cost (after task finish)")
-    real_cost_2 = fields.Float(related="new_activity_created.task_cost", string="Coste real")
+    planned_cost = fields.Float ("Coste previsto", help="Coste previsto inicialmente de la tarea",
+                                 compute=_get_costs, multi=True,
+                                 )
+    real_cost = fields.Float("Coste real", help="Coste real de la tarea.\nDebería ser confirmado una vez finalizada",
+                             compute=_get_costs, multi=True,
+                             )
+
+    new_activity_planned_cost = fields.Float(related="new_activity_created.planned_cost", string="Coste previsto",
+                                             help="Coste previsto inicialmente de la tarea. Heredado de la actividad asociada")
+    new_activity_real_cost = fields.Float(related="new_activity_created.real_cost", string="Coste real", help="Coste real de la tarea.\nHeredado de la actividad asociada")
+    task_planned_cost = fields.Float("Coste previsto", help="Coste previsto inicialmente de la tarea", required=True)
+    task_real_cost = fields.Float("Coste real", help="Coste real de la tarea.\nDebería ser confirmado una vez finalizada")
+
     real_cost_cal = fields.Float("Real Cost Cal", help="Real cost or amount_cost_ids",
                                  compute='_get_real_cost_cal')
+
     cost_ids = fields.One2many("project.task.cost", "task_id", string="Tasks Costs")
     amount_cost_ids = fields.Float("Tasks Costs Amount", compute="_get_task_costs")
     #sobre escribo date_start para poner el valor por defecto y required = True
     date_start = fields.Datetime(string='Starting Date',
                                  default=fields.Datetime.now,
-                                 index=True, copy=False, required = True)
+                                 index=True, copy=False, required=True)
     date_end = fields.Datetime(string='Ending Date', index=True,
                                default=fields.Datetime.now,
-                               copy=False,required = True)
+                               copy=False,required=True)
     code = fields.Char("Code", copy=False)
     long_code = fields.Char("Complete Id", compute="_get_long_code")
     no_schedule = fields.Boolean("No schedule", help='if check, task manager will created a new activity from this task', default = False)
@@ -321,53 +345,44 @@ class ProjectTask(models.Model):
                               index=True, track_visibility='always')
     default_draft = fields.Boolean(related='stage_id.default_draft')
     default_done = fields.Boolean(related='stage_id.default_done')
+    default_running = fields.Boolean(related='stage_id.default_running')
     ok_calendar = fields.Boolean("Ok Calendar", default=True)
+
     #date_st_day = fields.Date(string="Dia de la tarea")
+    stage_id = fields.Many2one('project.task.type', string='Stage', track_visibility='onchange', index=True,
+                               default=_get_draft_stage_id, group_expand='_read_group_stage_ids',
+                               domain="[('project_ids', '=', project_id)]", copy=False)
+
 
     @api.onchange('project_id')
     def _onchange_project(self):
         x = super(ProjectTask,self)._onchange_project()
 
         if self.project_id:
+            self.stage_id = self.stage_find(self.project_id.id, [('default_draft', '=', True)])
             x = {'domain': {'activity_id': [('project_id', '=', self.project_id.id)]},
                  }
             if self.activity_id.project_id.id != self.project_id.id:
                 self.activity_id = False
         return x
 
-    @api.constrains('planned_cost')
+    @api.constrains('task_planned_cost')
     def _check_costs(self):
-
-        if self.planned_cost <= 0.00:
+        if self.task_planned_cost <= 0.00 and not self.new_activity_created:
             raise ValidationError(_('Error! Check planned cost'))
 
     @api.onchange('planned_hours')
     def _onchange_planned_hours(self):
-
         start_dt = fields.Datetime.from_string(self.date_start)
         end_dt = start_dt + timedelta(minutes=(self.planned_hours - int(self.planned_hours)) * 60) + timedelta(
             hours=int(self.planned_hours))
         self.date_end = end_dt
 
-    @api.onchange('planned_cost')
+    @api.onchange('task_planned_cost')
     def _onchange_planned_cost(self):
+        if self.task_real_cost == 0.00:
+            self.task_real_cost = self.task_planned_cost
 
-    #    import ipdb; ipdb.set_trace()
-
-        if self.real_cost == 0.00 and not self.new_activity_created:
-            self.real_cost = self.planned_cost
-
-        self.activity_id._compute_planned_task_cost()
-        if self.activity_id.parent_task_id:
-            self.activity_id.parent_task_id.planned_cost = self.activity_id.planned_cost
-            self.activity_id.parent_task_id.activity_id._compute_planned_task_cost()
-
-    @api.onchange('real_cost')
-    def _onchange_real_cost(self):
-        self.activity_id._compute_task_cost()
-        if self.activity_id.parent_task_id:
-            self.activity_id.parent_task_id.real_cost = self.activity_id.real_cost
-            self.activity_id.parent_task_id.activity_id._compute_task_cost()
 
     @api.onchange('date_start')
     def _onchange_dates(self):
@@ -404,22 +419,20 @@ class ProjectTask(models.Model):
 
         #vals['date_st_day'] = vals.get('date_start', False)
 
-        if vals.get('real_cost', False):
-            if self.activity_id.parent_task_id:
-                self.activity_id.parent_task_id.real_cost = self.activity_id.task_cost
+        #if vals.get('real_cost', False):
+        #    if self.activity_id.parent_task_id:
+        #        self.activity_id.parent_task_id.real_cost = self.activity_id.real_cost
 
-        if vals.get('planned_cost', False):
-            if self.activity_id.parent_task_id:
-                self.activity_id.parent_task_id.planned_cost = self.activity_id.planned_cost
+        #if vals.get('planned_cost', False):
+        #    if self.activity_id.parent_task_id:
+        #        self.activity_id.parent_task_id.planned_cost = self.activity_id.planned_cost
 
-        for task in self:
-            if vals.get('project_id'):
-                stage_id = self.env['project.project'].browse(vals.get('project_id')).get_draft_stage()
-                vals['stage_id'] = stage_id
+        #for task in self:
+        #    if vals.get('project_id'):
+        #        stage_id = self.env['project.project'].browse(vals.get('project_id')).get_draft_stage()
+        #        vals['stage_id'] = stage_id
 
-        result = super(ProjectTask, self).write(vals)
-
-        return result
+        return super(ProjectTask, self).write(vals)
 
     @api.multi
     def copy(self, default):
@@ -482,6 +495,33 @@ class ProjectTask(models.Model):
 
         return True
 
+    def set_as_done(self):
+        allowed_users = self.get_users()
+        if self.env.user in allowed_users:
+            ctx = self._context.copy()
+            ctx.update({'tracking_disable': True})
+            self.sudo().with_context(ctx).write({'stage_id': self.stage_find(self.project_id.id, [('default_done','=', True)])})
+            self.sudo().write({'date_end': fields.Datetime.now()})
+
+            body = _('%s ha marcado la tarea como finalizada.') % (self.env.user.name)
+            # TODO change SUPERUSER_ID into user.id but catch errors
+            return self.message_post(body=body)
+
+
+    def get_users(self):
+        users = []
+        for user in self.user_ids:
+            users.append(user)
+        users.append(self.project_id.user_id)
+        users.append(self.activity_id.user_id)
+        users = list(set(users))
+        return users
+
+    def compute_costs(self):
+        pool = self.env['project.task'].search([('id','!=', '0')])
+        pool._get_task_costs()
+
+
 class ProjectAplType(models.Model):
     _name="project.type.apl"
 
@@ -503,6 +543,17 @@ class ProjectProject(models.Model):
     _inherit = "project.project"
     _order = 'code ASC'
 
+    def get_childs_plus(self):
+        for project in self:
+            child_project_ids_plus = [project.id]
+            if project.child_project_ids:
+                child_project_ids_plus += [x.id for x in project.child_project_ids]
+            project.child_project_ids_plus = [(6, 0, child_project_ids_plus)]
+
+    def _compute_child_projects_count(self):
+        for project in self:
+            project.child_project_ids_count = len(project.child_project_ids)
+
     def _compute_activity_count(self):
         for project in self:
             project.activity_count = len(project.activity_ids)
@@ -512,24 +563,45 @@ class ProjectProject(models.Model):
             ('case_default', '=', True)])
         return ids
 
-    def _compute_activity_cost(self):
+    @api.multi
+    #@api.depends('task_ids.real_cost', 'task_ids.planned_cost', 'task_ids.stage_id', 'budget_price')
+    def _compute_costs(self):
 
         for project in self:
-            project.task_cost = 0
-            if project.real_cost != 0:
-                project.task_cost = project.real_cost
-            else:
-                for task in project.task_ids:
-                    project.task_cost += task.real_cost
+            real_cost = 0
+            planned_cost = 0
+            budget_price = 0
+            tasks = project.task_ids.filtered(lambda x: not x.new_activity_created)
+            for task in tasks:
+                if task.stage_find(project.id, [('default_done', '=', True)]) == task.stage_id.id:
+                    real_cost += task.real_cost
+                planned_cost += task.planned_cost
+            project.project_real_cost = real_cost
+            project.project_planned_cost = planned_cost
+            project.project_cost_balance = project.project_budget_price - project.project_real_cost
 
 
-    def _compute_planned_activity_cost(self):
+    @api.multi
+    def _compute_child_costs(self):
 
         for project in self:
-            project.planned_cost = 0
-            for task in project.task_ids:
-                project.planned_cost += task.planned_cost
+            real_cost = 0
+            planned_cost = 0
+            budget_price = 0
+            for sub in project.child_project_ids_plus:
+                real_cost += sub.project_real_cost
+                planned_cost += sub.project_planned_cost
+                budget_price += sub.project_budget_price
+            project.real_cost = real_cost
+            project.planned_cost = planned_cost
+            project.budget_price = budget_price
+            project.cost_balance = project.budget_price - project.real_cost
 
+
+    def compute_costs(self):
+        domain = [('task_ids', '!=', '[]')]
+        pool = self.env['project.project'].search(domain)
+        pool._compute_costs()
 
     def _compute_dead_line(self):
         for project in self:
@@ -555,13 +627,10 @@ class ProjectProject(models.Model):
         column1='project_id', column2='type_id', string='Tasks Stages',
         default=_get_type_common)
 
-    activity_ids = fields.One2many('project.activity', 'project_id', string = "Activities")
+    activity_ids = fields.One2many('project.activity', 'project_id', string="Activities")
     activity_count = fields.Integer(compute='_compute_activity_count', string="Activities")
 
-    planned_cost = fields.Float("Planned Cost", help="Planned cost: Sum planned activity cost",
-                                compute="_compute_planned_activity_cost")
-    real_cost = fields.Float("Real Cost", help="Project Cost", copy=False)
-    task_cost = fields.Float("Task Cost", help="Activities Cost: Sum real activities cost", compute="_compute_activity_cost")
+
     state = fields.Selection([
         ('template', 'Template'),
         ('draft', 'Draft'),
@@ -580,10 +649,35 @@ class ProjectProject(models.Model):
     project_finance_apl_id = fields.Many2one("project.finance.apl", string="Finance type", domain=[('type', '=','finance_type')])
     long_name = fields.Char("Long name")
 
+    planned_cost = fields.Float("Coste previsto", help="Suma de los costes estimados de las tareas",
+                                multi=True, compute="_compute_child_costs")
+    real_cost = fields.Float("Coste real", help="Suma de costes reales de las tareas",
+                             multi=True, compute="_compute_child_costs")
+    cost_balance = fields.Float("Balance de costes", help="Coste presupuestado menos coste real",
+                                multi=True, compute="_compute_child_costs")
+    budget_price = fields.Float("Importe presupuestado", multi=True, compute="_compute_child_costs")
+
+    project_planned_cost = fields.Float("Coste previsto", help="Suma de los costes estimados de las tareas",
+                                multi=True, compute="_compute_costs")
+    project_real_cost = fields.Float("Coste real", help="Suma de costes reales de las tareas",
+                             multi=True, compute="_compute_costs")
+    project_cost_balance = fields.Float("Balance de costes", help="Coste presupuestado menos coste real",
+                                multi=True, compute="_compute_costs")
+    project_budget_price = fields.Float("Importe presupuestado")
+
     color_stage = fields.Integer(string='Color Index', related="stage_id.color")
     stage_id = fields.Many2one('project.task.type', compute="_compute_stage_id", string='Project Stage')
     user_ids = fields.Many2many('res.users', string='Externos Permitidos',
                                 index=True, track_visibility='always')
+    description = fields.Html(string='Description')
+
+    parent_project_id = fields.Many2one('project.project', string="Project padre")
+    child_project_ids = fields.One2many('project.project', 'parent_project_id', string="Sub Proyectos",
+                                        help ="Projectos derivados:\n"
+                                              "Seguimiento económico está relacionado con el proyecto padre\n"
+                                              "Los costes repercuten en el proyecto padre")
+    child_project_ids_plus = fields.One2many('project.project', compute="get_childs_plus")
+    child_project_ids_count = fields.Integer(compute='_compute_child_projects_count', string="Nº de Sub proyectos")
 
 
 

@@ -35,14 +35,6 @@ class MaintenanceRequest(models.Model):
 
                 }
                 new_request = self.copy(vals)
-
-
-
-
-
-
-
-
         return res
 
 class MaintenanceEquipment(models.Model):
@@ -409,41 +401,44 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
-        if self.user_id.id != self.env.user.id and self.env.user.id != 1 and \
-                not (self.new_activity_created and self.env.user in self.user_ids):
+        if False:
+            if self.user_id.id != self.env.user.id and self.env.user.id != 1 and \
+                    not (self.new_activity_created and self.env.user in self.user_ids):
 
-            if 'stage_id' in vals:
-                new_vals = {'stage_id': vals['stage_id']}
-                return super(ProjectTask, self).write(new_vals)
+                if 'stage_id' in vals and len(vals) > 1:
+                    new_vals = {'stage_id': vals['stage_id']}
+                    return super(ProjectTask, self).write(new_vals)
+
             #elif vals.keys() != ['description']:
             #    raise ValidationError ("No tienes permisos para cambiar esta tarea")
 
+        if self.stage_find(self.project_id.id, [('default_running', '=', True)]) == vals.get('stage_id', False):
+            print "COMPRUEBO DISPONIBLIDAD"
+            for task in self:
+                project_id = task.getval(vals, 'project_id', 'm2o')
+                equipment_id = task.getval(vals, 'equipment_id', 'm2o')
+                no_schedule = task.getval(vals, 'no_schedule')
+                date_start = task.getval(vals, 'date_start')
+                date_end = task.getval(vals, 'date_end')
+                new_activity_id = task.getval(vals, 'new_activity_id', 'm2o')
+                user_ids = task.getval(vals, 'user_ids', 'o2m')
+                new_activity_created = task.getval(vals, 'new_activity_created', 'm2o')
+                activity_id = task.getval(vals, 'activity_id', 'm2o')
+                vals['task_day'] = fields.Date.from_string(date_start)
+                if 'user_ids' in vals:
+                    userf_ids = vals['user_ids'][0][2]
+                    vals['message_follower_ids'] = task.refresh_follower_ids(new_follower_ids = userf_ids)
 
-        for task in self:
-            project_id = task.getval(vals, 'project_id', 'm2o')
-            equipment_id = task.getval(vals, 'equipment_id', 'm2o')
-            no_schedule = task.getval(vals, 'no_schedule')
-            date_start = task.getval(vals, 'date_start')
-            date_end = task.getval(vals, 'date_end')
-            new_activity_id = task.getval(vals, 'new_activity_id', 'm2o')
-            user_ids = task.getval(vals, 'user_ids', 'o2m')
-            new_activity_created = task.getval(vals, 'new_activity_created', 'm2o')
-            activity_id = task.getval(vals, 'activity_id', 'm2o')
-            vals['task_day'] = fields.Date.from_string(date_start)
-            if 'user_ids' in vals:
-                userf_ids = vals['user_ids'][0][2]
-                vals['message_follower_ids'] = task.refresh_follower_ids(new_follower_ids = userf_ids)
-
-            if no_schedule:
-                ok_calendar = True
-            else:
-                ok_calendar = task.get_concurrent(user_ids, equipment_id, date_start, date_end)
-            vals['ok_calendar'] = ok_calendar
-            if 'stage_id' in vals:
-                stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
-                if not ok_calendar and not stage_id.default_draft:
-                        raise ValidationError(
-                            _('Error stage. Concurrent Task Error'))
+                if no_schedule:
+                    ok_calendar = True
+                else:
+                    ok_calendar = task.get_concurrent(user_ids, equipment_id, date_start, date_end)
+                vals['ok_calendar'] = ok_calendar
+                if 'stage_id' in vals:
+                    stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
+                    if not ok_calendar and not stage_id.default_draft:
+                            raise ValidationError(
+                                _('Error stage. Concurrent Task Error'))
 
         result = super(ProjectTask, self).write(vals)
         return result

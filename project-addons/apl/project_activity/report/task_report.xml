@@ -3,8 +3,7 @@
     <data>
         <template id="my_layout" inherit_id="report.assets_pdf">
             <xpath expr="//link[1]" position="after">
-                <link rel="stylesheet" href="/apl_hr/static/src/css/apl_css.css"/>
-
+                <link rel="stylesheet" href="/project_activity/static/src/css/apl_css.css"/>
             </xpath>
         </template>
         <template id="apl_task_report">

@@ -56,7 +56,7 @@ msgid "Activities"
 msgstr "Actividades"
 
 #. module: project_activity
-#: model:ir.model.fields,help:project_activity.field_project_project_task_cost
+#: model:ir.model.fields,help:project_activity.field_project_project_real_cost
 msgid "Activities Cost: Sum real activities cost"
 msgstr "Coste de las Actividades: Suma del coste real de las actividades o suma de los costes asociados a las tareas"
 
@@ -109,7 +109,7 @@ msgid "Asociated Costs"
 msgstr "Costes asociados"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_user_id
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_user_id
 #: model:ir.ui.view,arch_db:project_activity.activity_report_document
 msgid "Assigned to"
 msgstr "Responsable"
@@ -211,7 +211,7 @@ msgstr "Crear plantillas de actividad"
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_create_uid
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_create_uid
 #: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_create_uid
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_create_uid
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_create_uid
 #: model:ir.model.fields,field_description:project_activity.field_project_type_apl_create_uid
 msgid "Created by"
 msgstr "Creado por"
@@ -220,7 +220,7 @@ msgstr "Creado por"
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_create_date
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_create_date
 #: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_create_date
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_create_date
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_create_date
 #: model:ir.model.fields,field_description:project_activity.field_project_type_apl_create_date
 msgid "Created on"
 msgstr "Creado el"
@@ -257,7 +257,7 @@ msgstr "Descripción"
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_display_name
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_display_name
 #: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_display_name
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_display_name
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_display_name
 #: model:ir.model.fields,field_description:project_activity.field_project_type_apl_display_name
 msgid "Display Name"
 msgstr "Nombre a mostrar"
@@ -356,13 +356,13 @@ msgstr "Aquí, puedes crear nuevas tareas"
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_id
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_id
 #: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_id
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_id
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_id
 #: model:ir.model.fields,field_description:project_activity.field_project_type_apl_id
 msgid "ID"
 msgstr "ID"
 
 #. module: project_activity
-#: model:ir.model.fields,help:project_activity.field_project_task_cost_template_cost
+#: model:ir.model.fields,help:project_activity.field_project_real_cost_template_cost
 msgid "If true, this cost will be copied from template task"
 msgstr "Si esta marcado, este coste sera copiado desde la plantilla"
 
@@ -396,7 +396,7 @@ msgstr "Es una plantilla"
 #: model:ir.model.fields,field_description:project_activity.field_project_activity___last_update
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz___last_update
 #: model:ir.model.fields,field_description:project_activity.field_project_finance_apl___last_update
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost___last_update
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost___last_update
 #: model:ir.model.fields,field_description:project_activity.field_project_type_apl___last_update
 msgid "Last Modified on"
 msgstr "Última modificación en"
@@ -405,7 +405,7 @@ msgstr "Última modificación en"
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_write_uid
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_write_uid
 #: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_write_uid
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_write_uid
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_write_uid
 #: model:ir.model.fields,field_description:project_activity.field_project_type_apl_write_uid
 msgid "Last Updated by"
 msgstr "Última actualización por"
@@ -414,13 +414,13 @@ msgstr "Última actualización por"
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_template_wz_write_date
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_write_date
 #: model:ir.model.fields,field_description:project_activity.field_project_finance_apl_write_date
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_write_date
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_write_date
 #: model:ir.model.fields,field_description:project_activity.field_project_type_apl_write_date
 msgid "Last Updated on"
 msgstr "Última actualización el"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_line_cost
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_line_cost
 msgid "Line Cost"
 msgstr "Coste asociado"
 
@@ -538,7 +538,7 @@ msgid "Private"
 msgstr "Privado"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_product_id
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_product_id
 msgid "Product id"
 msgstr "Producto"
 
@@ -594,7 +594,7 @@ msgid "Public"
 msgstr "Publico"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_quantity
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_quantity
 msgid "Quantity"
 msgstr "Cantidad"
 
@@ -603,12 +603,12 @@ msgstr "Cantidad"
 #: model:ir.model.fields,field_description:project_activity.field_project_project_real_cost
 #: model:ir.model.fields,field_description:project_activity.field_project_task_real_cost
 msgid "Real Cost"
-msgstr "Coste Real "
+msgstr "Coste real "
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_task_real_cost_cal
 msgid "Real Cost Cal"
-msgstr "Coste Real (calculado)"
+msgstr "Coste real (calculado)"
 
 #. module: project_activity
 #: model:ir.model.fields,help:project_activity.field_project_task_real_cost
@@ -670,13 +670,13 @@ msgid "Task"
 msgstr "Tarea"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_activity_task_cost
-#: model:ir.model.fields,field_description:project_activity.field_project_project_task_cost
+#: model:ir.model.fields,field_description:project_activity.field_project_activity_real_cost
+#: model:ir.model.fields,field_description:project_activity.field_project_project_real_cost
 msgid "Task Cost"
 msgstr "Coste de la tarea"
 
 #. module: project_activity
-#: model:ir.model.fields,help:project_activity.field_project_activity_task_cost
+#: model:ir.model.fields,help:project_activity.field_project_activity_real_cost
 msgid "Task Cost: Sum real task cost"
 msgstr "Coste de la tarea. Suma de la costes reales de las tareas o de los costes asociados a la tarea"
 
@@ -686,7 +686,7 @@ msgid "Task Stage"
 msgstr "Etapa de la tarea"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_task_id
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_task_id
 msgid "Task id"
 msgstr "Tarea"
 
@@ -701,7 +701,7 @@ msgid "Tasks"
 msgstr "Tareas"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_ids
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_ids
 msgid "Tasks Costs"
 msgstr "Costes de tarea"
 
@@ -741,7 +741,7 @@ msgid "Template Activity"
 msgstr "Plantilla de actividad"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_template_cost
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_template_cost
 msgid "Template Cost"
 msgstr "Plantilla de coste"
 
@@ -763,7 +763,7 @@ msgid "Type"
 msgstr "Tipo"
 
 #. module: project_activity
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_unit_cost
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_unit_cost
 msgid "Unit Cost"
 msgstr "Coste unitario"
 
@@ -874,7 +874,7 @@ msgstr "Si esta marcado, es estado en proceso"
 
 #. module: project_activity
 #: model:ir.model.fields,field_description:project_activity.field_project_activity_name
-#: model:ir.model.fields,field_description:project_activity.field_project_task_cost_name
+#: model:ir.model.fields,field_description:project_activity.field_project_real_cost_name
 msgid "name"
 msgstr "Nombre"
 
@@ -914,7 +914,7 @@ msgid "project.finance.apl"
 msgstr "project.finance.apl"
 
 #. module: project_activity
-#: model:ir.model,name:project_activity.model_project_task_cost
+#: model:ir.model,name:project_activity.model_project_real_cost
 msgid "project.task.cost"
 msgstr "project.task.cost"
 

@@ -20,19 +20,21 @@ class ProjectProject(models.Model):
 
     _inherit = 'project.project'
 
+    @api.multi
     def _get_purchase_invoice_count(self):
 
-        domain = [('project_id', '=', self.id), ('type', 'in', ('in_refund', 'in_invoice'))]
-        self.purchase_invoice_count = len(self.env['account.invoice'].search(domain))
+        for project in self:
+            domain = [('project_id', '=', project.id), ('type', 'in', ('in_refund', 'in_invoice'))]
+            project.purchase_invoice_count = len(self.env['account.invoice'].search(domain))
 
+    @api.multi
     def _get_invoice_count(self):
-
-        domain = [('project_id', '=', self.id), ('type', 'in', ('out_refund', 'out_invoice'))]
-        self.invoice_count = len(self.env['account.invoice'].search(domain))
+        for project in self:
+            domain = [('project_id', '=', project.id), ('type', 'in', ('out_refund', 'out_invoice'))]
+            project.invoice_count = len(self.env['account.invoice'].search(domain))
 
     @api.multi
     def _get_total_amounts(self):
-
 
         for project in self:
             project.total_paid = 0
@@ -84,7 +86,6 @@ class ProjectProject(models.Model):
 
     @api.multi
     def show_invoice_purchase(self):
-
 
         self.env['res']
         self.ensure_one()
