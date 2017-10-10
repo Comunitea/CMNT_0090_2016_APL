@@ -74,14 +74,14 @@ class ProjectProject(models.Model):
     date_aperture = fields.Date("Fecha apertura")
     register = fields.Char("Registro")
     ci_per_cent = fields.Float("% CI", default="21")
-    amount = fields.Float("Importe", digits=dp.get_precision('Account'))
+    amount = fields.Float("Importe total presupuestado", digits=dp.get_precision('Account'))
 
     total_endowment = fields.Float("Importe dotaciones", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
     total_invoiced = fields.Float("Importe emitido", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
     total_paid = fields.Float("Importe pagado", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
     total_base = fields.Float("Importe previsto", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
 
-    apl_state = fields.Many2one("project.aplstate", "Estado")
+    apl_state = fields.Many2one("project.aplstate", "Estado administrativo")
 
 
     @api.multi
