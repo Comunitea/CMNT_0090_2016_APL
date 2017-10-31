@@ -292,7 +292,7 @@
                 </xpath>
 
                 <field name="project_id" position="after">
-                    <field name="default_running"/>
+                    <field name="default_running" invisible="1"/>
                     <field name="long_code" readonly="1" invisible="1"/>
                 </field>
 
@@ -626,7 +626,7 @@
                                 <field name="partner_id" string="Customer"/>
                         </group>
                         <group>
-                            <field name="parent_project_id" readonly="1"/>
+                            <field name="parent_project_id" />
                             <field name="child_project_ids" widget="many2many_tags" readonly="1"/>
                             <field name="project_type_apl_id"/>
                             <field name="finance_type"/>

@@ -41,6 +41,7 @@ class ProjectActivity(models.Model):
     @api.multi
     #@api.depends('task_ids.real_cost', 'task_ids.planned_cost', 'task_ids.stage_id', 'budget_price')
     def _compute_costs(self):
+
         for activity in self:
             real_cost = 0
             planned_cost = 0
@@ -371,23 +372,25 @@ class ProjectTask(models.Model):
         if self.task_planned_cost <= 0.00 and not self.new_activity_created:
             raise ValidationError(_('Error! Check planned cost'))
 
-    @api.onchange('planned_hours')
-    def _onchange_planned_hours(self):
-        start_dt = fields.Datetime.from_string(self.date_start)
-        end_dt = start_dt + timedelta(minutes=(self.planned_hours - int(self.planned_hours)) * 60) + timedelta(
-            hours=int(self.planned_hours))
-        self.date_end = end_dt
-
     @api.onchange('task_planned_cost')
     def _onchange_planned_cost(self):
         if self.task_real_cost == 0.00:
             self.task_real_cost = self.task_planned_cost
 
+    @api.onchange('date_start', 'planned_hours')
+    def onchange_hours(self):
+        start_dt = fields.Datetime.from_string(self.date_start)
+        end_dt = start_dt + timedelta(minutes=(self.planned_hours - int(self.planned_hours)) * 60) + timedelta(
+            hours=int(self.planned_hours))
+        self.date_end = end_dt
 
-    @api.onchange('date_start')
+
+    @api.onchange('date_end')
     def _onchange_dates(self):
-        self._onchange_planned_hours()
-        return
+        date_end = fields.Datetime.from_string(self.date_end)
+        ph = date_end - fields.Datetime.from_string(self.date_start)
+        self.planned_hours = ph.seconds / 3600
+
 
     @api.model
     def default_get(self, default_fields):
