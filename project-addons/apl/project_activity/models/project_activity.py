@@ -6,7 +6,7 @@
 from odoo import api, fields, models, tools, _, SUPERUSER_ID
 from datetime import datetime, timedelta
 from odoo.exceptions import UserError, ValidationError
-
+from odoo.addons import decimal_precision as dp
 
 class TaskCosts(models.Model):
 
@@ -128,7 +128,8 @@ class ProjectActivity(models.Model):
 
     planned_cost = fields.Float("Coste previsto", multi=True, help="Suma de los costes estimados de las tareas", compute ="_compute_costs")
     real_cost = fields.Float("Coste real", multi=True, help="Suma de costes reales de las tareas",compute="_compute_costs")
-    budget_price = fields.Float("Importe presupuestado")
+    budget_price = fields.Float("Coste facturable")
+
     cost_balance = fields.Float("Balance de costes", help="Coste presupuestado menos coste real",
                                 compute="_compute_costs", multi=True)
     use_tasks = fields.Boolean(related="project_id.use_tasks")
@@ -526,9 +527,9 @@ class ProjectTask(models.Model):
 
 
 class ProjectAplType(models.Model):
-    _name="project.type.apl"
+    _name = "project.type.apl"
 
-    name=fields.Char("Project Type", help="formación, i+d e innovación, análisis sensorial, APF,  institucional,…")
+    name = fields.Char("Project Type", help="formación, i+d e innovación, análisis sensorial, APF,  institucional,…")
 
 class ProjectAplFinance(models.Model):
 
@@ -573,16 +574,22 @@ class ProjectProject(models.Model):
         for project in self:
             real_cost = 0
             planned_cost = 0
+            project_invoice_cost = 0
             budget_price = 0
             tasks = project.task_ids.filtered(lambda x: not x.new_activity_created)
             for task in tasks:
                 if task.stage_find(project.id, [('default_done', '=', True)]) == task.stage_id.id:
                     real_cost += task.real_cost
                 planned_cost += task.planned_cost
+            for activity in project.activity_ids:
+                project_invoice_cost += activity.budget_price
+
             project.project_real_cost = real_cost
             project.project_planned_cost = planned_cost
-            project.project_cost_balance = project.project_budget_price - project.project_real_cost
+            project.project_invoice_cost = project_invoice_cost
 
+            project.project_cost_balance = project.amount - project_invoice_cost
+            project.project_cost_balance_base = project.total_base - project_invoice_cost
 
     @api.multi
     def _compute_child_costs(self):
@@ -658,15 +665,21 @@ class ProjectProject(models.Model):
                              multi=True, compute="_compute_child_costs")
     cost_balance = fields.Float("Balance de costes", help="Coste presupuestado menos coste real",
                                 multi=True, compute="_compute_child_costs")
-    budget_price = fields.Float("Importe presupuestado", multi=True, compute="_compute_child_costs")
+    budget_price = fields.Float("Coste presupuestado", multi=True, compute="_compute_child_costs")
+
+    project_invoice_cost = fields.Float("Coste total facturable", help ="Suma de costes facturables de sus actividades",
+                                           multi=True,  compute="_compute_costs")
 
     project_planned_cost = fields.Float("Coste previsto", help="Suma de los costes estimados de las tareas",
                                 multi=True, compute="_compute_costs")
     project_real_cost = fields.Float("Coste real", help="Suma de costes reales de las tareas",
                              multi=True, compute="_compute_costs")
-    project_cost_balance = fields.Float("Balance de costes", help="Coste presupuestado menos coste real",
+    project_cost_balance = fields.Float("Balance importe total presupuestado", help="Importe total presupuestado - coste facturable",
                                 multi=True, compute="_compute_costs")
-    project_budget_price = fields.Float("Importe presupuestado")
+    project_cost_balance_base = fields.Float("Balance base imponible",
+                                        help="Suma de facturas emitidas - coste facturable",
+                                        multi=True, compute="_compute_costs")
+    project_budget_price = fields.Float("Coste presupuestado")
 
     color_stage = fields.Integer(string='Color Index', related="stage_id.color")
     stage_id = fields.Many2one('project.task.type', compute="_compute_stage_id", string='Project Stage')
@@ -682,7 +695,7 @@ class ProjectProject(models.Model):
     child_project_ids_plus = fields.One2many('project.project', compute="get_childs_plus")
     child_project_ids_count = fields.Integer(compute='_compute_child_projects_count', string="Nº de Sub proyectos")
 
-
+    amount = fields.Float("Importe total presupuestado", digits=dp.get_precision('Account'))
 
     @api.model
     def default_get(self, default_fields):

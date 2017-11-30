@@ -15,6 +15,29 @@
             </field>
         </record>
 
+
+        <record id ="view_project_project_costs_tree" model ="ir.ui.view">
+            <field name="name">project.project.costs.tree</field>
+            <field name="model">project.project</field>
+            <field eval="999" name="priority"/>
+            <field name="arch" type="xml">
+                <tree string="Projects">
+                    <field name="name" string="Proyecto"/>
+                    <field name="amount"/>
+                    <field name="total_base" string="Base imponible"/>
+                    <field name="project_invoice_cost"/>
+                    <field name="project_cost_balance"/>
+                    <field name="project_cost_balance_base"/>
+
+                    <field name="project_planned_cost"/>
+                    <field name="project_real_cost" />
+                    <field name="project_budget_price"/>
+
+                </tree>
+            </field>
+
+        </record>
+
         <record id="view_project_form_apl_managnement" model="ir.ui.view">
             <field name="name">view.project.form.apl.managnement</field>
             <field name="model">project.project</field>
@@ -87,6 +110,39 @@
 
 
                 </xpath>
+
+                <xpath expr="//field[@name='child_project_ids_plus']" position="replace">
+                     <field name="child_project_ids_plus" nolabel="1">
+                        <tree string="Projects">
+                            <field name="name" string="Proyecto"/>
+                            <field name="amount"/>
+                            <field name="total_base" string="Base imponible"/>
+                            <field name="project_invoice_cost"/>
+                            <field name="project_cost_balance"/>
+                            <field name="project_cost_balance_base"/>
+
+                            <field name="project_planned_cost" />
+                            <field name="project_real_cost" />
+                            <field name="project_budget_price" />
+
+                        </tree>
+                    </field>
+                </xpath>
+
+                <xpath expr="//group[@name='total1']" postion="replace">
+                    <group class="oe_subtotal_footer oe_right">
+
+                        <field name="sum_amount"/>
+                        <field name="sum_total_base"/>
+                        <field name="sum_project_invoice_cost"/>
+                        <field name="sum_project_cost_balance" class="oe_subtotal_footer_separator"/>
+                        <field name="sum_project_cost_balance_base" class="oe_subtotal_footer_separator"/>
+                        <field name="planned_cost"/>
+                        <field name="real_cost"/>
+                        <field name="budget_price" />
+                        <field name="cost_balance" class="oe_subtotal_footer_separator"/>
+                    </group>
+               </xpath>
 
             </field>
         </record>

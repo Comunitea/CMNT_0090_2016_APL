@@ -56,7 +56,6 @@
                     <field name="real_cost" sum="Real"/>
                     <field name="budget_price" sum="Presupuestado"/>
 
-
                 </tree>
             </field>
 
@@ -653,20 +652,19 @@
                         <group string="Costes asociados">
                             <field name="child_project_ids_plus" nolabel="1">
                                 <tree>
-
                                     <field name="name" string="Proyecto"/>
                                     <field name="project_planned_cost"/>
                                     <field name="project_real_cost" />
                                     <field name="project_budget_price"/>
-                                    <field name="project_cost_balance"/>
                                 </tree>
                             </field>
                         </group>
-                         <group class="oe_subtotal_footer oe_right">
-                                <field name="planned_cost"/>
+                         <group name="total1" class="oe_subtotal_footer oe_right">
+                                <!--field name="planned_cost"/>
                                 <field name="real_cost"/>
                                 <field name="budget_price" />
-                                <field name="cost_balance" class="oe_subtotal_footer_separator"/>
+                                <field name="cost_balance" class="oe_subtotal_footer_separator"/-->
+
                         </group>
                     </page>
                     <page name="description_page" string="Notas">
@@ -678,6 +676,9 @@
 
 
         </record>
+
+
+
         <record id="view_task_kanban_with_activity" model="ir.ui.view">
             <field name="name">Task Kanban With Activity</field>
             <field name="model">project.task</field>

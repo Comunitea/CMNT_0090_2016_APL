@@ -34,6 +34,29 @@ class ProjectProject(models.Model):
             project.invoice_count = len(self.env['account.invoice'].search(domain))
 
     @api.multi
+    def _get_totals(self):
+
+        for project in self:
+            sum_amount = 0
+            sum_total_base = 0
+            sum_project_invoice_cost = 0
+            sum_project_cost_balance = 0
+            sum_project_cost_balance_base = 0
+            for sub in project.child_project_ids_plus:
+                sum_amount += sub.amount
+                sum_total_base += sub.total_base
+                sum_project_invoice_cost += sub.project_invoice_cost
+                sum_project_cost_balance += sub.project_cost_balance
+                sum_project_cost_balance_base += sub.project_cost_balance_base
+
+            project.sum_amount = sum_amount
+            project.sum_total_base = sum_total_base
+            project.sum_project_invoice_cost = sum_project_invoice_cost
+            project.sum_project_cost_balance = sum_project_cost_balance
+            project.sum_project_cost_balance_base = sum_project_cost_balance_base
+
+
+    @api.multi
     def _get_total_amounts(self):
 
         for project in self:
@@ -74,7 +97,7 @@ class ProjectProject(models.Model):
     date_aperture = fields.Date("Fecha apertura")
     register = fields.Char("Registro")
     ci_per_cent = fields.Float("% CI", default="21")
-    amount = fields.Float("Importe total presupuestado", digits=dp.get_precision('Account'))
+
 
     total_endowment = fields.Float("Importe dotaciones", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
     total_invoiced = fields.Float("Importe emitido", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
@@ -82,6 +105,12 @@ class ProjectProject(models.Model):
     total_base = fields.Float("Importe previsto", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
 
     apl_state = fields.Many2one("project.aplstate", "Estado administrativo")
+
+    sum_amount = fields.Float("Total importe total presupuestado", compute =_get_totals)
+    sum_total_base = fields.Float("Total base imponible", compute =_get_totals)
+    sum_project_invoice_cost = fields.Float("Total coste facturable", compute=_get_totals)
+    sum_project_cost_balance = fields.Float("Total presupuestado - facturable", compute=_get_totals)
+    sum_project_cost_balance_base = fields.Float("Total imponible - facturable", compute=_get_totals)
 
 
     @api.multi
