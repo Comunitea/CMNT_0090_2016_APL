@@ -46,6 +46,7 @@
             <field name="arch" type="xml">
                 <tree string="Activities">
                     <field name="name"/>
+                    <field name="code"/>
                     <field name="project_id" invisible="context.get('user_invisible', False)"/>
 
                     <field name="progress" widget="progressbar" invisible="context.get('user_invisible', False)"/>
@@ -643,7 +644,7 @@
                     <page string="Costes asociados">
                         <group string="Costes">
                             <group>
-                                <field name="project_budget_price" />
+                                <field name="project_budget_price" invisible="1"/>
                             </group>
                             <group>
 

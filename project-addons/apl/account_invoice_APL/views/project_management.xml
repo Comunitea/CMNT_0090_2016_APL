@@ -31,7 +31,7 @@
 
                     <field name="project_planned_cost"/>
                     <field name="project_real_cost" />
-                    <field name="project_budget_price"/>
+                    <field name="project_budget_price" invisible="1"/>
 
                 </tree>
             </field>
@@ -54,8 +54,11 @@
                             <field string="Purchase invoices" name="purchase_invoice_count" widget="statinfo"/>
                     </button>
                 </xpath>
+                <field name="user_id" position="after">
+                    <field name="allow_see_economic"></field>
+                </field>
                 <xpath expr="//notebook/page[1]" position="after" invisible="{}">
-                    <page string="Seguimiento Economico" groups="account.group_account_user" attrs="{'invisible':[('parent_project_id','!=', False)]}">
+                    <page string="Seguimiento Economico" attrs="{'invisible':[('allow_see_economic','=', False)]}">
                         <group>
 
                             <group>
@@ -123,7 +126,7 @@
 
                             <field name="project_planned_cost" />
                             <field name="project_real_cost" />
-                            <field name="project_budget_price" />
+                            <field name="project_budget_price" invisible="1"/>
 
                         </tree>
                     </field>

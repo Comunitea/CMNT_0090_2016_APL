@@ -55,6 +55,13 @@ class ProjectProject(models.Model):
             project.sum_project_cost_balance = sum_project_cost_balance
             project.sum_project_cost_balance_base = sum_project_cost_balance_base
 
+    @api.one
+    def _get_allow_see_economic(self):
+
+        if self.user_id.id == self.env.user.id or \
+                self.env.user.has_group('account.group_account_manager'):
+            self.allow_see_economic = True
+
 
     @api.multi
     def _get_total_amounts(self):
@@ -111,7 +118,7 @@ class ProjectProject(models.Model):
     sum_project_invoice_cost = fields.Float("Total coste facturable", compute=_get_totals)
     sum_project_cost_balance = fields.Float("Total presupuestado - facturable", compute=_get_totals)
     sum_project_cost_balance_base = fields.Float("Total imponible - facturable", compute=_get_totals)
-
+    allow_see_economic = fields.Boolean('See economic', compute="_get_allow_see_economic")
 
     @api.multi
     def show_invoice_purchase(self):
