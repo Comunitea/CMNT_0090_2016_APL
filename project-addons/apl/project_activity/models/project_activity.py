@@ -8,10 +8,6 @@ from datetime import datetime, timedelta
 from odoo.exceptions import UserError, ValidationError
 from odoo.addons import decimal_precision as dp
 
-class IrConfig_Parameter(models.Model):
-
-    'ir.config_parameter'
-
 class TaskCosts(models.Model):
 
     _name = "project.task.cost"
@@ -54,7 +50,7 @@ class ProjectActivity(models.Model):
                 activities = activity.task_ids
             else:
                 activities = activity.task_ids.filtered(lambda x: not x.new_activity_created)
-        
+
             real_cost = 0
             planned_cost = 0
             for task in activities:
