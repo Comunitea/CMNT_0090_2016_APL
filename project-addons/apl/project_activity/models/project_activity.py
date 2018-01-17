@@ -45,7 +45,7 @@ class ProjectActivity(models.Model):
         for activity in self:
             real_cost = 0
             planned_cost = 0
-            for task in activity.task_ids:
+            for task in activity.task_ids.filtered(lambda x: not x.new_activity_created):
                 if task.stage_find(task.project_id.id, [('default_done', '=', True)]) == task.stage_id.id:
                     real_cost += task.real_cost
                 if task.stage_id.id != task.stage_find(task.project_id.id, [('default_draft', '=', True)]):
@@ -385,12 +385,12 @@ class ProjectTask(models.Model):
             hours=int(self.planned_hours))
         self.date_end = end_dt
 
-
     @api.onchange('date_end')
     def _onchange_dates(self):
-        date_end = fields.Datetime.from_string(self.date_end)
-        ph = date_end - fields.Datetime.from_string(self.date_start)
-        self.planned_hours = ph.seconds / 3600
+        if not self._context.get('from_hours', True):
+            date_end = fields.Datetime.from_string(self.date_end)
+            ph = date_end - fields.Datetime.from_string(self.date_start)
+            self.planned_hours = ph.seconds / 3600
 
 
     @api.model
@@ -435,6 +435,8 @@ class ProjectTask(models.Model):
         #    if vals.get('project_id'):
         #        stage_id = self.env['project.project'].browse(vals.get('project_id')).get_draft_stage()
         #        vals['stage_id'] = stage_id
+
+        print vals
 
         return super(ProjectTask, self).write(vals)
 
@@ -640,7 +642,7 @@ class ProjectProject(models.Model):
     activity_ids = fields.One2many('project.activity', 'project_id', string="Activities")
     activity_count = fields.Integer(compute='_compute_activity_count', string="Activities")
 
-
+    description = fields.Html(string='Description', default=u'<p><br></p>')
     state = fields.Selection([
         ('template', 'Template'),
         ('draft', 'Draft'),
@@ -776,6 +778,10 @@ class ProjectProject(models.Model):
     def get_date_end(self):
         self._get_date_end(self)
 
+    @api.multi
+    def write(self, vals):
+
+        return super(ProjectProject, self).write(vals)
 
 class ProjectTaskType(models.Model):
     _inherit = 'project.task.type'
