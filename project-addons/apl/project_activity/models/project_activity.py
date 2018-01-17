@@ -8,6 +8,10 @@ from datetime import datetime, timedelta
 from odoo.exceptions import UserError, ValidationError
 from odoo.addons import decimal_precision as dp
 
+class IrConfig_Parameter(models.Model):
+
+    'ir.config_parameter'
+
 class TaskCosts(models.Model):
 
     _name = "project.task.cost"
@@ -42,10 +46,18 @@ class ProjectActivity(models.Model):
     #@api.depends('task_ids.real_cost', 'task_ids.planned_cost', 'task_ids.stage_id', 'budget_price')
     def _compute_costs(self):
 
+        icp = self.env['ir.config_parameter']
+        include_new_activity_created = icp.get_param('project_activity.incluir_solicitudes', '0')
+
         for activity in self:
+            if include_new_activity_created != "0":
+                activities = activity.task_ids
+            else:
+                activities = activity.task_ids.filtered(lambda x: not x.new_activity_created)
+        
             real_cost = 0
             planned_cost = 0
-            for task in activity.task_ids.filtered(lambda x: not x.new_activity_created):
+            for task in activities:
                 if task.stage_find(task.project_id.id, [('default_done', '=', True)]) == task.stage_id.id:
                     real_cost += task.real_cost
                 if task.stage_id.id != task.stage_find(task.project_id.id, [('default_draft', '=', True)]):
