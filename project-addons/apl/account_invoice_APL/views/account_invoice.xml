@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data>
         <record id="account_invoice_form_APL" model="ir.ui.view">
             <field name="name">account.invoice.form.APL</field>
             <field name="model">account.invoice</field>
@@ -45,6 +44,7 @@
                 <field name="number" position="replace">
                     <field name="invoice_number"/>
                 </field>
+
                 <xpath expr="//field[@name='invoice_line_ids']" position="attributes">
                     <attribute name="context">
                         {'type': type, 'journal_id': journal_id}
@@ -97,6 +97,7 @@
                     <field name = "project_id"/>
                 </field>
                 <field name="date_invoice" position="before">
+                     <field name="estimated_date"/>
                      <field name = "date_end"/>
                 </field>
                 <field name="amount_total_signed" position="before">
@@ -105,7 +106,7 @@
             </field>
         </record>
 
-        <record id="account_invoice_supplier_tree_with_project" model="ir.ui.view">
+        <!--record id="account_invoice_supplier_tree_with_project" model="ir.ui.view">
             <field name="name">account.invoice.supplier.tree.with.project</field>
             <field name="model">account.invoice</field>
             <field name="inherit_id" ref="account.invoice_supplier_tree"/>
@@ -114,13 +115,14 @@
                     <field name = "project_id"/>
                 </field>
                 <field name="date_invoice" position="before">
-                     <field name = "date_end"/>
+                    <field name="estimated_date"/>
+                    <field name = "date_end"/>
                 </field>
                 <field name="amount_total_signed" position="before">
                      <field name = "planned_cost" sum="Planned Cost"/>
                 </field>
             </field>
-        </record>
+        </record-->
 
         <record id="view_account_invoice_filter_project" model="ir.ui.view">
             <field name="name">account_payment_partner.account_invoice_search.project</field>
@@ -146,7 +148,58 @@
         </record>
 
 
-    </data>
+    <record id="invoice_tree" model="ir.ui.view">
+        <field name="name">apl.customer_invoice_tree</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account_payment_partner.invoice_tree"/>
+        <field name="arch" type="xml">
+            <field name="payment_mode_id" position="replace">
+                <field name="payment_mode_id" invisible="1"/>
+            </field>
+
+        </field>
+    </record>
+    <record id="invoice_form" model="ir.ui.view">
+        <field name="name">apl.invoice_form</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account_payment_partner.invoice_form"/>
+        <field name="arch" type="xml">
+            <field name="payment_mode_id" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+        </field>
+    </record>
+
+    <record id="invoice_form" model="ir.ui.view">
+        <field name="name">apl.invoice_form</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account.invoice_form"/>
+        <field name="arch" type="xml">
+            <field name="payment_term_id" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="partner_bank_id" position="attributes">
+                <attribute name="invisible">1</attribute>3
+            </field>
+            <field name="origin" position="attributes">
+               <attribute name="invisible">0</attribute>
+            </field>
+             <field name="payment_mode_id" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+        </field>
+    </record>
+    <!--record id="invoice_supplier_form" model="ir.ui.view">
+        <field name="name">apl.invoice_supplier_form</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account_payment_partner.invoice_supplier_form"/>
+        <field name="arch" type="xml">
+           <xpath expr="//field[@name='origin']" position="replace">
+               <field name="origin"></field>
+            </xpath>
+        </field>
+    </record-->
+
 </openerp>
 
 

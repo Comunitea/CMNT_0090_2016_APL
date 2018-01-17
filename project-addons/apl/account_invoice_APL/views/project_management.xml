@@ -142,8 +142,8 @@
                         <field name="sum_project_cost_balance_base" class="oe_subtotal_footer_separator"/>
                         <field name="planned_cost"/>
                         <field name="real_cost"/>
-                        <field name="budget_price" />
-                        <field name="cost_balance" class="oe_subtotal_footer_separator"/>
+                        <field name="budget_price" invisible="1"/>
+                        <field name="cost_balance" class="oe_subtotal_footer_separator" invisible="1"/>
                     </group>
                </xpath>
 
