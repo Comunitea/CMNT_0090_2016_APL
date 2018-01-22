@@ -56,8 +56,6 @@ class AccountInvoice(models.Model):
     endowment_date = fields.Date("Fecha dotacion")
     endowment_amount = fields.Float("Importe dotacion", digits=dp.get_precision('Account'))
     origin = fields.Char(string='Source Document',
-                         help="Reference of the document that produced this invoice.")
-    origin = fields.Char(string='Source Document',
                          help="Reference of the document that produced this invoice.",
                          readonly=False, states={'draft': [('readonly', False)]})
     @api.model
