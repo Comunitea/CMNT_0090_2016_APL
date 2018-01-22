@@ -55,10 +55,11 @@ class AccountInvoice(models.Model):
     amount_paid = fields.Float("Importe Pagado", digits=dp.get_precision('Account'), compute=_get_payment)
     endowment_date = fields.Date("Fecha dotacion")
     endowment_amount = fields.Float("Importe dotacion", digits=dp.get_precision('Account'))
-
     origin = fields.Char(string='Source Document',
                          help="Reference of the document that produced this invoice.")
-
+    origin = fields.Char(string='Source Document',
+                         help="Reference of the document that produced this invoice.",
+                         readonly=False, states={'draft': [('readonly', False)]})
     @api.model
     def default_get(self, fields):
         res = super(AccountInvoice, self).default_get(fields)

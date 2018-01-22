@@ -85,6 +85,7 @@
                                       decoration-warning = "state=='cancel'"
                                       decoration-bf = "endowment_amount &gt; 0"  >
                                     <field name="number" readonly="1"/>
+                                    <field name="origin"/>
                                     <field name="state"/>
                                     <field name="estimated_date"/>
                                     <field name="amount_untaxed"/>
