@@ -591,7 +591,8 @@ class ProjectProject(models.Model):
                 if task.stage_find(project.id, [('default_done', '=', True)]) == task.stage_id.id:
                     real_cost += task.real_cost
                 planned_cost += task.planned_cost
-            for activity in project.activity_ids:
+            activities = project.activity_ids.filtered(lambda x: not x.parent_task_id)
+            for activity in activities:
                 project_invoice_cost += activity.budget_price
 
             project.project_real_cost = real_cost

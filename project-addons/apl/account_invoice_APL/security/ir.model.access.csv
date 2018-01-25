@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_project_aplstate_manager,project.aplstate,model_project_aplstate,project.group_project_manager,1,1,1,1
+access_project_invoice_type_manager,project.invoice.type,model_project_invoice_type,project.group_project_manager,1,1,1,1

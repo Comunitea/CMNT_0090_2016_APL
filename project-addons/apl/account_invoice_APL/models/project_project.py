@@ -16,6 +16,12 @@ class ProjectProjectEstado(models.Model):
     name = fields.Char("Estado")
 
 
+class ProjectInvoiceType(models.Model):
+
+    _name ="project.invoice.type"
+
+    name = fields.Char("Tipo")
+
 class ProjectProject(models.Model):
 
     _inherit = 'project.project'
@@ -59,7 +65,7 @@ class ProjectProject(models.Model):
     def _get_allow_see_economic(self):
 
         if self.user_id.id == self.env.user.id or \
-                self.env.user.has_group('account.group_account_manager'):
+                self.env.user.has_group('account.group_account_user'):
             self.allow_see_economic = True
 
 
@@ -112,7 +118,7 @@ class ProjectProject(models.Model):
     total_base = fields.Float("Importe previsto", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
 
     apl_state = fields.Many2one("project.aplstate", "Estado administrativo")
-
+    apl_invoice_type = fields.Many2one("project.invoice.type", "Tipo de facturación")
     sum_amount = fields.Float("Total importe total presupuestado", compute =_get_totals)
     sum_total_base = fields.Float("Total base imponible", compute =_get_totals)
     sum_project_invoice_cost = fields.Float("Total coste facturable", compute=_get_totals)

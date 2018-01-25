@@ -57,6 +57,9 @@
                 <field name="user_id" position="after">
                     <field name="allow_see_economic"></field>
                 </field>
+                <field name="project_finance_apl_id" position="after">
+                    <field name="apl_invoice_type"></field>
+                </field>
                 <xpath expr="//notebook/page[1]" position="after" invisible="{}">
                     <page string="Seguimiento Economico" attrs="{'invisible':[('allow_see_economic','=', False)]}">
                         <group>

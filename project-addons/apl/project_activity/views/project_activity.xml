@@ -30,7 +30,6 @@
             </field>
             <field name="mail_template_id" position="after">
                 <field name="default_draft"/>
-
                 <field name="default_error"/>
                 <field name="default_running"/>
                 <field name="default_done"/>
@@ -425,8 +424,11 @@
                     <field name="project_id" string="Project"/>
                     <field name="name" string="Activity"/>
                     <field name="progress" string="progress"/>
-                    <filter string="My Activities" name="my_activities" domain="[('is_template','=',False),('user_id','=',uid)]"/>
 
+                    <filter string="My Activities" name="my_activities" domain="[('user_id','=',uid)]"/>
+                    <filter string="Actividades" name="no_solicitudes" domain="[('parent_task_id','=',False)]"/>
+                    <filter string="Solicitudes" name="no_solicitudes" domain="[('parent_task_id','!=',False)]"/>
+                    <filter string="Por defecto" name="start_activities" domain="[('parent_task_id','=',False), ('user_id','=',uid)]"/>
                     <separator/>
                     <filter string="Draft" name="draft" />
 
@@ -460,6 +462,7 @@
             <field name="res_model">project.activity</field>
             <field name="view_mode">tree,form,calendar,pivot,kanban,graph</field>
             <field name="context">{
+                'search_default_start_activities': 1,
                 'search_default_project_id': [active_id],
                 'default_project_id': active_id,
             }</field>
@@ -644,7 +647,7 @@
                     <page string="Costes asociados">
                         <group string="Costes">
                             <group>
-                                <field name="project_budget_price" invisible="1"/>
+                                <field name="project_budget_price"/>
                             </group>
                             <group>
 
