@@ -655,9 +655,11 @@ class ProjectProject(models.Model):
     state = fields.Selection([
         ('template', 'Template'),
         ('draft', 'Draft'),
+        ('quoted', 'Presupuestado'),
         ('progress', 'In Progress'),
         ('done', 'Done'),
         ('closed', 'Closed'),
+        ('not acepted', 'No aceptado')
     ], required=True, default='draft')
     date_deadline = fields.Date(string='Deadline', compute="_compute_dead_line")
     date_start = fields.Datetime(string='Start Date', compute="_get_date_start")

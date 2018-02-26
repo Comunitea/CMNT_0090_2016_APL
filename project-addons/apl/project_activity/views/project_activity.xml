@@ -462,7 +462,7 @@
             <field name="res_model">project.activity</field>
             <field name="view_mode">tree,form,calendar,pivot,kanban,graph</field>
             <field name="context">{
-                'search_default_start_activities': 1,
+
                 'search_default_project_id': [active_id],
                 'default_project_id': active_id,
             }</field>
@@ -596,7 +596,7 @@
 
                 <xpath expr="//sheet" position="before">
                     <header>
-                        <field name="state" widget="statusbar" clickable="True"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,quoted,progress,done,closed,not acepted" clickable="True"/>
                     </header>
                 </xpath>
                 <xpath expr="//button[@name='attachment_tree_view']" position="after">
