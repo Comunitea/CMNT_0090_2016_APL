@@ -12,6 +12,11 @@
                 <field name="number" position="replace">
                     <field name="invoice_number"/>
                 </field>
+                <field name="journal_id" position="before">
+                    <field name="aplicacion_presupuestaria"/>
+                    <field name="numero_autorizacion"/>
+                </field>
+
                 <xpath expr="//notebook" posicion="inside">
                     <page string ="Project" attrs="{'invisible': [('project_id','=', False)]}">
                         <group>
@@ -37,6 +42,11 @@
             <field name="model">account.invoice</field>
             <field name="inherit_id" ref="account.invoice_supplier_form"/>
             <field name="arch" type="xml">
+                <field name="journal_id" position="before">
+                    <field name="aplicacion_presupuestaria"/>
+                    <field name="numero_autorizacion"/>
+                </field>
+
                 <field name="date_invoice" position="before">
                     <field name="project_id"/>
 
@@ -142,6 +152,7 @@
                     <separator/>
                     <filter string="Estimated end" context="{'group_by':'date_end'}"/>
                     <filter string="Project" context="{'group_by':'project_id'}"/>
+                    <filter string="Autorizacion" context="{'group_by':'aplicacion_presupuestaria'}"/>
                 </xpath>
 
             </field>
@@ -185,6 +196,9 @@
                <attribute name="invisible">0</attribute>
             </field>
              <field name="payment_mode_id" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="fiscal_position_id" position="attributes">
                 <attribute name="invisible">1</attribute>
             </field>
         </field>

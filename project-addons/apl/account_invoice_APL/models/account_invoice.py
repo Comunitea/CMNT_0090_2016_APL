@@ -14,6 +14,13 @@ class AnalityaccountAPL(models.Model):
     _inherit = "account.analytic.account"
     invoice_ids = fields.One2many("account.invoice", "project_id", string="Facturas asociadas")
 
+class AplicacionPresupuestaria(models.Model):
+
+    _name ="aplicacion.presupuestaria"
+
+    name = fields.Char("Aplicaciones presupuestarias")
+
+
 
 class AccountInvoice(models.Model):
 
@@ -58,6 +65,11 @@ class AccountInvoice(models.Model):
     origin = fields.Char(string='Source Document',
                          help="Reference of the document that produced this invoice.",
                          readonly=False, states={'draft': [('readonly', False)]})
+
+    aplicacion_presupuestaria = fields.Many2one('aplicacion.presupuestaria', "Aplicación presupuestaria")
+    numero_autorizacion = fields.Char("Nº autorización")
+
+
     @api.model
     def default_get(self, fields):
         res = super(AccountInvoice, self).default_get(fields)
