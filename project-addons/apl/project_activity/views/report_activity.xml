@@ -152,7 +152,6 @@
 										</td>
 									</tr>
 									<tr>
-
 										<td colspan="2" ><span t-field="task.description"/></td>
 									</tr>
 								</table>							

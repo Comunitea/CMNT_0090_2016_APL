@@ -712,9 +712,12 @@ class ProjectProject(models.Model):
 
     @api.model
     def default_get(self, default_fields):
+        ctx= self._context.copy()
+        if ctx.get('project_creation_in_progress', False):
+            return super(ProjectProject, self).default_get(default_fields)
         default_code = self.env['ir.sequence'].next_by_code('project.project.sequence')
-        contextual_self = self.with_context(default_code=default_code)
-        return super(ProjectProject, contextual_self).default_get(default_fields)
+        ctx.update(default_code=default_code)
+        return super(ProjectProject, self.with_context(ctx)).default_get(default_fields)
 
     @api.onchange('user_id')
     def _onchange(self):
