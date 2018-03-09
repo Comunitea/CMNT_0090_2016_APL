@@ -149,6 +149,7 @@ class ProjectActivity(models.Model):
     parent_task_id = fields.Many2one('project.task', string="Parent task",
                                      help="This activity was created from this task")
 
+    accepted_code = fields.Char("Codigo de facturación", help="Código de presupuesto aceptado")
 
     @api.model
     def default_get(self, default_fields):
@@ -709,6 +710,8 @@ class ProjectProject(models.Model):
     child_project_ids_count = fields.Integer(compute='_compute_child_projects_count', string="Nº de Sub proyectos")
 
     amount = fields.Float("Importe total presupuestado", digits=dp.get_precision('Account'))
+    accepted_code = fields.Char("Codigo de P.A.", help="Código de presupuesto aceptado")
+
 
     @api.model
     def default_get(self, default_fields):

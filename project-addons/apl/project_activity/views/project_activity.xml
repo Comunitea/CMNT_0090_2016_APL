@@ -47,6 +47,7 @@
                     <field name="name"/>
                     <field name="code"/>
                     <field name="project_id" invisible="context.get('user_invisible', False)"/>
+                    <field name="accepted_code"/>
 
                     <field name="progress" widget="progressbar" invisible="context.get('user_invisible', False)"/>
                     <field name="date_deadline" invisible="1"/>
@@ -212,6 +213,7 @@
                         <page name="description_page" string="Description">
                             <group>
                                 <field name="code"/>
+                                <field name="accepted_code"/>
                             </group>
                             <field name="description" type="html"/>
                             <div class="oe_clear"/>
@@ -635,7 +637,7 @@
                             <field name="finance_type"/>
                                 <label for="project_finance_apl_id" string=" " class="oe_inline"/>
                                 <field name="project_finance_apl_id" nolabel="1" class="oe_inline"  domain="[('type', '=', finance_type)]"/>
-
+                            <field name="accepted_code"/>
                         </group>
                     </group>
                 </xpath>
@@ -645,9 +647,9 @@
                 <xpath expr="//notebook/page[1]" position="after">
 
                     <page string="Costes asociados">
-                        <group string="Costes">
+                        <group string="Costes" invisible="1">
                             <group>
-                                <field name="project_budget_price"/>
+                                <field name="project_budget_price" />
                             </group>
                             <group>
 
