@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <record id="view_project_task_change_batch_wz" model="ir.ui.view">
+            <field name="name">Cambios en lote de tareas</field>
+            <field name="model">project.task.batch.change.wz</field>
+            <field name="arch" type="xml">
+                <form string="CAmbios en lote">
+
+                    <group>
+
+                        <label for="user_id" string="Responsable"/>
+                        <div>
+                            <field name="user_id" class="oe_inline"/>
+                            <!--button name="change_user_id" string="Aplicar" type="object" class="btn-primary"/-->
+                        </div>
+                        <label for="user_ids" string="Asignado a ..."/>
+                        <div>
+                            <field name="user_ids" class="oe_inline">
+
+
+                            </field>
+                            <!--button name="change_user_ids" string="Aplicar" type="object" class="btn-primary"/-->
+                        </div>
+
+                        <label for="activity_id" string="Actividad"/>
+                        <div>
+                            <field name="activity_id" class="oe_inline"/>
+                            <!--button name="change_activity_id" string="Aplicar" type="object" class="btn-primary"/-->
+                        </div>
+
+                        <label for="equipment_id" string="Equipamiento"/>
+                        <div>
+                            <field name="equipment_id" class="oe_inline"/>
+
+                        </div>
+
+                    </group>
+                    <group>
+                        <field name="task_ids">
+
+                        </field>
+                    </group>
+
+                    <footer>
+                        <button name="add_all_users" string="Asignar a todos" type="object" class="btn-primary"/>
+                        <button name="change_values" string="Aplicar" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-default" special="cancel"/>
+                    </footer>
+
+                </form>
+            </field>
+        </record>
+
+
+        <!--record id="action_view_project_task_batch_change" model="ir.actions.act_window">
+            <field name="name">Task Batch Change</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">project.task.batch.change.wz</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+
+        </record-->
+        <act_window
+            id="act_project_task_batch_change"
+            name="Cambios en lote"
+            res_model="project.task.batch.change.wz"
+            view_id="view_project_task_change_batch_wz"
+            multi="True"
+            view_mode="form"
+            key2="client_action_multi"
+            target="new"
+            src_model="project.task"/>
+</odoo>

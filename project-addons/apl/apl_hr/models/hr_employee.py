@@ -8,6 +8,7 @@ from odoo import fields, models, tools, api, _
 
 from odoo.exceptions import UserError, ValidationError
 import datetime
+from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 
 class Employee(models.Model):
 
@@ -20,10 +21,17 @@ class HrHolidays(models.Model):
 
     _inherit = "hr.holidays"
 
+    @api.model
+    def _get_default_date_from(self):
+        return fields.Date.today() + ' 06:00:00'
+
+
+
     remaining_leaves_by_type = fields.Float(compute='_compute_leaves_by_type', string='Remaining Leaves',
                                     help='Maximum Leaves Allowed - Leaves Already Taken')
 
     number_of_days_formatted = fields.Char(compute="_compute_number_days_formatted")
+    date_from = fields.Datetime(default=_get_default_date_from)
 
     @api.constrains('date_from', 'date_to')
     def _check_date(self):
@@ -59,3 +67,8 @@ class HrHolidays(models.Model):
         else:
             self.number_of_days_formatted = '%02d:%02d' %(hours, minutes)
 
+    @api.model
+    def default_get(self, fields):
+
+        res = super(HrHolidays, self).default_get(fields)
+        return res

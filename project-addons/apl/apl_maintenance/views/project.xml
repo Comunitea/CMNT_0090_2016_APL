@@ -8,6 +8,7 @@
             <field name="arch" type="xml">
                 <field name="user_id" position="after">
                     <field name="equipment_id" />
+                    <field name="maintenance_request_id" attrs="{'invisible': [('maintenance_request_id', '=', False)]}" readonly="1"/>
                     <field name="user_ids" widget="many2many_tags" required="1"/>
                     <field name="ok_calendar" invisible="1"/>
                 </field>
@@ -50,8 +51,14 @@
                 <xpath expr="//filter[@name='my_tasks']" position="replace">
                     <filter string="My Tasks" name="my_tasks" domain="['|',('user_id','=',uid),('user_ids','in',uid)]"/>
                 </xpath>
+               <xpath expr="//filter[@name='unassigned']" position="before">
+                   <separator/>
+                   <filter string="Mantenimientos" name="manteinance_request" domain="[('maintenance_request_id','!=',False)]"/>
+                   <filter string="Producciones" name="no_manteinance_request" domain="[('maintenance_request_id','=',False)]"/>
+                   <separator/>
+               </xpath>
                <xpath expr="//filter[@name='unassigned']" position="after">
-                    <filter string="No asigned to" name="no_asigned_to" domain="[('user_id','=',uid), ('user_ids','=',False)]"/>
+                   <filter string="No asigned to" name="no_asigned_to" domain="[('user_id','=',uid), ('user_ids','=',False)]"/>
                 </xpath>
 
             </field>

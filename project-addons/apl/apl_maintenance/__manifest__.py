@@ -14,7 +14,7 @@
         """,
     'license': 'AGPL-3',
     'depends': [
-        'base', 'project', 'maintenance', 'hr', 'hr_holidays'
+        'project_activity', 'maintenance', 'hr_holidays'
     ],
     'contributors': [
         "Comunitea",
@@ -22,7 +22,8 @@
     "data": [
         'views/maintenance.xml',
         'views/project.xml',
-        'views/hr.xml'
+        'views/hr.xml',
+        'wizard/project_task_batch_change.xml'
     ],
     "demo": [
 

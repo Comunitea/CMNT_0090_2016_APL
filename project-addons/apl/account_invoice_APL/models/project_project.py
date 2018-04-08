@@ -79,7 +79,7 @@ class ProjectProject(models.Model):
             project.total_base = 0
 
             domain = [('project_id', '=', project.id), ('state','in',('open', 'paid'))]
-            invoices = self.env['account.invoice'].search(domain)
+            invoices = self.sudo().env['account.invoice'].search(domain)
             for invoice in invoices:
                 project.total_endowment += invoice.endowment_amount
                 project.total_invoiced += invoice.amount_total
@@ -112,10 +112,10 @@ class ProjectProject(models.Model):
     ci_per_cent = fields.Float("% CI", default="21")
 
 
-    total_endowment = fields.Float("Importe dotaciones", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
-    total_invoiced = fields.Float("Importe emitido", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
-    total_paid = fields.Float("Importe pagado", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
-    total_base = fields.Float("Importe previsto", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
+    total_endowment = fields.Float("Importe dotado", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
+    total_invoiced = fields.Float("Importe emitido (con I.V.A.)", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
+    total_paid = fields.Float("Importe pagado (con I.V.A.)", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
+    total_base = fields.Float("Importe emitido (sin I.V.A.)", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
 
     apl_state = fields.Many2one("project.aplstate", "Estado administrativo")
     apl_invoice_type = fields.Many2one("project.invoice.type", "Tipo de facturación")

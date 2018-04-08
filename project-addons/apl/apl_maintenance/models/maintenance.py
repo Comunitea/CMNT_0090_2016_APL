@@ -11,30 +11,181 @@ from datetime import datetime, timedelta
 from odoo.fields import Datetime, Date
 import pytz
 
+
+
+class MaintenancePreventive(models.Model):
+    _name = 'maintenance.preventive'
+
+    @api.multi
+    def _compute_next_maintenance(self):
+        date_now = fields.Date.context_today(self)
+        for preventive in self:
+            next_maintenance_todo = self.env['maintenance.request'].search([
+                ('preventive_id', '=', preventive.id),
+                ('stage_id.done', '!=', True)], order="request_date asc", limit=1)
+            last_maintenance_done = self.env['maintenance.request'].search([
+                ('preventive_id', '=', preventive.id),  ('stage_id.done', '=', True)], order="close_date desc", limit=1)
+
+            equipment = preventive.equipment_id
+            if next_maintenance_todo and last_maintenance_done:
+                next_date = next_maintenance_todo.request_date
+                date_gap = fields.Date.from_string(next_maintenance_todo.request_date) - fields.Date.from_string(
+                    last_maintenance_done.close_date)
+                # If the gap between the last_maintenance_done and the next_maintenance_todo one is bigger than 2 times the period and next request is in the future
+                # We use 2 times the period to avoid creation too closed request from a manually one created
+                if date_gap > timedelta(0) and date_gap > timedelta(
+                        days=equipment.period) * 2 and fields.Date.from_string(
+                        next_maintenance_todo.request_date) > fields.Date.from_string(date_now):
+                    # If the new date still in the past, we set it for today
+                    if fields.Date.from_string(last_maintenance_done.close_date) + timedelta(
+                            days=equipment.period) < fields.Date.from_string(date_now):
+                        next_date = date_now
+                    else:
+                        next_date = fields.Date.to_string(
+                            fields.Date.from_string(last_maintenance_done.close_date) + timedelta(
+                                days=equipment.period))
+            elif next_maintenance_todo:
+                next_date = next_maintenance_todo.request_date
+                date_gap = fields.Date.from_string(next_maintenance_todo.request_date) - fields.Date.from_string(
+                    date_now)
+                # If next maintenance to do is in the future, and in more than 2 times the period, we insert an new request
+                # We use 2 times the period to avoid creation too closed request from a manually one created
+                if date_gap > timedelta(0) and date_gap > timedelta(days=equipment.period) * 2:
+                    next_date = fields.Date.to_string(
+                        fields.Date.from_string(date_now) + timedelta(days=equipment.period))
+            elif last_maintenance_done:
+                next_date = fields.Date.from_string(last_maintenance_done.close_date) + timedelta(days=equipment.period)
+                # If when we add the period to the last maintenance done and we still in past, we plan it for today
+                if next_date < fields.Date.from_string(date_now):
+                    next_date = date_now
+            else:
+                next_date = fields.Date.to_string(fields.Date.from_string(date_now) + timedelta(days=equipment.period))
+
+            preventive.next_action_date = next_date
+
+    @api.multi
+    def name_get(self):
+        """Use the company name and template as name."""
+        res = []
+        for record in self:
+            res.append(
+                (record.id, "%s - %s" % (record.equipment_id.name,
+                                         record.name)))
+        return res
+
+    name = fields.Char("Name")
+    equipment_id = fields.Many2one('maintenance.equipment')
+    maintenance_duration = fields.Float(help="Maintenance Duration in minutes and seconds.")
+    period = fields.Integer('Days between each preventive maintenance')
+    next_action_date = fields.Date(compute='_compute_next_maintenance', string='Date of the next preventive maintenance', store=True)
+    start_hour = fields.Char("Start hour", help ="Hora por defecto a la que se programa el mantenimiento (Hora: Minuto) 08:00:00")
+    planned_cost = fields.Float("Coste previsto", help="Coste previsto para este mantenimiento. Se exporta a la tarea que se genera", required=True)
+
 class MaintenanceRequest(models.Model):
     _inherit = 'maintenance.request'
 
+    preventive_id = fields.Many2one('maintenance.preventive', "Preventive")
+    maintenance_type = fields.Selection(selection_add=[('programmed', 'Programmed')])
+    task_id = fields.Many2one('project.task', 'Tarea asociada')
+
+    @api.model
+    def get_activity_values(self, project_id=False, maintenance_type=False):
+
+         return {   'project_id':project_id.id,
+                    'name': self.preventive_id and self.preventive_id.display_name or self.display_name,
+                    'user_id': self.equipment_id.technician_user_id.id,
+                    'request_type': maintenance_type or self.maintenance_type}
+
+    @api.model
+    def get_task_values(self):
+        project_id = self.equipment_id.project_id
+        if not project_id:
+            raise ValidationError(_('Error ! Equipment must be assigned to project.'))
+
+        name = self.name + " " + self.schedule_date
+        if self.preventive_id:
+            activity_name = self.maintenance_type + '[%s]'%self.preventive_id
+            maintenance_duration = self.preventive_id.maintenance_duration
+            planned_cost = self.preventive_id.planned_cost
+        else:
+            activity_name = self.maintenance_type
+            maintenance_duration = self.equipment_id.maintenance_duration
+            planned_cost = 0.01
+
+        start_dt = fields.Datetime.from_string(self.schedule_date)
+        end_dt = start_dt + timedelta(minutes=(maintenance_duration - int(maintenance_duration)) * 60) + timedelta(hours=int(maintenance_duration))
+        user_id = self.equipment_id.technician_user_id.id
+        activity_id = project_id.activity_ids.filtered(lambda x: x.request_type == activity_name)
+        if not activity_id:
+            activity_id = self.env['project.activity'].create(self.get_activity_values(project_id, activity_name))
+
+        vals = {
+            'name': name,
+            'project_id': project_id.id,
+            'equipment_id': self.equipment_id.id,
+            'maintenance_request_id': self.id,
+            'activity_id': activity_id.id,
+            'user_id': user_id,
+            'user_ids': [(6, 0, [user_id])],
+            'date_start': self.schedule_date,# + start_hour,
+            'date_end': end_dt,
+            'planned_hours': maintenance_duration,
+            'task_planned_cost': planned_cost,
+
+        }
+        return vals
+
+    @api.model
+    def create(self, vals):
+        new_request = super(MaintenanceRequest, self).create(vals)
+        ctx = self._context.copy()
+        ctx.update({'from_maintenance_request': True})
+        new_task = self.env['project.task'].with_context(ctx).create(new_request.get_task_values())
+        new_task.message_post(
+            body="Esta tarea ha sido creada de: <a href=# data-oe-model=maintenance.request data-oe-id=%d>%s</a>" % (
+            new_request.id, new_request.display_name))
+        new_request.task_id = new_task
+        ok_calendar, ok_calendar_message = new_task.get_concurrent()
+        if not ok_calendar:
+            new_task.message_post(body=ok_calendar_message)
+        elif ok_calendar:
+            new_request.stage_id = self.env['maintenance.stage'].search(
+                [('sequence', '>', new_request.stage_id.sequence)], limit=1)
+        return new_request
+
+    @api.multi
+    def unlink(self):
+        self.mapped('task_id').unlink()
+        return super(MaintenanceRequest, self).unlink()
+
     @api.multi
     def write(self, vals):
-        #todo hay un cron que crea maintenance_request el dia que hay
-        #esta programdo en la ficha del equipo pero entonces no aparecen en la agenda
+        if 'stage_id' in vals:
+            restart_stage = self.env['maintenance.stage'].search([], limit=1)
+            stage = self.env['maintenance.stage'].browse(vals.get('stage_id'))
+            if restart_stage == self.stage_id and stage.done:
+                raise ValidationError('No puedes realizar un mantenimiento no programado')
+            if stage.done:
+                stage_domain = [('default_done', '=', True)]
+            elif stage != restart_stage:
+                stage_domain = [('default_running', '=', True)]
+            else:
+                stage_domain = [('default_draft', '=', True)]
 
+            stage_id = self.task_id.stage_find([], domain=stage_domain)
+            ctx = self._context.copy()
+            ctx.update({'from_maintenance_request': True})
+            write_task = self.sudo().task_id.with_context(ctx).write({'stage_id': stage_id or restart_stage.id})
+            if not write_task:
+                self.message_post(
+                    body="No se ha podido programar el mantenimiento <em>%s</em> para el <b>%s</b>. Comprueba la tarea creada" % (
+                    self.name, self.schedule_date))
+                vals['stage_id'] = restart_stage.id
+            else:
+                self.task_id.message_post(
+                    body="El usuario <em>%s</em> ha cambiado el estado desde el mantenimiento asociado" % (self.env.user.name)
+                    )
         res = super(MaintenanceRequest, self).write(vals)
-        if vals.get('stage_id', False) and self.maintenance_type=='preventive':
-            stage_id = self.env['maintenance.stage'].browse(vals.get('stage_id', False))
-            if stage_id.done == True:
-                #creamos uno nuevo
-                schedule_date = fields.Datetime.from_string(self.close_date) + timedelta(days = self.equipment_id.period)
-                request_date = self.close_date
-                maintenance_type ='preventive'
-                vals = {
-                    'request_date': schedule_date,
-                    'schedule_date': schedule_date,
-                    'maintenance_type':maintenance_type,
-                    'stage_id':1
-
-                }
-                new_request = self.copy(vals)
         return res
 
 class MaintenanceEquipment(models.Model):
@@ -60,14 +211,52 @@ class MaintenanceEquipment(models.Model):
     active_tasks = fields.Integer("Tasks no finished", compute ="_get_active_task")
     ok_calendar = fields.Boolean("Ok Calendar", compute="_get_ok_calendar")
     no_equipment = fields.Boolean("Default no equipment")
+    active = fields.Boolean(default=True, help="The active field allows you to hide the category without removing it.")
+    preventive_ids = fields.One2many('maintenance.preventive', 'equipment_id', string="Preventives")
+    project_id = fields.Many2one('project.project', 'Proyecto asociado')
 
+    def return_create_vals(self, date, schedule_date=False, preventive_id=False):
+        if not date:
+            date = fields.Date.today()
+
+        if not schedule_date:
+            schedule_date = date
+
+        if preventive_id:
+            name = preventive_id.display_name
+            type = "programmed"
+            start_hour = " " + preventive_id.start_hour
+            maintenance_duration = preventive_id.maintenance_duration
+        else:
+            name = u'Mantenimiento preventivo - %s' % self.name
+            type = 'preventive'
+            maintenance_duration = self.maintenance_duration
+            start_hour = ' 07:00'
+
+        schedule_date = schedule_date + start_hour
+        vals = {
+            'name': name,
+            'request_date': date,
+            'schedule_date': schedule_date,
+            'category_id': self.category_id.id,
+            'equipment_id': self.id,
+            'maintenance_type': type,
+            'owner_user_id': self.env.uid or self.owner_user_id.id,
+            'technician_user_id': self.technician_user_id.id,
+            'duration': maintenance_duration,
+            'preventive_id': preventive_id and preventive_id.id or False
+        }
+        return vals
+
+    def _create_new_request(self, date, schedule_date=False, preventive_id=False):
+        self.ensure_one()
+        self.env['maintenance.request'].create(self.return_create_vals(date=date, schedule_date=schedule_date, preventive_id=preventive_id))
 
     @api.multi
     def copy(self):
 
         vals = ({'allowed_user_ids': [6,0, [self.allowed_user_ids]]})
         new_equipment = super(MaintenanceEquipment, self).copy(vals)
-
         return new_equipment
 
     @api.model
@@ -76,385 +265,23 @@ class MaintenanceEquipment(models.Model):
         equipment = super(MaintenanceEquipment, self).create(vals)
         return equipment
 
-
-
     @api.multi
     def write(self, vals):
-
         return super(MaintenanceEquipment, self).write(vals)
 
-class ConcurrentTask(models.Model):
-
-    _name = "project.task.concurrent"
-    _description = "Concurrent Tasks"
-
-
-    origin_task_id = fields.Many2one("project.task", string="Task Reference(Actual)", help="This task generate concurrent tasks")
-    date_end = fields.Datetime(string='Ending Date')
-    date_start = fields.Datetime(string='Starting Date')
-    task_id = fields.Many2one("project.task", string="Concurrent Task", help="Task concurrent with reference task")
-    equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
-    name = fields.Char(related="task_id.name")
-    #project_id= fields.Many2one(related="task_id.project_id")
-    #activity_id  = fields.Many2one(related="task_id.activity_id")
-    #activity_id = fields.Many2one("project.activity",related="task_id.activity_id")# string="Activity")
-    #user_ids = fields.Many2many('res.users',
-    #                                string='Assigned to')
-    user_id = fields.Many2one('res.users', string="Assigned to")
-    error = fields.Char("Concurrence type")
-    error_color = fields.Integer("Kanban Color")
-    is_reference = fields.Boolean('is reference task', default=False)
-
-
-    def open_task_view(self):
-
-                    return {
-                        'type': 'ir.actions.act_window',
-                        'name': 'view_task_form2',
-                        'res_model': 'project.task',
-                        'view_mode': 'form',
-                        }
-
-class ProjectTask(models.Model):
-
-    _inherit ="project.task"
-
-    equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
-    user_ids = fields.Many2many('res.users', string='Asignada a',
-                                index=True, track_visibility='always', required=True)
-    ok_calendar = fields.Boolean ("Ok Calendar", default=True)
-    task_day = fields.Datetime("task day")
-
-    @api.constrains('equipment_id', 'user_ids')
-    def _check_user_ids(self):
-
-        if self.equipment_id and not self.equipment_id.no_equipment and not self.user_ids:
-            if not self.stage_id.default_draft :
-                raise ValidationError(_('Error ! Task with equiment must be assigned.'))
-
-    @api.onchange('equipment_id')#, 'date_start', 'date_end', 'user_ids')
-    def get_user_ids_domain(self):
-        if self.equipment_id:
-            x = {'domain': {'user_ids': [('id', 'in', [x.id for x in self.equipment_id.allowed_user_ids])]},
-                 'value': {'user_ids': []}}
-        else:
-            x = {'domain': {'user_ids': []},
-                 'value': {'user_ids': []}}
-
-        if self.stage_id.id and not self.stage_id.default_draft:
-            x['warning'] = {'title': _('Warning'),
-                            'message': _('You are changing equipment in wrong stage.')}
-        return x
-
-    def get_concurrent(self, user_ids=False, equipment_id=False,
-                       date_start=False, date_end=False, self_id=False):
-
-        def new_concurrent(origin_task_id, task_id, user_id, date_start, date_end, equipment_id, error, error_color, is_reference= False):
-            vals = {
-                'origin_task_id': origin_task_id,
-                'task_id': task_id,
-                'user_id': user_id,
-                'date_start': date_start,
-                'date_end': date_end,
-                'equipment_id': equipment_id,
-                'error': error,
-                'error_color': error_color,
-                'is_reference': is_reference
-            }
-            new_task = self.env['project.task.concurrent'].create(vals)
-            return new_task.id
-
-        if not self_id:
-            if isinstance(self.id, models.NewId):
-                self_id = self._context['params']['id']
-            else:
-                self_id = self.id
-
-        equipment_id = equipment_id or self.equipment_id.id
-        date_start = date_start or self.date_start
-        date_end = date_end or self.date_end
-
-        if user_ids:
-            user_ids = self.env['res.users'].browse(user_ids)
-        else:
-            user_ids = self.user_ids
-        concurrent_task_ids = []
-
-        # Borro las tareas concurrentes
-        domain = [('origin_task_id', '=', self_id)]
-        to_unlink = self.env['project.task.concurrent'].search(domain)
-        to_unlink.unlink()
-        add_reference = False
-        pool_tasks_equipment = False
-        if equipment_id:
-            # Compruebo que el equipo no este en dos tareas al mismo tiempo
-
-            domain = [('equipment_id', '=', equipment_id),
-                      ('equipment_id.no_equipment','!=', True),
-                      ('stage_id.default_running','=', True),
-                      ('id','!=', self_id)]
-            pool_tasks_equipment = self.env['project.task'].search(domain)
-            for task in pool_tasks_equipment:
-                if (task.date_start < date_start < task.date_end) \
-                        or (task.date_start< date_end < task.date_end):
-
-                    new_id = new_concurrent(self_id, task.id, False, task.date_start, task.date_end,
-                                            task.equipment_id.id, "Equipamiento no disponible", 1,
-                                            is_reference=False)
-
-                    concurrent_task_ids += [new_id]
-                    add_reference = True
-
-        if not equipment_id and not pool_tasks_equipment:
-            print "---------Equipamiento OK"
-
-        if user_ids:
-            # Compruebo que los usuarios no esten en dos tareas al mismo tiempo
-
-            new_date_end = Datetime.from_string(date_end) - timedelta(minutes=1)
-            new_date_end = Datetime.to_string(new_date_end)
-            new_date_start = Datetime.from_string(date_start) + timedelta(minutes=1)
-            new_date_start = Datetime.to_string(new_date_start)
-            domain = [('no_schedule', '=', False), ('stage_id.default_running', '=', True), ('id', '!=', self_id),
-                      '|',
-                      '&', ('date_start', '<=', new_date_end), ('date_end', '>=', new_date_start),
-                      '&', ('date_start', '<=', new_date_start), ('date_end', '>=', new_date_start),
-
-                     ]
-
-
-            pool_tasks = self.env['project.task'].search(domain)
-
-            new_id = False
-            for task in pool_tasks:
-
-                for user_id in user_ids:
-                    if user_id in task.user_ids:
-                        new_id = new_concurrent(self_id, task.id, user_id.id, task.date_start, task.date_end,
-                                                False, "Usuario Ocupado", 1,
-                                                is_reference=False)
-                        concurrent_task_ids += [new_id]
-                        add_reference = True
-
-            if not new_id:
-                print "---------Tareas OK"
-
-            start_dt = Datetime.from_string(date_start)
-            end_dt = Datetime.from_string(date_end)
-            start_d = Date.from_string(date_start)
-            if start_dt.replace(hour=0, minute=0, second=0).date() != end_dt.replace(hour=23, minute=59, second=59).date():
-                raise ValidationError(_('Error ! Your task is 2 days long'))
-
-            for user_id in user_ids:
-                # compruebo si trabaja ese dia.
-                domain_resource = [('user_id', '=', user_id.id)]
-                resource = self.env['resource.resource'].search(domain_resource)
-                if resource and start_dt != end_dt:
-                    is_work_day = resource.is_work_day(start_dt)
-
-                    if is_work_day:
-                        print "--------Trabaja ese dia"
-                        employee = self.env['hr.employee'].search([('user_id', '=', user_id.id)])
-                        calendar = employee.calendar_id
-                        intervals = calendar.get_working_intervals_of_day(start_dt=start_dt,
-                                                                          end_dt=end_dt,
-                                                                          compute_leaves=True,
-                                                                          resource_id=resource.id)
-                        duracion_interval = 0
-
-
-                        if intervals:
-                            work_sec = (intervals[0][1]-intervals[0][0]).seconds
-                            task_sec = (end_dt - start_dt).seconds
-                            if task_sec > work_sec:
-                                day_interval = calendar.get_working_intervals_of_day(
-                                    start_dt=start_dt.replace(hour=0, minute=0, second=0),
-                                    compute_leaves=True, resource_id=resource.id)
-                                day_hours = ''
-                                for work_interval in day_interval:
-
-                                    i1 = fields.Datetime.context_timestamp(self, work_interval[0])
-                                    i2 = fields.Datetime.context_timestamp(self, work_interval[1])
-                                    duracion_interval += (i1 - i2).seconds
-
-                                    day_hours += "%02d:%02d - %02d:%02d " % (i1.hour, i1.minute, i2.hour, i2.minute)
-
-                                print "-------Fuera de horario ese dia"
-                                new_id = new_concurrent(self_id, self_id, user_id.id, date_start,
-                                                        date_end,
-                                                        False, "Fuera de horario. Disponible %s" % day_hours, 3,
-                                                        is_reference=False)
-
-                                concurrent_task_ids += [new_id]
-
-                        else:
-                            print "-------No trabaja ese dia"
-                            new_id = new_concurrent(self_id, self_id, user_id.id, date_start,
-                                                    date_end,
-                                                    False, "Fuera de horario", 1,
-                                                    is_reference=False)
-
-                            concurrent_task_ids += [new_id]
-
-                    else:
-                        print "-------No trabaja ese dia"
-                        new_id = new_concurrent(self_id, self_id, user_id.id, False, False,
-                                                False, "No trabaja el dia %s"%start_d, 3,is_reference=False)
-
-                        concurrent_task_ids += [new_id]
-                else:
-                    continue
-
-        if concurrent_task_ids:
-            ok_calendar = False
-            if add_reference:
-                new_id = new_concurrent(self_id, self_id, False, date_start,
-                                        date_end,
-                                        False, "Tarea de referencia", 0,
-                                        is_reference=True)
-                concurrent_task_ids += [new_id]
-        else:
-            ok_calendar = True
-        return ok_calendar
-
-    def open_concurrent(self):
-        return {
-                'type': 'ir.actions.act_window',
-                'name': 'open.concurring.tasks',
-                'res_model': 'project.task.concurrent',
-                'view_mode': 'tree,form,calendar',
-                'domain': [('origin_task_id', '=', self.id)]}
-
-    def calc_ok(self):
-        self.get_concurrent()
-
-    def getval(self, vals, field, type = False):
-        if field in vals:
-            if type == 'o2m' or type == 'm2m':
-                new_value = vals.get(field)[0][2]
-            else:
-                new_value = vals[field]
-        else:
-            if type == 'm2o':
-                new_value = self[field].id
-            elif type =='o2m' or type =='m2m':
-                new_value = [x.id for x in self[field]]
-            else:
-                new_value = self[field]
-        return new_value
-
-    def refresh_follower_ids(self, new_follower_ids = []):
-        message_follower_ids = []
-        if new_follower_ids:
-            to_append = []
-            to_unlink = []
-            partner_ids = []
-            follower_ids =[]
-            for x in self.message_follower_ids:
-                follower_ids += [x.partner_id.id]
-            for us in new_follower_ids:
-                partner_id = self.env['res.users'].browse(us).partner_id.id
-                partner_ids += [partner_id]
-                to_append += [partner_id]
-
-            to_append += [self.user_id.partner_id.id]
-            to_append += [self.create_uid.partner_id.id]
-            to_append = list(set(to_append))
-
-            self.env['mail.followers'].browse(self.message_follower_ids.ids).unlink()
-
-            partner_data = dict((pid, None) for pid in to_append)
-            message_follower_id, po = self.message_follower_ids._add_follower_command('project.task',
-                                                                                          [self.id],
-                                                                                          partner_data,
-                                                                                          {}, True)
-            message_follower_ids += message_follower_id
-            return message_follower_ids
-
-
-
     @api.model
-    def create(self, vals):
+    def _cron_generate_requests(self):
+        """
+            Generates maintenance request on the next_action_date or today if none exists
+        """
+        super(MaintenanceEquipment, self)._cron_generate_requests()
+        for preventive in self.env['maintenance.preventive'].search([('period', '>', 0)]):
+            next_prog_requests = self.env['maintenance.request'].search_read([('stage_id.done', '=', False),
+                                                                              ('preventive_id', '=', preventive.id),
+                                                                              ])
+            if not next_prog_requests:
+                preventive.equipment_id._create_new_request(fields.Date.today(), preventive.next_action_date,
+                                                            preventive_id=preventive)
 
-        res = super(ProjectTask, self).create(vals)
-
-        if 'user_ids' in vals:
-            userf_ids = vals['user_ids'][0][2]
-            vals['message_follower_ids'] = res.refresh_follower_ids(new_follower_ids=userf_ids)
-            vals2 = {'message_follower_ids': vals['message_follower_ids'] }
-            res.write(vals2)
-        return res
-
-
-
-    @api.multi
-    def write(self, vals):
-
-        if False:
-            if self.user_id.id != self.env.user.id and self.env.user.id != 1 and \
-                    not (self.new_activity_created and self.env.user in self.user_ids):
-
-                if 'stage_id' in vals and len(vals) > 1:
-                    new_vals = {'stage_id': vals['stage_id']}
-                    return super(ProjectTask, self).write(new_vals)
-
-            #elif vals.keys() != ['description']:
-            #    raise ValidationError ("No tienes permisos para cambiar esta tarea")
-        if 'user_ids' in vals:
-            userf_ids = vals['user_ids'][0][2]
-            vals['message_follower_ids'] = self.refresh_follower_ids(new_follower_ids=userf_ids)
-
-
-        if self.stage_find(self.project_id.id, [('default_running', '=', True)]) == vals.get('stage_id', False):
-
-
-            for task in self:
-
-                equipment_id = task.getval(vals, 'equipment_id', 'm2o')
-                no_schedule = task.getval(vals, 'no_schedule')
-                date_start = task.getval(vals, 'date_start')
-                date_end = task.getval(vals, 'date_end')
-
-                user_ids = task.getval(vals, 'user_ids', 'o2m')
-                #project_id = task.getval(vals, 'project_id', 'm2o')
-                #new_activity_id = task.getval(vals, 'new_activity_id', 'm2o')
-                #new_activity_created = task.getval(vals, 'new_activity_created', 'm2o')
-                #activity_id = task.getval(vals, 'activity_id', 'm2o')
-
-                if date_start in vals:
-                    vals['task_day'] = fields.Date.from_string(date_start)
-
-
-                if no_schedule:
-                    ok_calendar = True
-                else:
-                    ok_calendar = task.get_concurrent(user_ids, equipment_id, date_start, date_end)
-
-                if ok_calendar != self.ok_calendar:
-                    vals['ok_calendar'] = ok_calendar
-
-                if 'stage_id' in vals:
-                    stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
-                    if not ok_calendar and not stage_id.default_draft:
-                            raise ValidationError(
-                                _('Error stage. Concurrent Task Error'))
-
-        result = super(ProjectTask, self).write(vals)
-        return result
-
-class ReportProjectActivityTaskUser(models.Model):
-    _inherit = "report.project.task.user"
-
-    equipment_id = fields.Many2one("maintenance.equipment", 'Equipment', group_operator='avg', readonly=True)
-
-    def _select(self):
-        return super(ReportProjectActivityTaskUser, self)._select() + """,
-            equipment_id as equipment_id
-            """
-
-    def _group_by(self):
-        return super(ReportProjectActivityTaskUser, self)._group_by() + """,
-            equipment_id
-            """
 
 

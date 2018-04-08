@@ -10,7 +10,7 @@
     "category": "",
     'license': 'AGPL-3',
     'depends': [
-        'base', 'project','apl_maintenance'
+        'base', 'project'
     ],
     'contributors': [
         "Comunitea",
@@ -21,7 +21,8 @@
         'wizard/project_activity_templates.xml',
         'data/project_activity_sequence.xml',
         'report/task_report.xml',
-    'security/ir.model.access.csv',
+        'report/activity_report.xml',
+        'security/ir.model.access.csv',
     ],
     "demo": [
 

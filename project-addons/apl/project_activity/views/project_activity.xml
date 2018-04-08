@@ -17,7 +17,19 @@
             </field>
         </record>
 
+         <record id="view_project_project_filter_apl" model="ir.ui.view">
+             <field name="name">view.project.project.filter.apl</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.view_project_project_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_id']" position="before">
+                    <field name="code" filter_domain="[('code','ilike',self)]"/>
+                    <field name="accepted_code" filter_domain="[('accepted_code','ilike',self)]"/>
+                    <field name="partner_contact_id" filter_domain="[('partner_contact_id','ilike',self)]"/>
+                </xpath>
 
+            </field>
+        </record>
 
         <record id="task_type_edit" model="ir.ui.view">
         <field name="name">project.task.type.form.inherit</field>
@@ -179,6 +191,7 @@
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Activity Name"/>
+                            <field name="label_tasks" invisible="1"/>
                         </h1>
                     </div>
                     <group>
@@ -207,8 +220,6 @@
 
                         </group>
                     </group>
-
-
                     <notebook>
                         <page name="description_page" string="Description">
                             <group>
@@ -293,21 +304,23 @@
                 </xpath>
 
                 <field name="project_id" position="after">
+
                     <field name="default_running" invisible="1"/>
+                    <field name="default_draft" invisible="1"/>
                     <field name="long_code" readonly="1" invisible="1"/>
                 </field>
 
                 <field name="project_id" position="after">
-                    <field name="activity_id" required="1" domain="[('project_id', '=', project_id)]"/>
+                    <field name="activity_id" required="1" domain="[('project_id', '=', project_id)]" attrs="{'readonly': [('default_running','=', True)]}"/>
                 </field>
                 <xpath expr="//field[@name='project_id']" position="attributes">
                     <attribute name="required">1</attribute>
                 </xpath>
                 <field name="legend_blocked" position="before">
-                    <field name="no_schedule" />
+                    <field name="no_schedule"  attrs="{'readonly': [('default_draft','!=', True)]}"/>
                     <!--<field name="new_activity_id" string="Plantilla de solicitud"
                            attrs="{'invisible':['|',('new_activity_created','!=',False) ,('no_schedule','=',False)]}"/>-->
-                    <field name="new_activity_created" string="Actividad relacionada" attrs="{'invisible':[('new_activity_created','=',False)]}"/>
+                    <field name="new_activity_created" string="Actividad relacionada" attrs="{'invisible':[('new_activity_created','=',False)], 'readonly': [('default_draft','!=', True)]}"/>
 
                 </field>
 
@@ -317,9 +330,9 @@
 
 
                 <field name="date_deadline" position="after">
-                    <field name="date_start"/>
-                    <field name="planned_hours" widget="float_time" required="1" context="{'from_hours':True}"/>
-                    <field name="date_end" context="{'from_hours': False}"/>
+                    <field name="date_start" attrs="{'readonly': [('default_draft','!=', True)]}"/>
+                    <field name="planned_hours" widget="float_time" required="1" context="{'from_hours':True}" attrs="{'readonly': [('default_draft','!=', True)]}"/>
+                    <field name="date_end" context="{'from_hours': False}" attrs="{'readonly': [('default_draft','!=', True)]}"/>
                 </field>
                 <field name="sequence" position="after">
                     <field name="code" />
@@ -327,7 +340,7 @@
 
                 <xpath expr="//notebook/page[@name='description_page']" position="after">
                     <page string="Asociated Costs">
-                    <field name="cost_ids"  invisible="1" >
+                    <!--field name="cost_ids"  invisible="1" >
                         <tree editable="bottom">
                             <field name="name"/>
                             <field name="product_id" required="1"/>
@@ -338,7 +351,7 @@
                             <field name="template_cost"/>
                         </tree>
 
-                    </field>
+                    </field-->
                     <group>
                         <group>
                             <field name="new_activity_planned_cost" invisible="1"/>
@@ -389,7 +402,7 @@
 
                 <field name="project_id" position="after">
                     <field name="activity_id" invisible="context.get('user_invisible', False)"/>
-                    <field name="real_cost" sum="Total Real"/>
+                    <field name="real_cost" sum="Total Real" />
                     <field name="planned_cost" sum="Total previsto"/>
                     <field name="date_start"/>
                     <field name="date_end"/>
@@ -404,7 +417,7 @@
             <field name="name">project.task.tree.concurring_tasks</field>
             <field name="model">project.task</field>
             <field name="arch" type="xml">
-                <tree string="Concurring Tasks" >
+                <tree string="Concurring Tasks">
                     <field name="name" />
                     <field name="activity_id"/>
                     <field name="project_id"/>
@@ -435,7 +448,11 @@
                     <filter string="Draft" name="draft" />
 
                     <separator/>
+                    <field name="code" filter_domain="[('code','ilike',self)]"/>
+                    <field name="accepted_code" filter_domain="[('accepted_code','ilike',self)]"/>
+
                     <field name="user_id" string="Activity User"/>
+
                     <group expand="0" string="Group By">
                         <filter string="User" name="Manager" context="{'group_by':'user_id'}"/>
                         <filter string="Project" name="Project" context="{'group_by':'project_id'}"/>
@@ -464,7 +481,6 @@
             <field name="res_model">project.activity</field>
             <field name="view_mode">tree,form,calendar,pivot,kanban,graph</field>
             <field name="context">{
-
                 'search_default_project_id': [active_id],
                 'default_project_id': active_id,
             }</field>
@@ -616,6 +632,7 @@
                     <group>
                         <field name="long_name"/>
                         <field name="code" readonly="0"/>
+                        <field name="readable"/>
                     </group>
                 </xpath>
 
@@ -628,7 +645,8 @@
                                 <field name="user_id" string="Project Manager" attrs="{'readonly':[('active','=',False)]}"/>
                                 <field name="privacy_visibility" widget="radio"/>
                                 <field name="user_ids" widget="many2many_tags"/>
-                                <field name="partner_id" string="Customer"/>
+                                <field name="partner_id" string="Customer" domain="[('is_company','=',True)]"/>
+                                <field name="partner_contact_id" string="Contacto técnico"/>
                         </group>
                         <group>
                             <field name="parent_project_id" />
@@ -646,7 +664,7 @@
                 </xpath>
                 <xpath expr="//notebook/page[1]" position="after">
 
-                    <page string="Costes asociados">
+                    <page string="Costes asociados" groups="account.group_account_user">
                         <group string="Costes" invisible="1">
                             <group>
                                 <field name="project_budget_price" />
@@ -656,16 +674,16 @@
                             </group>
                         </group>
                         <group string="Costes asociados">
-                            <field name="child_project_ids_plus" nolabel="1">
+                            <field name="child_project_ids_plus" nolabel="1" >
                                 <tree>
                                     <field name="name" string="Proyecto"/>
                                     <field name="project_planned_cost"/>
-                                    <field name="project_real_cost" />
+                                    <field name="project_real_cost"/>
                                     <field name="project_budget_price"/>
                                 </tree>
                             </field>
                         </group>
-                         <group name="total1" class="oe_subtotal_footer oe_right">
+                         <group name="total1" class="oe_subtotal_footer oe_right" >
                                 <!--field name="planned_cost"/>
                                 <field name="real_cost"/>
                                 <field name="budget_price" />

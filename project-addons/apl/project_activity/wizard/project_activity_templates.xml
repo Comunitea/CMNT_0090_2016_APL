@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+
         <record id="view_pj_activity_template_wz" model="ir.ui.view">
             <field name="name">Activity Templates Orders</field>
             <field name="model">project.activity.template.wz</field>
