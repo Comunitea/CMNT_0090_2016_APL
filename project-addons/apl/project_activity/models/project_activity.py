@@ -68,7 +68,7 @@ class ProjectActivity(models.Model):
             activity.real_cost = real_cost
             activity.planned_cost = planned_cost
             activity.cost_balance = activity.budget_price - real_cost
-            print "[%s] : Real %s, Estimado %s"%(activity.name, activity.real_cost, activity.planned_cost)
+            print "[%s] : Real %s, Estimado %s"%(activity.id, activity.real_cost, activity.planned_cost)
 
     @api.multi
     def _compute_task_count(self):
