@@ -65,7 +65,7 @@ class ProjectActivity(models.Model):
                 if default_done == task.stage_id.id:
                     real_cost += task.real_cost
                 planned_cost += task.planned_cost
-
+            print planned_cost
             activity.real_cost = real_cost
             activity.planned_cost = planned_cost
             activity.cost_balance = activity.budget_price - real_cost
