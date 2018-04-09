@@ -39,7 +39,7 @@ class ProjectActivity(models.Model):
     _order = 'code ASC'
 
     @api.multi
-    @api.depends('task_ids', 'task_ids.real_cost', 'task_ids.planned_cost', 'task_ids.stage_id', 'budget_price')
+    @api.depends('task_ids', 'task_ids.task_real_cost', 'task_ids.task_planned_cost', 'task_ids.stage_id', 'budget_price')
     def _compute_costs(self):
 
         icp = self.env['ir.config_parameter']
@@ -54,7 +54,6 @@ class ProjectActivity(models.Model):
             real_cost = 0
             planned_cost = 0
 
-
             default_done = False
             #default_draft = False
             if tasks:
@@ -65,11 +64,11 @@ class ProjectActivity(models.Model):
                 if default_done == task.stage_id.id:
                     real_cost += task.real_cost
                 planned_cost += task.planned_cost
-            print planned_cost
+
             activity.real_cost = real_cost
             activity.planned_cost = planned_cost
             activity.cost_balance = activity.budget_price - real_cost
-
+            print "[%s] : Real %s, Estimado %s"%(activity.name, activity.real_cost, activity.planned_cost)
 
     @api.multi
     def _compute_task_count(self):

@@ -117,7 +117,6 @@ class ProjectTask(models.Model):
     new_activity_real_cost = fields.Float(related="new_activity_created.real_cost", string="Coste real", help="Coste real de la tarea.\nHeredado de la actividad asociada")
     task_planned_cost = fields.Float("Coste previsto", help="Coste previsto inicialmente de la tarea", required=True)
     task_real_cost = fields.Float("Coste real", help="Coste real de la tarea.\nDebería ser confirmado una vez finalizada")
-
     real_cost_cal = fields.Float("Real Cost Cal", help="Real cost or amount_cost_ids",
                                  compute='_get_real_cost_cal')
 

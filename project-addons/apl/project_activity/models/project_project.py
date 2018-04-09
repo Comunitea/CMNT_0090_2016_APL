@@ -53,9 +53,21 @@ class ProjectProject(models.Model):
             ('case_default', '=', True)])
         return ids
 
+
+    @api.model
+    def refresh_costs(self):
+
+        acts = self.env['project.activity'].search([])
+        for activity in acts:
+            activity._compute_costs()
+        acts = self.env['project.project'].search([])
+        for activity in acts:
+            activity._compute_costs()
+
     @api.multi
     def _compute_costs(self):
         for project in self:
+
             real_cost = 0
             planned_cost = 0
             project_invoice_cost = 0
@@ -78,7 +90,7 @@ class ProjectProject(models.Model):
             project.project_invoice_cost = project_invoice_cost
             project.project_cost_balance = project.amount - project_invoice_cost
             project.project_cost_balance_base = project.total_base - project_invoice_cost
-
+            print "[%s] Real: %s, Estimado %s, Invoice cost: %s. "%(project.name, project.project_real_cost, project.project_planned_cost, project.project_invoice_cost)
     @api.multi
     def _compute_child_costs(self):
         for project in self:
@@ -247,6 +259,3 @@ class ProjectProject(models.Model):
     def get_date_end(self):
         self._get_date_end(self)
 
-    @api.multi
-    def write(self, vals):
-        return super(ProjectProject, self).write(vals)
