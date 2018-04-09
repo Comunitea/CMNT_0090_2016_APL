@@ -632,7 +632,6 @@
                     <group>
                         <field name="long_name"/>
                         <field name="code" readonly="0"/>
-                        <field name="readable"/>
                     </group>
                 </xpath>
 

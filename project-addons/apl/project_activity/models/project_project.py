@@ -62,12 +62,12 @@ class ProjectProject(models.Model):
             tasks = project.task_ids.filtered(lambda x: not x.new_activity_created)
             if tasks:
                 default_done = tasks[0].stage_find(tasks[0].project_id.id, [('default_done', '=', True)])
-                default_draft = tasks[0].stage_find(tasks[0].project_id.id, [('default_draft', '=', True)])
+                #default_draft = tasks[0].stage_find(tasks[0].project_id.id, [('default_draft', '=', True)])
                 for task in tasks:
                     if default_done == task.stage_id.id:
                         real_cost += task.real_cost
-                    if default_draft == task.stage_id.id:
-                        planned_cost += task.planned_cost
+                    #if default_draft == task.stage_id.id:
+                    planned_cost += task.planned_cost
 
             activities = project.activity_ids.filtered(lambda x: not x.parent_task_id)
             for activity in activities:

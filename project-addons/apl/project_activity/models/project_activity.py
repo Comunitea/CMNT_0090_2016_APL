@@ -46,6 +46,7 @@ class ProjectActivity(models.Model):
         include_new_activity_created = icp.get_param('project_activity.incluir_solicitudes', '0')
 
         for activity in self:
+
             if include_new_activity_created != "0":
                 tasks = activity.task_ids
             else:
@@ -55,16 +56,16 @@ class ProjectActivity(models.Model):
 
 
             default_done = False
-            default_draft = False
+            #default_draft = False
             if tasks:
                 default_done = tasks.stage_find(activity.project_id.id, [('default_done', '=', True)])
-                default_draft = tasks.stage_find(activity.project_id.id, [('default_draft', '=', True)])
+                #default_draft = tasks.stage_find(activity.project_id.id, [('default_draft', '=', True)])
 
             for task in tasks:
                 if default_done == task.stage_id.id:
                     real_cost += task.real_cost
-                if default_draft == task.stage_id.id:
-                    planned_cost += task.planned_cost
+                planned_cost += task.planned_cost
+
             activity.real_cost = real_cost
             activity.planned_cost = planned_cost
             activity.cost_balance = activity.budget_price - real_cost
@@ -85,7 +86,7 @@ class ProjectActivity(models.Model):
     @api.multi
     def _progress_get(self):
         for activity in self:
-            activity.progress = len(activity.task_ids.filtered(lambda x: x.default_done)) / (len(activity.task_ids) or 1.0) * 100
+            activity.progress = float(len(activity.task_ids.filtered(lambda x: x.stage_id.default_done))) / (len(activity.task_ids) or 1.0) * 100
 
     @api.one
     def _get_date_end(self):
