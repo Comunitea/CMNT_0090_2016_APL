@@ -150,7 +150,7 @@ class ProjectActivity(models.Model):
     description = fields.Html(string='Notas del proyecto')
     parent_task_id = fields.Many2one('project.task', string="Parent task",
                                      help="This activity was created from this task")
-    accepted_code = fields.Char("Código de presupuesto", help="Código de presupuesto aceptado")
+    accepted_code = fields.Char("Código de facturación", help="Código de facturación")
 
     @api.model
     def default_get(self, default_fields):

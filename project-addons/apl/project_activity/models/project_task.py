@@ -246,11 +246,11 @@ class ProjectTask(models.Model):
                 'name': "%s/%s/%s"%(self.project_id.code, self.activity_id.code, self.code),
                 'parent_task_id': self.id
                 }
-
             new_activity = self.sudo().new_activity_id.create(default)
+            done_stage = self.project_id.get_done_stage()
             self.sudo().write({'new_activity_created': new_activity.id,
                                'new_activity_id': False,
-                               'stage_id': self.project_id.get_done_stage()})
+                               'stage_id': done_stage and done_stage.id})
 
             return {'type': 'ir.actions.act_window',
                     'view_mode': 'form',
