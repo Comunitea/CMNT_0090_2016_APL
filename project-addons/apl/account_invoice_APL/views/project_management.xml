@@ -54,14 +54,12 @@
                             <field string="Purchase invoices" name="purchase_invoice_count" widget="statinfo"/>
                     </button>
                 </xpath>
-                <field name="user_id" position="after">
-                    <field name="allow_see_economic" invisible="1"></field>
-                </field>
+
                 <field name="project_finance_apl_id" position="after">
                     <field name="apl_invoice_type"></field>
                 </field>
-                <xpath expr="//notebook/page[1]" position="after" invisible="{}">
-                    <page string="Seguimiento Economico" attrs="{'invisible':[('allow_see_economic','=', False)]}" groups="account.group_account_user">
+                <xpath expr="//notebook/page[1]" position="after">
+                    <page string="Seguimiento Economico" groups="account.group_account_invoice">
                         <group>
 
                             <group>
@@ -80,7 +78,7 @@
                                 <field name="apl_state"/>
                             </group>
                         </group>
-                        <group string="Facturacion" groups="account.group_account_user">
+                        <group string="Facturacion">
                             <field name="invoice_ids" nolabel="1" >
                                 <tree editable="top" create="0"
                                       decoration-muted = "state=='draft'"
@@ -104,7 +102,7 @@
 
 
                         </group>
-                        <group class="oe_subtotal_footer oe_right" groups="account.group_account_user">
+                        <group class="oe_subtotal_footer oe_right">
 
                             <field name="total_invoiced"/>
                             <field name="total_base"/>

@@ -39,13 +39,13 @@ class ProjectActivity(models.Model):
     _order = 'code ASC'
 
     @api.multi
-    @api.depends('task_ids', 'task_ids.task_real_cost', 'task_ids.task_planned_cost', 'task_ids.stage_id', 'budget_price')
+    @api.depends('task_ids.task_real_cost', 'task_ids.task_planned_cost', 'task_ids.stage_id', 'budget_price')
     def _compute_costs(self):
 
         icp = self.env['ir.config_parameter']
         include_new_activity_created = icp.get_param('project_activity.incluir_solicitudes', '0')
 
-        for activity in self.sudo():
+        for activity in self:
 
             if include_new_activity_created != "0":
                 tasks = activity.task_ids
@@ -55,19 +55,19 @@ class ProjectActivity(models.Model):
             planned_cost = 0
 
             default_done = False
-            #default_draft = False
             if tasks:
                 default_done = tasks.stage_find(activity.project_id.id, [('default_done', '=', True)])
-                #default_draft = tasks.stage_find(activity.project_id.id, [('default_draft', '=', True)])
-
+                default_draft = tasks.stage_find(activity.project_id.id, [('default_draft', '=', True)])
             for task in tasks:
                 if default_done == task.stage_id.id:
                     real_cost += task.real_cost
-                planned_cost += task.planned_cost
+                if default_draft != task.stage_id.id:
+                    planned_cost += task.planned_cost
 
             activity.real_cost = real_cost
             activity.planned_cost = planned_cost
             activity.cost_balance = activity.budget_price - real_cost
+
             print "[%s] : Real %s, Estimado %s"%(activity.id, activity.real_cost, activity.planned_cost)
 
     @api.multi
@@ -136,12 +136,12 @@ class ProjectActivity(models.Model):
     progress = fields.Integer(compute='_progress_get', string='Tasks done')
     date_deadline = fields.Date(string='Deadline', compute="_compute_dead_line")
 
-    planned_cost = fields.Float("Coste previsto", multi=True, help="Suma de los costes estimados de las tareas", compute ="_compute_costs", store=True)
-    real_cost = fields.Float("Coste real", multi=True, help="Suma de costes reales de las tareas", compute="_compute_costs", store=True)
+    planned_cost = fields.Float("Coste previsto", multi=True, help="Suma de los costes estimados de las tareas", compute ="_compute_costs", store=True, compute_sudo=True)
+    real_cost = fields.Float("Coste real", multi=True, help="Suma de costes reales de las tareas", compute="_compute_costs", store=True, compute_sudo=True)
     budget_price = fields.Float("Coste facturable")
 
     cost_balance = fields.Float("Balance de costes", help="Coste presupuestado menos coste real",
-                                compute="_compute_costs", multi=True, store=True)
+                                compute="_compute_costs", multi=True, store=True, compute_sudo=True)
     use_tasks = fields.Boolean(related="project_id.use_tasks")
     code = fields.Char("Code", copy=False)
     long_code = fields.Char("Complete Id", compute="_get_long_code", store=True)
