@@ -45,7 +45,7 @@ class ProjectActivity(models.Model):
         icp = self.env['ir.config_parameter']
         include_new_activity_created = icp.get_param('project_activity.incluir_solicitudes', '0')
 
-        for activity in self:
+        for activity in self.sudo():
 
             if include_new_activity_created != "0":
                 tasks = activity.task_ids

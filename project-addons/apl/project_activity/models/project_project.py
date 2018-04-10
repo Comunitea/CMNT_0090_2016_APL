@@ -66,8 +66,8 @@ class ProjectProject(models.Model):
 
     @api.multi
     def _compute_costs(self):
-        for project in self:
 
+        for project in self.sudo():
             real_cost = 0
             planned_cost = 0
             project_invoice_cost = 0
@@ -91,6 +91,7 @@ class ProjectProject(models.Model):
             project.project_cost_balance = project.amount - project_invoice_cost
             project.project_cost_balance_base = project.total_base - project_invoice_cost
             print "[%s] Real: %s, Estimado %s, Invoice cost: %s. "%(project.id, project.project_real_cost, project.project_planned_cost, project.project_invoice_cost)
+
     @api.multi
     def _compute_child_costs(self):
         for project in self:
@@ -130,16 +131,8 @@ class ProjectProject(models.Model):
             project.date_start = task.date_start if task else False
 
 
-    @api.multi
-    @api.depends('activity_ids.user_id', 'task_ids.user_id', 'task_ids.user_ids')
-    def _get_readable(self):
-        for project in self:
-            user_ids = project.task_ids.mapped('user_ids').mapped('id') + \
-                       project.task_ids.mapped('user_id').mapped('id') + \
-                       project.activity_ids.mapped('user_id').mapped('id')
-            project.readable = [(6, 0, user_ids)]
 
-    readable = fields.Many2many('res.users', compute="_get_readable", store=True)
+    readable = fields.Many2many('res.users', store=True)
     type_ids = fields.Many2many(
         comodel_name='project.task.type', relation='project_task_type_rel',
         column1='project_id', column2='type_id', string='Tasks Stages',
@@ -221,7 +214,7 @@ class ProjectProject(models.Model):
     @api.multi
     @api.depends('task_ids', 'task_ids.stage_id')
     def _compute_stage_id(self):
-        for project in self:
+        for project in self.sudo():
             start_stage_id = project.get_first_stage()
             last_stage_id = project.get_last_stage()
             run = False
