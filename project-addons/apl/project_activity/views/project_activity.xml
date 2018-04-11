@@ -330,9 +330,9 @@
 
 
                 <field name="date_deadline" position="after">
-                    <field name="date_start" attrs="{'readonly': [('default_draft','!=', True)]}"/>
-                    <field name="planned_hours" widget="float_time" required="1" context="{'from_hours':True}" attrs="{'readonly': [('default_draft','!=', True)]}"/>
-                    <field name="date_end" context="{'from_hours': False}" attrs="{'readonly': [('default_draft','!=', True)]}"/>
+                    <field name="date_start" context="{'onchange_field': 'date_start'}" attrs="{'readonly': [('default_draft','!=', True)]}"/>
+                    <field name="planned_hours" widget="float_time" required="1" context="{'onchange_field': 'planned_hours'}" attrs="{'readonly': [('default_draft','!=', True)]}"/>
+                    <field name="date_end" context="{'onchange_field': 'date_end'}" attrs="{'readonly': [('default_draft','!=', True)]}"/>
                 </field>
                 <field name="sequence" position="after">
                     <field name="code" />
