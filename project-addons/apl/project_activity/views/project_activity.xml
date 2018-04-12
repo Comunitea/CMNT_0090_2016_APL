@@ -753,7 +753,8 @@
             <field name="view_id" ref="view_task_calendar_global"/>
             <field name="context"> {
                 'search_default_programadas': 1,
-                'search_default_my_tasks': 1
+                'search_default_my_tasks': 1,
+                'calendar_view': True
                 }
                  </field>
        </record>
