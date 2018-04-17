@@ -72,7 +72,7 @@ class ProjectProject(models.Model):
             project.total_base = 0
 
             domain = [('project_id', '=', project.id), ('state','in',('open', 'paid'))]
-            invoices = self.sudo().env['account.invoice'].search(domain)
+            invoices = self.env['account.invoice'].search(domain)
             for invoice in invoices:
                 project.total_endowment += invoice.endowment_amount
                 project.total_invoiced += invoice.amount_total
@@ -90,13 +90,13 @@ class ProjectProject(models.Model):
             if last_invoice:
                 project.last_invoice_date = last_invoice.date_invoice
 
-    purchase_invoice_count = fields.Integer ('Purchase Invoices', compute = "_get_purchase_invoice_count", groups="account.group_account_user")
-    invoice_count = fields.Integer('Purchase Invoices', compute="_get_invoice_count", groups="account.group_account_user")
+    purchase_invoice_count = fields.Integer ('Purchase Invoices', compute = "_get_purchase_invoice_count", groups="account.group_account_invoice", compute_sudo=True)
+    invoice_count = fields.Integer('Purchase Invoices', compute="_get_invoice_count", groups="account.group_account_invoice", compute_sudo=True)
 
     to_invoice = fields.Boolean('Facturable', default=False)
     to_manage = fields.Boolean('Gestionable', default=False)
-    last_invoice_date = fields.Date("Ultima factura", compute=_get_last_invoice_date, groups="account.group_account_user")
-    invoice_ids = fields.One2many("account.invoice", "project_id", string="Facturas asociadas", groups="account.group_account_user")
+    last_invoice_date = fields.Date("Ultima factura", compute=_get_last_invoice_date, groups="account.group_account_invoice", compute_sudo=True)
+    invoice_ids = fields.One2many("account.invoice", "project_id", string="Facturas asociadas", groups="account.group_account_invoice")
     date_DE = fields.Date("Fecha DE")
     date_CITT = fields.Date("Fecha CITT")
     date_resumen = fields.Date("Fecha resumen")
@@ -105,18 +105,18 @@ class ProjectProject(models.Model):
     ci_per_cent = fields.Float("% CI", default="21")
 
 
-    total_endowment = fields.Float("Importe dotado", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
-    total_invoiced = fields.Float("Importe emitido (con I.V.A.)", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
-    total_paid = fields.Float("Importe pagado (con I.V.A.)", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
-    total_base = fields.Float("Importe emitido (sin I.V.A.)", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_user")
+    total_endowment = fields.Float("Importe dotado", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_invoice", compute_sudo=True)
+    total_invoiced = fields.Float("Importe emitido (con I.V.A.)", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_invoice", compute_sudo=True)
+    total_paid = fields.Float("Importe pagado (con I.V.A.)", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_invoice", compute_sudo=True)
+    total_base = fields.Float("Importe emitido (sin I.V.A.)", digits=dp.get_precision('Account'), compute=_get_total_amounts, groups="account.group_account_invoice", compute_sudo=True)
 
     apl_state = fields.Many2one("project.aplstate", "Estado administrativo")
     apl_invoice_type = fields.Many2one("project.invoice.type", "Tipo de facturación")
-    sum_amount = fields.Float("Total importe total presupuestado", compute =_get_totals)
-    sum_total_base = fields.Float("Total base imponible", compute =_get_totals)
-    sum_project_invoice_cost = fields.Float("Total coste facturable", compute=_get_totals)
-    sum_project_cost_balance = fields.Float("Total presupuestado - facturable", compute=_get_totals)
-    sum_project_cost_balance_base = fields.Float("Total imponible - facturable", compute=_get_totals)
+    sum_amount = fields.Float("Total importe total presupuestado", compute =_get_totals, compute_sudo=True)
+    sum_total_base = fields.Float("Total base imponible", compute =_get_totals, compute_sudo=True)
+    sum_project_invoice_cost = fields.Float("Total coste facturable", compute=_get_totals, compute_sudo=True)
+    sum_project_cost_balance = fields.Float("Total presupuestado - facturable", compute=_get_totals, compute_sudo=True)
+    sum_project_cost_balance_base = fields.Float("Total imponible - facturable", compute=_get_totals, compute_sudo=True)
 
 
     @api.multi

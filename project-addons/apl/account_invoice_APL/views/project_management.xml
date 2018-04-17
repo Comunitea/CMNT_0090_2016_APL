@@ -46,11 +46,11 @@
                  <xpath expr="//button[@name='toggle_active']" position="after">
                      <button class="oe_stat_button" type="object"
                             icon="fa-pencil-square-o"
-                            name="show_invoice" groups="account.group_account_user">
+                            name="show_invoice" groups="account.group_account_invoice">
                             <field string="Invoices" name="invoice_count" widget="statinfo"/>
                     </button>
                     <button class="oe_stat_button" type="object"
-                            name="show_invoice_purchase" icon="fa-pencil-square-o" groups="account.group_account_user">
+                            name="show_invoice_purchase" icon="fa-pencil-square-o" groups="account.group_account_invoice">
                             <field string="Purchase invoices" name="purchase_invoice_count" widget="statinfo"/>
                     </button>
                 </xpath>
@@ -133,7 +133,7 @@
                 </xpath>
 
                 <xpath expr="//group[@name='total1']" postion="replace">
-                    <group name ="total1" class="oe_subtotal_footer oe_right" groups="account.group_account_user">
+                    <group name ="total1" class="oe_subtotal_footer oe_right" groups="account.group_account_invoice">
                         <field name="sum_amount"/>
                         <field name="sum_total_base"/>
                         <field name="sum_project_invoice_cost"/>

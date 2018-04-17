@@ -663,7 +663,7 @@
                 </xpath>
                 <xpath expr="//notebook/page[1]" position="after">
 
-                    <page string="Costes asociados" groups="account.group_account_user">
+                    <page string="Costes asociados" groups="account.group_account_invoice">
                         <group string="Costes" invisible="1">
                             <group>
                                 <field name="project_budget_price" />

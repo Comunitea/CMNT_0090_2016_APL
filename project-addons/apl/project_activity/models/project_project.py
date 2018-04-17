@@ -67,7 +67,7 @@ class ProjectProject(models.Model):
     @api.multi
     def _compute_costs(self):
 
-        for project in self.sudo():
+        for project in self:
             real_cost = 0
             planned_cost = 0
             project_invoice_cost = 0
@@ -139,7 +139,7 @@ class ProjectProject(models.Model):
         default=_get_type_common)
 
     activity_ids = fields.One2many('project.activity', 'project_id', string="Activities")
-    activity_count = fields.Integer(compute='_compute_activity_count', string="Activities")
+    activity_count = fields.Integer(compute='_compute_activity_count', string="Activities", compute_sudo=True)
 
     description = fields.Html(string='Description', default=u'<p><br></p>')
     state = fields.Selection([
@@ -151,9 +151,9 @@ class ProjectProject(models.Model):
         ('closed', 'Closed'),
         ('not acepted', 'No aceptado')
     ], required=True, default='draft')
-    date_deadline = fields.Date(string='Deadline', compute="_compute_dead_line")
-    date_start = fields.Datetime(string='Start Date', compute="_get_date_start")
-    date_end = fields.Datetime(string='Ending Date', compute="_get_date_end")
+    date_deadline = fields.Date(string='Deadline', compute="_compute_dead_line",  compute_sudo=True)
+    date_start = fields.Datetime(string='Start Date', compute="_get_date_start",  compute_sudo=True)
+    date_end = fields.Datetime(string='Ending Date', compute="_get_date_end",  compute_sudo=True)
     project_type_apl_id=fields.Many2one("project.type.apl", string="Project type")
     finance_type = fields.Selection([
         ('public', 'Public'),
@@ -163,29 +163,29 @@ class ProjectProject(models.Model):
     long_name = fields.Char("Long name")
 
     planned_cost = fields.Float("Coste previsto", help="Suma de los costes estimados de las tareas",
-                                multi=True, compute="_compute_child_costs")
+                                multi=True, compute="_compute_child_costs", compute_sudo=True)
     real_cost = fields.Float("Coste real", help="Suma de costes reales de las tareas",
-                             multi=True, compute="_compute_child_costs")
+                             multi=True, compute="_compute_child_costs", compute_sudo=True)
     cost_balance = fields.Float("Balance de costes", help="Coste presupuestado menos coste real",
-                                multi=True, compute="_compute_child_costs")
-    budget_price = fields.Float("Coste presupuestado", multi=True, compute="_compute_child_costs")
+                                multi=True, compute="_compute_child_costs", compute_sudo=True)
+    budget_price = fields.Float("Coste presupuestado", multi=True, compute="_compute_child_costs", compute_sudo=True)
 
     project_invoice_cost = fields.Float("Coste total facturable", help ="Suma de costes facturables de sus actividades",
-                                           multi=True,  compute="_compute_costs")
+                                           multi=True,  compute="_compute_costs",  compute_sudo=True)
 
     project_planned_cost = fields.Float("Coste previsto", help="Suma de los costes estimados de las tareas",
-                                multi=True, compute="_compute_costs")
+                                multi=True, compute="_compute_costs", compute_sudo=True)
     project_real_cost = fields.Float("Coste real", help="Suma de costes reales de las tareas",
-                             multi=True, compute="_compute_costs")
+                             multi=True, compute="_compute_costs",  compute_sudo=True)
     project_cost_balance = fields.Float("Balance importe total presupuestado", help="Importe total presupuestado - coste facturable",
-                                multi=True, compute="_compute_costs")
+                                multi=True, compute="_compute_costs",  compute_sudo=True)
     project_cost_balance_base = fields.Float("Balance base imponible",
                                         help="Suma de facturas emitidas - coste facturable",
-                                        multi=True, compute="_compute_costs")
+                                        multi=True, compute="_compute_costs", compute_sudo=True)
     project_budget_price = fields.Float("Coste presupuestado")
 
     color_stage = fields.Integer(string='Color Index', related="stage_id.color")
-    stage_id = fields.Many2one('project.task.type', compute="_compute_stage_id", string='Project Stage')
+    stage_id = fields.Many2one('project.task.type', compute="_compute_stage_id", string='Project Stage', compute_sudo=True)
     user_ids = fields.Many2many('res.users', string='Externos Permitidos',
                                 index=True, track_visibility='always')
     description = fields.Html(string='Description')
@@ -195,8 +195,8 @@ class ProjectProject(models.Model):
                                         help ="Projectos derivados:\n"
                                               "Seguimiento económico está relacionado con el proyecto padre\n"
                                               "Los costes repercuten en el proyecto padre")
-    child_project_ids_plus = fields.One2many('project.project', compute="get_childs_plus")
-    child_project_ids_count = fields.Integer(compute='_compute_child_projects_count', string="Nº de Sub proyectos")
+    child_project_ids_plus = fields.One2many('project.project', compute="get_childs_plus", compute_sudo=True)
+    child_project_ids_count = fields.Integer(compute='_compute_child_projects_count', string="Nº de Sub proyectos",  compute_sudo=True)
 
     amount = fields.Float("Importe total presupuestado", digits=dp.get_precision('Account'))
     accepted_code = fields.Char("Codigo de presupuesto aceptado.", help="Código de presupuesto aceptado")
@@ -214,7 +214,7 @@ class ProjectProject(models.Model):
     @api.multi
     @api.depends('task_ids', 'task_ids.stage_id')
     def _compute_stage_id(self):
-        for project in self.sudo():
+        for project in self:
             start_stage_id = project.get_first_stage()
             last_stage_id = project.get_last_stage()
             run = False
