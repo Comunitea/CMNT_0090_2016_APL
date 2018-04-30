@@ -303,7 +303,6 @@ class ProjectTask(models.Model):
 
     @api.model
     def create(self, vals):
-
         res = super(ProjectTask, self).create(vals)
 
         if 'user_ids' in vals:
@@ -316,7 +315,6 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
-
         if 'user_ids' in vals:
             userf_ids = vals['user_ids'][0][2]
             vals['message_follower_ids'] = self.refresh_follower_ids(new_follower_ids=userf_ids)

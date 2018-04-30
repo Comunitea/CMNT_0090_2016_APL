@@ -63,7 +63,7 @@ class ProjectTask(models.Model):
             return False
         return self.stage_find(project_id, [('default_draft', '=', True)])
 
-    @api.multi
+    @api.mult
     @api.depends('stage_id')
     def _get_task_state(self):
 
@@ -124,10 +124,8 @@ class ProjectTask(models.Model):
     amount_cost_ids = fields.Float("Tasks Costs Amount", compute="_get_task_costs")
 
     date_start = fields.Datetime(string='Starting Date',
-                                 default=fields.Datetime.now,
                                  index=True, copy=False, required=True)
     date_end = fields.Datetime(string='Ending Date', index=True,
-                               default=fields.Datetime.now,
                                copy=False,required=True)
     code = fields.Char("Code", copy=False)
     long_code = fields.Char("Complete Id", compute="_get_long_code", store=True)
@@ -151,6 +149,14 @@ class ProjectTask(models.Model):
                                 index=True, track_visibility='always', required=True)
     readable = fields.Boolean(compute="get_readable")
     equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
+
+    @api.onchange('stage_id')
+    def onchange_stage_id(self):
+        if not isinstance(self.id, int):
+            if self.project_id:
+                self.stage_id = self.stage_find(self.project_id.id, [('default_draft', '=', True)])
+            else:
+                self.stage_id = False
 
     @api.onchange('activity_id')
     def onchange_activity_id(self):
@@ -186,7 +192,8 @@ class ProjectTask(models.Model):
     @api.onchange('date_start', 'planned_hours', 'date_end')
     def on_change_task_times(self):
         onchange_field = self._context.get('onchange_field', False)
-        if onchange_field != 'date_end':
+
+        if onchange_field != 'date_end' and not self._context.get('calendar_view', False):
             start_dt = fields.Datetime.from_string(self.date_start)
             end_dt = start_dt + timedelta(minutes=(self.planned_hours - int(self.planned_hours)) * 60) + timedelta(
                 hours=int(self.planned_hours))
@@ -208,22 +215,35 @@ class ProjectTask(models.Model):
     @api.model
     def default_get(self, default_fields):
 
-        contextual_self = self.with_context()
-        if not 'default_project_id' in self._context and 'default_activity_id' in self._context:
+        ctx = self._context.copy()
+
+        if not 'default_project_id' in ctx and 'default_activity_id' in ctx:
             py = self.env['project.activity'].browse(self._context['default_activity_id'])
             default_project_id = py and py.project_id and py.project_id.id or False
-            contextual_self = contextual_self.with_context(default_project_id=default_project_id)
+            ctx.update(default_project_id=default_project_id)
 
         if self._context.get('default_activity_id', False):
             default_activity_id = self.env.context.get('default_activity_id', False)
             default_user_id = self.env['project.activity'].browse(default_activity_id).user_id.id or self.env.uid
-            contextual_self = contextual_self.with_context(default_user_id=default_user_id)
+            ctx.update(default_user_id=default_user_id)
+
+        if ctx.get('calendar_view', False):
+            ctx.update(default_user_id=ctx.get('uid', False))
 
         default_code = self.env['ir.sequence'].next_by_code('project.task.sequence')
-        contextual_self = contextual_self.with_context(default_code=default_code)
-        res = super(ProjectTask, contextual_self).default_get(default_fields)
+        ctx.update(default_code=default_code)
+
+        if not ctx.get('default_date_end', False):
+            ctx.update(default_date_end=fields.Datetime.now())
+        if not ctx.get('default_date_start', False):
+            ctx.update(default_date_start=fields.Datetime.now())
+        res = super(ProjectTask, self.with_context(ctx)).default_get(default_fields)
+
         return res
 
+    @api.onchange('user_id')
+    def _onchange_user(self):
+        return
 
     @api.multi
     def copy(self, default):

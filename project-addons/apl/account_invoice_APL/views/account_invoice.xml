@@ -111,7 +111,8 @@
                      <field name = "date_end"/>
                 </field>
                 <field name="amount_total_signed" position="before">
-                     <field name = "planned_cost" sum="Planned Cost"/>
+                    <field name = "planned_cost" sum="Planned Cost"/>
+                    <field name = "amount_untaxed" sum="Base imponible"/>
                 </field>
             </field>
         </record>
