@@ -63,7 +63,7 @@ class ProjectTask(models.Model):
             return False
         return self.stage_find(project_id, [('default_draft', '=', True)])
 
-    @api.mult
+    @api.multi
     @api.depends('stage_id')
     def _get_task_state(self):
 
@@ -237,6 +237,7 @@ class ProjectTask(models.Model):
             ctx.update(default_date_end=fields.Datetime.now())
         if not ctx.get('default_date_start', False):
             ctx.update(default_date_start=fields.Datetime.now())
+
         res = super(ProjectTask, self.with_context(ctx)).default_get(default_fields)
 
         return res
