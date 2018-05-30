@@ -90,7 +90,7 @@ class ProjectProject(models.Model):
             project.project_invoice_cost = project_invoice_cost
             project.project_cost_balance = project.amount - project_invoice_cost
             project.project_cost_balance_base = project.total_base - project_invoice_cost
-            print "[%s] Real: %s, Estimado %s, Invoice cost: %s. "%(project.id, project.project_real_cost, project.project_planned_cost, project.project_invoice_cost)
+            #print "[%s] Real: %s, Estimado %s, Invoice cost: %s. "%(project.id, project.project_real_cost, project.project_planned_cost, project.project_invoice_cost)
 
     @api.multi
     def _compute_child_costs(self):
@@ -132,7 +132,6 @@ class ProjectProject(models.Model):
 
 
 
-    readable = fields.Many2many('res.users', store=True)
     type_ids = fields.Many2many(
         comodel_name='project.task.type', relation='project_task_type_rel',
         column1='project_id', column2='type_id', string='Tasks Stages',

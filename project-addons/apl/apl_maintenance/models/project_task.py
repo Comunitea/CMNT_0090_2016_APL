@@ -75,6 +75,31 @@ class ProjectTask(models.Model):
     def get_concurrent(self, user_ids=False, equipment_id=False,
                        date_start=False, date_end=False, self_id=False):
 
+        def get_simultaneos(task_id, start_date, end_date):
+            sql = u"select pt.id, pt.name, ptrur.res_users_id, rp.name, pt.date_start, pt.date_end from project_task pt " \
+                  u"join project_task_type ptt on ptt.id = pt.stage_id " \
+                  u"join project_task_res_users_rel ptrur on ptrur.project_task_id = pt.id " \
+                  u"join res_users ru on ru.id = ptrur.res_users_id " \
+                  u"join res_partner rp on rp.id = ru.partner_id " \
+                  u"where pt.id != %s and ptt.default_running = true and pt.no_schedule = false and " \
+                  u"(date_end > '%s' and date_end <= '%s' or date_start >= '%s' and date_start < '%s') " \
+                  u"and ptrur.res_users_id in (select res_users_id from project_task_res_users_rel where project_task_id = %s) order by pt.id"%(task_id, start_date, end_date, start_date, end_date, task_id)
+            self._cr.execute(sql)
+            tasks = self._cr.fetchall()
+            return tasks
+
+        def get_simultaneos_equipment(task_id, start_date, end_date, equipment_id):
+
+            sql = u"select pt.id, pt.name, pt.equipment_id, me.name, pt.date_start, pt.date_end from project_task pt " \
+                  u"join project_task_type ptt on ptt.id = pt.stage_id " \
+                  u"join maintenance_equipment me on me.id = pt.equipment_id " \
+                  u"where pt.id != %s and ptt.default_running = true and pt.no_schedule = false and pt.equipment_id = %s and " \
+                  u"(date_end > '%s' and date_end <= '%s' or date_start >= '%s' and date_start < '%s') " \
+                  u"order by pt.id"%(task_id, equipment_id, start_date, end_date, start_date, end_date)
+            self._cr.execute(sql)
+            tasks = self._cr.fetchall()
+            return tasks
+
         def new_concurrent(origin_task_id, task_id, user_id, date_start, date_end, equipment_id, error, error_color, is_reference= False):
             vals = {
                 'origin_task_id': origin_task_id,
@@ -113,75 +138,45 @@ class ProjectTask(models.Model):
         to_unlink.unlink()
         add_reference = False
         new_id = False
+        new_date_end = Datetime.from_string(date_end)# - timedelta(minutes=1)
+        new_date_end = Datetime.to_string(new_date_end)
+        new_date_start = Datetime.from_string(date_start)# + timedelta(minutes=1)
+        new_date_start = Datetime.to_string(new_date_start)
+        domain_date = [('id', '!=', self_id), '|',
+                       '&', ('date_start', '<', new_date_end), ('date_end', '>=', new_date_end),
+                       '&', ('date_start', '<=', new_date_start), ('date_end', '>', new_date_start)]
+
+        if self.planned_hours >= 9:
+            message = u'%s<br/>Has programado una tarea de más de 9 horas.' % message
+
         if equipment_id:
-            # Compruebo que el equipo no este en dos tareas al mismo tiempo
-            #sql = "select pt.id from project_task pt join project_task_type ptt on ptt.id = pt.stage_id " \
-            #      "where (pt.date_start, pt.date_end) OVERLAPS  (%s, %s) and pt.id != %d and ptt.default_running = True and " \
-            #      "pt.equipment_id = %d order by pt.id desc"%(date_start, date_end, self_id, equipment_id)
-            domain = [('equipment_id', '=', equipment_id),
-                      ('equipment_id.no_equipment', '!=', True),
-                      ('stage_id.default_running', '=', True),
-                      ('id', '!=', self_id),
-                      ]
-            pool_tasks_equipment = self.env['project.task'].search(domain)
-            for task in pool_tasks_equipment:
-                if (task.date_start < date_start < task.date_end) \
-                        or (task.date_start< date_end < task.date_end):
-
-                    new_id = new_concurrent(self_id, task.id, False, task.date_start, task.date_end,
-                                            task.equipment_id.id, "Equipamiento no disponible", 1,
-                                            is_reference=False)
-
-                    concurrent_task_ids += [new_id.id]
-                    message = u'%s<br/>Error de equipo  <a href=# data-oe-model=project.task data-oe-id=%d>%s</a> en la tarea <a href=# data-oe-model=project.task data-oe-id=%d>%s</a> : %s' % (
-                    message, task.equipment_id.id, task.equipment_id.name, task.id, task.name, new_id.error)
-                    add_reference = True
-
-        if not new_id:
-            print "---------Equipamiento OK"
+            # Compruebo que el equipo no se usa en dos tareas al mismo tiempo
+            tasks = get_simultaneos_equipment(self_id, new_date_start, new_date_end, equipment_id)
+            for task in tasks:
+                new_id = new_concurrent(self_id, task[0], False, task[4], task[5],
+                                        task[2], "Equipamiento no disponible", 1,
+                                        is_reference=False)
+                concurrent_task_ids += [new_id.id]
+                message = u'%s<br/>Error de equipo  <a href=# data-oe-model=project.task data-oe-id=%d>%s</a> en la tarea <a href=# data-oe-model=project.task data-oe-id=%d>%s</a> : %s' % (
+                message, task[2], task[3], task[0], task[1], new_id.error)
+                add_reference = True
 
         if user_ids:
             # Compruebo que los usuarios no esten en dos tareas al mismo tiempo
-
-            new_date_end = Datetime.from_string(date_end) - timedelta(minutes=1)
-            new_date_end = Datetime.to_string(new_date_end)
-            new_date_start = Datetime.from_string(date_start) + timedelta(minutes=1)
-            new_date_start = Datetime.to_string(new_date_start)
-            domain = [('no_schedule', '=', False), ('stage_id.default_running', '=', True), ('id', '!=', self_id),
-                      '|',
-                      '&', ('date_start', '<=', new_date_end), ('date_end', '>=', new_date_start),
-                      '&', ('date_start', '<=', new_date_start), ('date_end', '>=', new_date_start),
-                     ]
-
-            domain = [('no_schedule', '=', False), ('stage_id.default_running', '=', True), ('id', '!=', self_id),
-                      '|',
-                      '&', ('date_start', '<', date_start), ('date_end', '>', date_start),
-                      '&', ('date_start', '<', date_end), ('date_end', '>', date_end),
-                      ]
-
-            pool_tasks = self.env['project.task'].search(domain)
-            new_id = False
-            for task in pool_tasks:
-                for user_id in user_ids:
-                    if user_id in task.user_ids:
-                        new_id = new_concurrent(self_id, task.id, user_id.id, task.date_start, task.date_end,
-                                                False, "Usuario Ocupado", 1,
-                                                is_reference=False)
-                        concurrent_task_ids += [new_id.id]
-                        message = u'%s<br/>Error del usuario  <a href=# data-oe-model=res.user data-oe-id=%d>%s</a> con la tarea <a href=# data-oe-model=project.task data-oe-id=%d>%s</a> : %s' % (message, user_id, user_id.name, task.id, task.name, new_id.error)
-                        add_reference = True
-
-            if not new_id:
-                print "---------Tareas OK"
+            tasks = get_simultaneos(self_id, new_date_start, new_date_end)
+            for task in tasks:
+                new_id = new_concurrent(self_id, task[0], task[2], task[4], task[5],
+                                        False, "Usuario Ocupado", 1,
+                                        is_reference=False)
+                concurrent_task_ids += [new_id.id]
+                message = u'%s<br/>Error del usuario  <a href=# data-oe-model=res.user data-oe-id=%d>%s</a> con la tarea <a href=# data-oe-model=project.task data-oe-id=%d>%s</a> : %s' % (
+                message, task[2], task[3], task[0], task[1], new_id.error)
+                add_reference = True
 
             start_dt = Datetime.from_string(date_start)
             end_dt = Datetime.from_string(date_end)
             start_d = Date.from_string(date_start)
-            if start_dt.replace(hour=0, minute=0, second=0).date() != end_dt.replace(hour=23, minute=59, second=59).date():
-                raise ValidationError(_('Error ! Your task is 2 days long: %s - %s'%(start_dt, end_dt)))
-
             for user_id in user_ids:
-
                 # compruebo si trabaja ese dia.
                 domain_resource = [('user_id', '=', user_id.id)]
                 resource = self.env['resource.resource'].search(domain_resource)
@@ -189,7 +184,6 @@ class ProjectTask(models.Model):
                     is_work_day = resource.is_work_day(start_dt)
 
                     if is_work_day:
-                        print "--------Trabaja ese dia"
                         employee = self.env['hr.employee'].search([('user_id', '=', user_id.id)])
                         calendar = employee.calendar_id
                         intervals = calendar.get_working_intervals_of_day(start_dt=start_dt,
@@ -211,16 +205,17 @@ class ProjectTask(models.Model):
                                     duracion_interval += (i1 - i2).seconds
                                     day_hours += "%02d:%02d - %02d:%02d " % (i1.hour, i1.minute, i2.hour, i2.minute)
 
-                                print "-------Fuera de horario ese dia"
+
                                 new_id = new_concurrent(self_id, self_id, user_id.id, date_start,
                                                         date_end,
                                                         False, "Fuera de horario. Disponible %s" % day_hours, 3,
                                                         is_reference=False)
                                 message = u'%s<br/>Error de horario en el usuario <a href=# data-oe-model=resource.resource data-oe-id=%d>%s</a> : %s' % (message, resource.id, resource.user_id.name, new_id.error)
+
                                 concurrent_task_ids += [new_id.id]
 
                         else:
-                            print "-------Fuera de horario"
+
                             new_id = new_concurrent(self_id, self_id, user_id.id, date_start,
                                                     date_end,
                                                     False, "Fuera de horario el dia %s"%start_d, 1,
@@ -228,7 +223,6 @@ class ProjectTask(models.Model):
                             concurrent_task_ids += [new_id.id]
                             message = u'%s<br/>Error de horario en el usuario <a href=# data-oe-model=resource.resource data-oe-id=%d>%s</a> : %s' % (message, resource.id, resource.user_id.name, new_id.error)
                     else:
-                        print "-------No trabaja ese dia"
                         new_id = new_concurrent(self_id, self_id, user_id.id, False, False,
                                                 False, "No trabaja el dia %s"%start_d, 3,is_reference=False)
                         concurrent_task_ids += [new_id.id]
@@ -311,7 +305,6 @@ class ProjectTask(models.Model):
             vals2 = {'message_follower_ids': vals['message_follower_ids'] }
             res.write(vals2)
         return res
-
 
     @api.multi
     def write(self, vals):

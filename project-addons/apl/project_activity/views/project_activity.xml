@@ -292,7 +292,7 @@
             <field name="arch" type="xml">
                 <field name="user_id" position="replace">
                     <label for="user_id" string="Responsable"/>
-                    <field name="user_id" nolabel="1"/>
+                    <field name="user_id" nolabel="1" attrs="{'readonly': [('default_draft','=', False)]}"/>
                 </field>
                 <xpath expr="//button[@name='toggle_active']" position="before">
                     <button type="object" name="new_activity_from_task" string="New Activity" class="oe_stat_button" icon="fa-list"
@@ -311,13 +311,13 @@
                 </field>
 
                 <field name="project_id" position="after">
-                    <field name="activity_id" required="1" domain="[('project_id', '=', project_id)]" attrs="{'readonly': [('default_running','=', True)]}"/>
+                    <field name="activity_id" required="1" domain="[('project_id', '=', project_id)]" attrs="{'readonly': [('default_draft','=', False)]}"/>
                 </field>
                 <xpath expr="//field[@name='project_id']" position="attributes">
-                    <attribute name="required">1</attribute>
+                    <attribute name="attrs">{'readonly': [('default_draft', '=', False)], 'required':1}</attribute>
                 </xpath>
                 <field name="legend_blocked" position="before">
-                    <field name="no_schedule"  attrs="{'readonly': [('default_draft','!=', True)]}"/>
+                    <field name="no_schedule"  attrs="{'readonly': [('default_draft','=', False)]}"/>
                     <!--<field name="new_activity_id" string="Plantilla de solicitud"
                            attrs="{'invisible':['|',('new_activity_created','!=',False) ,('no_schedule','=',False)]}"/>-->
                     <field name="new_activity_created" string="Actividad relacionada" attrs="{'invisible':[('new_activity_created','=',False)], 'readonly': [('default_draft','!=', True)]}"/>

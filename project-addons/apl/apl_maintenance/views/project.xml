@@ -7,9 +7,9 @@
             <field name="inherit_id" ref="project.view_task_form2"/>
             <field name="arch" type="xml">
                 <field name="user_id" position="after">
-                    <field name="equipment_id" />
+                    <field name="equipment_id" attrs="{'readonly': [('default_draft','=', False)]}"/>
                     <field name="maintenance_request_id" attrs="{'invisible': [('maintenance_request_id', '=', False)]}" readonly="1"/>
-                    <field name="user_ids" widget="many2many_tags" required="1"/>
+                    <field name="user_ids" widget="many2many_tags" required="1" attrs="{'readonly': [('default_draft','=', False)]}"/>
                     <field name="ok_calendar" invisible="1"/>
                 </field>
 

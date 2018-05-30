@@ -70,12 +70,15 @@ class ProjectTask(models.Model):
         for task in self:
             if task.stage_id.default_draft:
                 task.state = "draft"
-            if task.stage_id.default_error:
+            elif task.stage_id.default_error:
                 task.state = "error"
-            if task.stage_id.default_done:
+            elif task.stage_id.default_done:
                 task.state = "done"
-            if task.stage_id.default_running:
+            elif task.stage_id.default_running:
                 task.state = "progress"
+            else:
+                task.state = "error"
+            #task.message_post("Ha ocurrido un error al recuperar el estado de la tarea")
 
     @api.multi
     @api.depends('activity_id', 'code')
@@ -85,14 +88,6 @@ class ProjectTask(models.Model):
                 task.long_code = "%s-%s"%(task.activity_id.long_code, task.code)
             else:
                 task.long_code = task.code
-
-
-    @api.multi
-    def get_readable(self):
-        for task in self:
-            user_ids = [user.id for user in task.user_ids]
-            user_ids.append(task.user_id.id)
-            task.readable = True if self._uid in user_ids else False
 
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -147,7 +142,6 @@ class ProjectTask(models.Model):
 
     user_ids = fields.Many2many('res.users', string='Asignada a',
                                 index=True, track_visibility='always', required=True)
-    readable = fields.Boolean(compute="get_readable")
     equipment_id = fields.Many2one("maintenance.equipment", 'Equipment')
 
     @api.onchange('stage_id')

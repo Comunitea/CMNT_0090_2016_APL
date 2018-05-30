@@ -64,6 +64,8 @@
                     <field name="partner_id" filter_domain="[('partner_id', 'child_of', self)]"/>
                     <field name="state"/>
                     <filter string="Unassigned" name="unassigned" domain="[('user_id','=',False)]"/>
+                    <filter string="Actividades" name="actividades" domain="[('solicitud','=',True)]"/>
+                    <filter string="Solicitudes" name="solicitudes" domain="[('solicitud','=',False)]"/>
                     <separator/>
                     <group expand="0" string="Extended Filters">
                         <field name="state"/>

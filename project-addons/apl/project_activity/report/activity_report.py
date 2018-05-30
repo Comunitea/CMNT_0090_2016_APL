@@ -26,7 +26,7 @@ class ReportProjectActivityUser(models.Model):
         help="Number of Days to Open the activity")
     delay_endings_days = fields.Float(string='# Días hasta el fin', digits=(16,2), readonly=True)
     nbr = fields.Integer('# de actividades', readonly=True)  # TDE FIXME master: rename into nbr_tasks
-
+    solicitud = fields.Boolean("Solicitud")
     partner_id = fields.Many2one('res.partner', string='Cliente', readonly=True)
     state = fields.Selection([
         ('template', 'Template'),
@@ -63,6 +63,7 @@ class ReportProjectActivityUser(models.Model):
                     pa.cost_balance as cost_balance,
                     pa.name as name,
                     pp.state as state,
+                    case when pa.parent_task_id isnull then true else false end as solicitud,
                     (extract('epoch' from (pa.write_date-pa.create_date)))/(3600*24)  as closing_days,
                     (extract('epoch' from (date_start-pa.create_date)))/(3600*24)  as opening_days,
                     (extract('epoch' from ((select min(date_end) from project_task pt where pt.activity_id = pa.id)-(now() at time zone 'UTC'))))/(3600*24)  as delay_endings_days
@@ -85,6 +86,7 @@ class ReportProjectActivityUser(models.Model):
                     pa.budget_price,
                     pa.cost_balance,
                     pa.name,
+                    pa.parent_task_id,
                     pp.state
         """
         return group_by_str
