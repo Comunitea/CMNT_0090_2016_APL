@@ -314,7 +314,7 @@
                     <field name="activity_id" required="1" domain="[('project_id', '=', project_id)]" attrs="{'readonly': [('default_draft','=', False)]}"/>
                 </field>
                 <xpath expr="//field[@name='project_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('default_draft', '=', False)], 'required':1}</attribute>
+                     <attribute name="attrs">{'readonly': [('default_draft', '=', False), ('project_id','!=', False)], 'required':1}</attribute>
                 </xpath>
                 <field name="legend_blocked" position="before">
                     <field name="no_schedule"  attrs="{'readonly': [('default_draft','=', False)]}"/>

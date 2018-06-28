@@ -7,3 +7,4 @@ access_project_type_apl,project.type.apl,model_project_type_apl,project.group_pr
 access_project_type_apl_manager,project.type.apl,model_project_type_apl,project.group_project_manager,1,1,1,1
 access_project_finance_apl,project.finance.apl,model_project_finance_apl,project.group_project_user,1,0,0,0
 access_project_finance_apl_manager,project.finance.apl,model_project_finance_apl,project.group_project_manager,1,1,1,1
+access_report_project_activity_user,report.project.activity.user,model_report_project_activity_user,project.group_project_manager,1,1,1,1

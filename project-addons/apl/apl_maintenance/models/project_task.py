@@ -82,8 +82,8 @@ class ProjectTask(models.Model):
                   u"join res_users ru on ru.id = ptrur.res_users_id " \
                   u"join res_partner rp on rp.id = ru.partner_id " \
                   u"where pt.id != %s and ptt.default_running = true and pt.no_schedule = false and " \
-                  u"(date_end > '%s' and date_end <= '%s' or date_start >= '%s' and date_start < '%s') " \
-                  u"and ptrur.res_users_id in (select res_users_id from project_task_res_users_rel where project_task_id = %s) order by pt.id"%(task_id, start_date, end_date, start_date, end_date, task_id)
+                  u"(date_end > '%s' and date_end <= '%s' or date_start >= '%s' and date_start < '%s' or date_start < '%s' and date_end > '%s') " \
+                  u"and ptrur.res_users_id in (select res_users_id from project_task_res_users_rel where project_task_id = %s) order by pt.id"%(task_id, start_date, end_date, start_date, end_date, start_date, end_date, task_id)
             self._cr.execute(sql)
             tasks = self._cr.fetchall()
             return tasks
@@ -94,8 +94,8 @@ class ProjectTask(models.Model):
                   u"join project_task_type ptt on ptt.id = pt.stage_id " \
                   u"join maintenance_equipment me on me.id = pt.equipment_id " \
                   u"where pt.id != %s and ptt.default_running = true and pt.no_schedule = false and pt.equipment_id = %s and " \
-                  u"(date_end > '%s' and date_end <= '%s' or date_start >= '%s' and date_start < '%s') " \
-                  u"order by pt.id"%(task_id, equipment_id, start_date, end_date, start_date, end_date)
+                  u"(date_end > '%s' and date_end <= '%s' or date_start >= '%s' and date_start < '%s' or date_start < '%s' and date_end > '%s') " \
+                  u"order by pt.id"%(task_id, equipment_id, start_date, end_date, start_date, end_date, start_date, end_date)
             self._cr.execute(sql)
             tasks = self._cr.fetchall()
             return tasks
@@ -148,6 +148,7 @@ class ProjectTask(models.Model):
 
         if self.planned_hours >= 9:
             message = u'%s<br/>Has programado una tarea de más de 9 horas.' % message
+            self.message_post(body=message)
 
         if equipment_id:
             # Compruebo que el equipo no se usa en dos tareas al mismo tiempo
@@ -160,6 +161,7 @@ class ProjectTask(models.Model):
                 message = u'%s<br/>Error de equipo  <a href=# data-oe-model=project.task data-oe-id=%d>%s</a> en la tarea <a href=# data-oe-model=project.task data-oe-id=%d>%s</a> : %s' % (
                 message, task[2], task[3], task[0], task[1], new_id.error)
                 add_reference = True
+                self.message_post(body=message)
 
         if user_ids:
             # Compruebo que los usuarios no esten en dos tareas al mismo tiempo
@@ -172,6 +174,7 @@ class ProjectTask(models.Model):
                 message = u'%s<br/>Error del usuario  <a href=# data-oe-model=res.user data-oe-id=%d>%s</a> con la tarea <a href=# data-oe-model=project.task data-oe-id=%d>%s</a> : %s' % (
                 message, task[2], task[3], task[0], task[1], new_id.error)
                 add_reference = True
+                self.message_post(body=message)
 
             start_dt = Datetime.from_string(date_start)
             end_dt = Datetime.from_string(date_end)
@@ -211,7 +214,7 @@ class ProjectTask(models.Model):
                                                         False, "Fuera de horario. Disponible %s" % day_hours, 3,
                                                         is_reference=False)
                                 message = u'%s<br/>Error de horario en el usuario <a href=# data-oe-model=resource.resource data-oe-id=%d>%s</a> : %s' % (message, resource.id, resource.user_id.name, new_id.error)
-
+                                self.message_post(body=message)
                                 concurrent_task_ids += [new_id.id]
 
                         else:
@@ -222,11 +225,13 @@ class ProjectTask(models.Model):
                                                     is_reference=False)
                             concurrent_task_ids += [new_id.id]
                             message = u'%s<br/>Error de horario en el usuario <a href=# data-oe-model=resource.resource data-oe-id=%d>%s</a> : %s' % (message, resource.id, resource.user_id.name, new_id.error)
+                            self.message_post(body=message)
                     else:
                         new_id = new_concurrent(self_id, self_id, user_id.id, False, False,
                                                 False, "No trabaja el dia %s"%start_d, 3,is_reference=False)
                         concurrent_task_ids += [new_id.id]
                         message = u'%s<br/>Error de usuario <a href=# data-oe-model=resource.resource data-oe-id=%d>%s</a> : %s' % (message, resource.id, resource.user_id.name, new_id.error)
+                        self.message_post(body=message)
                 else:
                     continue
 
@@ -238,10 +243,10 @@ class ProjectTask(models.Model):
                                         False, "Tarea de referencia", 0,
                                         is_reference=True)
                 concurrent_task_ids += [new_id.id]
-
         else:
             ok_calendar = True
             message = u'%s<br/>No se han encontrado errores para la tarea <a href=# data-oe-model=resource.resource data-oe-id=%d>%s</a>' % (message, self.id, self.name)
+
         return ok_calendar, message
 
     def open_concurrent(self):
@@ -308,16 +313,33 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
+
         if 'user_ids' in vals:
             userf_ids = vals['user_ids'][0][2]
             vals['message_follower_ids'] = self.refresh_follower_ids(new_follower_ids=userf_ids)
 
-        for task in self:
+        change_state = False
+        if vals.get('stage_id'):
+            self.ensure_one()
+            if self.stage_find(self.project_id.id, [('default_running', '=', True)]) == vals.get('stage_id',
+                                                                                              False):
+                change_state = True
 
+        fields_to_check = ('equipment_id', 'no_schedule', 'date_start', 'date_end', 'user_ids', 'duration', 'stage_id')
+        fields_list = sorted(list(set(vals).intersection(set(fields_to_check))))
+        ok_calendar = True
+        for task in self:
+            check_sim = False
             if 'stage_id' in vals and task.maintenance_request_id and not self._context.get('from_maintenance_request', False):
                  raise ValidationError(
                                 _('Error. No puedes cambiar el estado de una tarea de mantenimiento'))
-            if task.stage_find(task.project_id.id, [('default_running', '=', True)]) == vals.get('stage_id', False):
+
+            #if task.stage_find(task.project_id.id, [('default_running', '=', True)]) == vals.get('stage_id', False) or check_sim:
+            if not task.stage_id.default_draft and fields_list:
+                check_sim = True
+
+
+            if change_state or check_sim:
                 equipment_id = task.getval(vals, 'equipment_id', 'm2o')
                 no_schedule = task.getval(vals, 'no_schedule')
                 date_start = task.getval(vals, 'date_start')
@@ -330,16 +352,16 @@ class ProjectTask(models.Model):
                     ok_calendar = True
                 else:
                     ok_calendar, ok_calendar_message = task.get_concurrent(user_ids, equipment_id, date_start, date_end)
-                if ok_calendar != self.ok_calendar:
                     vals['ok_calendar'] = ok_calendar
+
                 if 'stage_id' in vals:
                     stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
                     if not ok_calendar and not stage_id.default_draft:
                         vals.pop('stage_id')
-                        self.message_post(body=ok_calendar_message)
+                        #self.message_post(body=ok_calendar_message)
 
         result = True
-        if vals:
+        if vals and ok_calendar:
             result = super(ProjectTask, self).write(vals)
 
         return result
