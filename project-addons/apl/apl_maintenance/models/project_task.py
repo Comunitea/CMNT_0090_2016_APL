@@ -321,6 +321,11 @@ class ProjectTask(models.Model):
         change_state = False
         if vals.get('stage_id'):
             self.ensure_one()
+
+            if self.stage_find(self.project_id.id, [('default_draft', '=', True)]) == vals.get('stage_id',
+                                                                                              False):
+                return super(ProjectTask, self).write(vals)
+
             if self.stage_find(self.project_id.id, [('default_running', '=', True)]) == vals.get('stage_id',
                                                                                               False):
                 change_state = True
