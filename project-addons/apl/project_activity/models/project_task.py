@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from odoo.exceptions import UserError, ValidationError
 from odoo.addons import decimal_precision as dp
 
+from odoo.tools import html_sanitize
+
 
 class ProjectTaskType(models.Model):
     _inherit = 'project.task.type'
@@ -199,11 +201,20 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
+        if len(self) == 1 and html_sanitize(vals.get('description', False)) == self.description:
+            vals.pop('description')
+            if not vals:
+                return True
         if self._context.get('calendar_view', False) and 'date_end' in vals and 'date_start' in vals:
             date_end = fields.Datetime.from_string(vals.get('date_end'))
             ph = date_end - fields.Datetime.from_string(vals.get('date_start'))
             vals['planned_hours'] = ph.seconds / 3600.00
-        return super(ProjectTask, self).write(vals)
+        res = super(ProjectTask, self).write(vals)
+        if res:
+            activity_ids = self.mapped('activity_id') + self.mapped('new_activity_created') + self.mapped('activity_id').mapped('parent_task_id').mapped('activity_id')
+            activity_ids._compute_costs()
+
+        return res
 
 
     @api.model

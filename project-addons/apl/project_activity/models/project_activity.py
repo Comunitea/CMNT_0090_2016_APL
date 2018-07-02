@@ -38,6 +38,12 @@ class ProjectActivity(models.Model):
     _inherit = ['mail.thread', 'ir.needaction_mixin']
     _order = 'code ASC'
 
+
+
+    def check_all_cost(self):
+        activity_ids = self.env['project.activity'].search([('id','>',0)])
+        activity_ids._compute_costs()
+
     @api.multi
     @api.depends('task_ids.task_real_cost', 'task_ids.task_planned_cost', 'task_ids.stage_id', 'budget_price')
     def _compute_costs(self):
@@ -46,6 +52,7 @@ class ProjectActivity(models.Model):
         include_new_activity_created = icp.get_param('project_activity.incluir_solicitudes', '0')
 
         for activity in self:
+            print u"Calculando costes de %s"%activity.name
 
             if include_new_activity_created != "0":
                 tasks = activity.task_ids

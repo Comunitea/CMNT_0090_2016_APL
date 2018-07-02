@@ -249,6 +249,8 @@ class ProjectTask(models.Model):
 
         return ok_calendar, message
 
+
+
     def open_concurrent(self):
         return {
                 'type': 'ir.actions.act_window',
@@ -328,6 +330,7 @@ class ProjectTask(models.Model):
 
             if self.stage_find(self.project_id.id, [('default_running', '=', True)]) == vals.get('stage_id',
                                                                                               False):
+
                 change_state = True
 
         fields_to_check = ('equipment_id', 'no_schedule', 'date_start', 'date_end', 'user_ids', 'duration', 'stage_id')
@@ -363,13 +366,22 @@ class ProjectTask(models.Model):
                     stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
                     if not ok_calendar and not stage_id.default_draft:
                         vals.pop('stage_id')
-                        #self.message_post(body=ok_calendar_message)
-
+                    else:
+                        if self.stage_find(self.project_id.id, [('default_running', '=', True)]) == vals.get('stage_id',
+                                                                                                        False):
+                            task.create_asigned_users_message()
         result = True
         if vals and ok_calendar:
             result = super(ProjectTask, self).write(vals)
 
         return result
+
+    def create_asigned_users_message(self):
+        message = u'<br>Asignada a <br><ul>'
+        for x in self.user_ids:
+            message = u'%s <li><a href=# data-oe-model=resource.resource data-oe-id=%d>%s</a></li>'%(message, x.id, x.name)
+            message = u'%s </lu>' %message
+        self.message_post(message)
 
 class ReportProjectActivityTaskUser(models.Model):
     _inherit = "report.project.task.user"
