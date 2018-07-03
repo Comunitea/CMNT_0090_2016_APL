@@ -16,8 +16,8 @@
         "Comunitea",
         "Kiko Sanchez<kiko@comunitea.com>",    ],
     "data": [
-        'views/project_activity.xml',
         'views/report_activity.xml',
+        'views/project_activity.xml',
         'wizard/project_activity_templates.xml',
         'data/project_activity_sequence.xml',
         'report/task_report.xml',
