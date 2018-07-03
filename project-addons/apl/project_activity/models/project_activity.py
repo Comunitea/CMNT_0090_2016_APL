@@ -52,7 +52,7 @@ class ProjectActivity(models.Model):
         include_new_activity_created = icp.get_param('project_activity.incluir_solicitudes', '0')
 
         for activity in self:
-            print u"Calculando costes de %s"%activity.name
+            print u"Calculando costes de %s"%activity
 
             if include_new_activity_created != "0":
                 tasks = activity.task_ids
