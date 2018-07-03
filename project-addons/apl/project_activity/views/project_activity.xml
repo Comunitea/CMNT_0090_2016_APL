@@ -782,8 +782,7 @@
           model="project.task"
           report_type="qweb-pdf"
           name="project_activity.apl_task_report"
-          file="project_activity.apl_task_report"
-    />
+          file="project_activity.apl_task_report"/>
 
     </data>
 </openerp>
