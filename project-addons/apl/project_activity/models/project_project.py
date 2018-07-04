@@ -88,8 +88,6 @@ class ProjectProject(models.Model):
             project.project_invoice_cost = project_invoice_cost
             project.project_cost_balance = project.amount - project_invoice_cost
             project.project_cost_balance_base = project.total_base - project_invoice_cost
-            print "Costes para %s"%(project.name)
-            print "Planned cost: %s"%project.project_planned_cost
 
     @api.multi
     def _compute_child_costs(self):
