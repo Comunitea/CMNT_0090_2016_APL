@@ -59,26 +59,24 @@ class ProjectProject(models.Model):
 
         acts = self.sudo().env['project.activity'].search([])
         for activity in acts:
-            activity._compute_costs()
+            activity.sudo()._compute_costs()
         acts = self.env['project.project'].search([])
         for activity in acts:
-            activity._compute_costs()
+            activity.sudo()._compute_costs()
 
     @api.multi
     def _compute_costs(self):
 
-        for project in self.sudo():
+        for project in self:
             real_cost = 0
             planned_cost = 0
             project_invoice_cost = 0
             tasks = project.task_ids.filtered(lambda x: not x.new_activity_created)
             if tasks:
                 default_done = tasks[0].stage_find(tasks[0].project_id.id, [('default_done', '=', True)])
-                #default_draft = tasks[0].stage_find(tasks[0].project_id.id, [('default_draft', '=', True)])
                 for task in tasks:
                     if default_done == task.stage_id.id:
                         real_cost += task.real_cost
-                    #if default_draft == task.stage_id.id:
                     planned_cost += task.planned_cost
 
             activities = project.activity_ids.filtered(lambda x: not x.parent_task_id)
@@ -90,10 +88,12 @@ class ProjectProject(models.Model):
             project.project_invoice_cost = project_invoice_cost
             project.project_cost_balance = project.amount - project_invoice_cost
             project.project_cost_balance_base = project.total_base - project_invoice_cost
-            #print "[%s] Real: %s, Estimado %s, Invoice cost: %s. "%(project.id, project.project_real_cost, project.project_planned_cost, project.project_invoice_cost)
+            print "Costes para %s"%(project.name)
+            print "Planned cost: %s"%project.project_planned_cost
 
     @api.multi
     def _compute_child_costs(self):
+
         for project in self:
             real_cost = 0
             planned_cost = 0
