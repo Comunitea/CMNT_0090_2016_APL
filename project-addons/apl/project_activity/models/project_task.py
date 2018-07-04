@@ -211,7 +211,8 @@ class ProjectTask(models.Model):
             vals['planned_hours'] = ph.seconds / 3600.00
         res = super(ProjectTask, self).write(vals)
         if res:
-            activity_ids = self.mapped('activity_id') + self.mapped('new_activity_created') + self.mapped('activity_id').mapped('parent_task_id').mapped('activity_id')
+            new_self = self.sudo()
+            activity_ids = new_self.mapped('activity_id') + new_self.mapped('new_activity_created') + new_self.mapped('activity_id').mapped('parent_task_id').mapped('activity_id')
             activity_ids._compute_costs()
 
         return res

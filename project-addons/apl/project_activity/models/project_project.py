@@ -57,7 +57,7 @@ class ProjectProject(models.Model):
     @api.model
     def refresh_costs(self):
 
-        acts = self.env['project.activity'].search([])
+        acts = self.sudo().env['project.activity'].search([])
         for activity in acts:
             activity._compute_costs()
         acts = self.env['project.project'].search([])
@@ -67,7 +67,7 @@ class ProjectProject(models.Model):
     @api.multi
     def _compute_costs(self):
 
-        for project in self:
+        for project in self.sudo():
             real_cost = 0
             planned_cost = 0
             project_invoice_cost = 0
