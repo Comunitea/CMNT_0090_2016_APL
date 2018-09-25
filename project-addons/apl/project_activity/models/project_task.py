@@ -201,7 +201,7 @@ class ProjectTask(models.Model):
 
     @api.multi
     def write(self, vals):
-        if len(self) == 1 and html_sanitize(vals.get('description', False)) == self.description:
+        if len(self) == 1 and html_sanitize(vals.get('description', False)) == self.description and False:
             vals.pop('description')
             if not vals:
                 return True
