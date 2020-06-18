@@ -2,6 +2,7 @@
 bin
 develop-eggs
 odoo-repos
+data
 downloads
 eggs
 etc
