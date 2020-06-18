@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
+        <record id="account_invoice_tree_APL" model="ir.ui.view">
+            <field name="name">account.invoice.tree.APL</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_supplier_tree"/>
+            <field name="arch" type="xml">
+                <field name="amount_total_signed" position="replace">
+                    <field name="amount_untaxed"/>
+                </field>
+            </field>
+        </record>
+
         <record id="account_invoice_form_APL" model="ir.ui.view">
             <field name="name">account.invoice.form.APL</field>
             <field name="model">account.invoice</field>
