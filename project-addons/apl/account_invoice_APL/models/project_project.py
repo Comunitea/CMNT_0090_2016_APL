@@ -71,7 +71,7 @@ class ProjectProject(models.Model):
             project.total_invoiced = 0
             project.total_base = 0
 
-            domain = [('project_id', '=', project.id), ('state','in',('open', 'paid'))]
+            domain = [('project_id', '=', project.id), ('type', 'in', ['out_refund', 'out_invoice']), ('state','in', ['open', 'paid'])]
             invoices = self.env['account.invoice'].search(domain)
             for invoice in invoices:
                 project.total_endowment += invoice.endowment_amount
