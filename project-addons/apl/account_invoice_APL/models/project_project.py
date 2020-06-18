@@ -96,7 +96,10 @@ class ProjectProject(models.Model):
     to_invoice = fields.Boolean('Facturable', default=False)
     to_manage = fields.Boolean('Gestionable', default=False)
     last_invoice_date = fields.Date("Ultima factura", compute=_get_last_invoice_date, groups="account.group_account_invoice", compute_sudo=True)
-    invoice_ids = fields.One2many("account.invoice", "project_id", string="Facturas asociadas", groups="account.group_account_invoice")
+    invoice_ids = fields.One2many("account.invoice", "project_id",
+                                  string="Facturas asociadas",
+                                  groups="account.group_account_invoice",
+                                  domain=[('type', 'in', ('out_refund', 'out_invoice'))])
     date_DE = fields.Date("Fecha DE")
     date_CITT = fields.Date("Fecha CITT")
     date_resumen = fields.Date("Fecha resumen")
@@ -122,7 +125,6 @@ class ProjectProject(models.Model):
     @api.multi
     def show_invoice_purchase(self):
 
-        self.env['res']
         self.ensure_one()
         form_view_ref = self.env.ref('account.invoice_supplier_form', False)
         tree_view_ref = self.env.ref('account.invoice_supplier_tree', False)
