@@ -99,7 +99,7 @@ class ProjectProject(models.Model):
     invoice_ids = fields.One2many("account.invoice", "project_id",
                                   string="Facturas asociadas",
                                   groups="account.group_account_invoice",
-                                  domain=[('type', 'in', ('out_refund', 'out_invoice'))])
+                                  domain=[('type', 'in', ['out_refund', 'out_invoice'])])
     date_DE = fields.Date("Fecha DE")
     date_CITT = fields.Date("Fecha CITT")
     date_resumen = fields.Date("Fecha resumen")
