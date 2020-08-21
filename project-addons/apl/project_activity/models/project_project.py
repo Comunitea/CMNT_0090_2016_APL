@@ -183,7 +183,7 @@ class ProjectProject(models.Model):
 
     color_stage = fields.Integer(string='Color Index', related="stage_id.color")
     stage_id = fields.Many2one('project.task.type', compute="_compute_stage_id", string='Project Stage', compute_sudo=True)
-    user_ids = fields.Many2many('res.users', string='Externos Permitidos',
+    user_ids = fields.Many2many('res.users', string='Corresponsable',
                                 index=True, track_visibility='always')
     description = fields.Html(string='Description')
 
