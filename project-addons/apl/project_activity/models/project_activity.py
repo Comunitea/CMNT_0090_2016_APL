@@ -52,7 +52,7 @@ class ProjectActivity(models.Model):
         include_new_activity_created = icp.get_param('project_activity.incluir_solicitudes', '0')
 
         for activity in self:
-            print u"Calculando costes de %s"%activity
+            #print (u"Calculando costes de %s"%activity)
 
             if include_new_activity_created != "0":
                 tasks = activity.task_ids
@@ -75,7 +75,7 @@ class ProjectActivity(models.Model):
             activity.planned_cost = planned_cost
             activity.cost_balance = activity.budget_price - real_cost
 
-            print "[%s] : Real %s, Estimado %s"%(activity.id, activity.real_cost, activity.planned_cost)
+            # print "[%s] : Real %s, Estimado %s"%(activity.id, activity.real_cost, activity.planned_cost)
 
     @api.multi
     def _compute_task_count(self):

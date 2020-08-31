@@ -147,7 +147,7 @@ class ProjectProject(models.Model):
         ('done', 'Done'),
         ('closed', 'Closed'),
         ('not acepted', 'No aceptado')
-    ], required=True, default='draft')
+    ], required=True, default='draft', track_visibility='onchange', index=True)
     date_deadline = fields.Date(string='Deadline', compute="_compute_dead_line",  compute_sudo=True)
     date_start = fields.Datetime(string='Start Date', compute="_get_date_start",  compute_sudo=True)
     date_end = fields.Datetime(string='Ending Date', compute="_get_date_end",  compute_sudo=True)
