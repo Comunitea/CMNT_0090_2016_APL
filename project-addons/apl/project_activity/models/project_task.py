@@ -9,7 +9,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.addons import decimal_precision as dp
 
 from odoo.tools import html_sanitize
-
+import threading
 import logging
 _logger = logging.getLogger(__name__)
 
