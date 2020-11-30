@@ -37,7 +37,7 @@ class MailMail(models.Model):
             filters = ['&',
                        ('state', '=', 'outgoing'),
                        '|',
-                       ('scheduled_date', '<', datetime.datetime.now()),
+                       ('scheduled_date', '<', datetime.now()),
                        ('scheduled_date', '=', False)]
 
             if 'filters' in self._context:
