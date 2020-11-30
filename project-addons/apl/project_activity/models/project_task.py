@@ -49,7 +49,7 @@ class MailMail(models.Model):
             auto_commit = not getattr(threading.currentThread(), 'testing', False)
             for id in ids:
                 mesg = self.browse(id)
-                print(u"Enviando {} con autocommit {}".format(mesg.display_name, auto_commit))
+                print(u"Enviando {} con autocommit {}".format(mesg.id, auto_commit))
                 res = mesg.send(auto_commit=auto_commit)
                 print(u"Envio OK")
         except Exception:
