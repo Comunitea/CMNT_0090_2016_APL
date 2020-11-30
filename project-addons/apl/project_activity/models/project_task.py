@@ -42,18 +42,16 @@ class MailMail(models.Model):
 
             if 'filters' in self._context:
                 filters.extend(self._context['filters'])
-            _logger.info("Enviando con filtro: {}".format(filters))
             ids = self.search(filters).ids
-            _logger.info("Enviando los ids: {}".format(ids))
         res = None
         try:
             # auto-commit except in testing mode
             auto_commit = not getattr(threading.currentThread(), 'testing', False)
             for id in ids:
                 mesg = self.browse(id)
-                print("Enviando {} con autocommit {}".format(mesg.display_name, auto_commit))
+                print(u"Enviando {} con autocommit {}".format(mesg.display_name, auto_commit))
                 res = mesg.send(auto_commit=auto_commit)
-                print("Envio OK")
+                print(u"Envio OK")
         except Exception:
             _logger.exception("Failed processing mail queue")
         return res
