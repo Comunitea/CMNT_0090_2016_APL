@@ -10,6 +10,53 @@ from odoo.addons import decimal_precision as dp
 
 from odoo.tools import html_sanitize
 
+import logging
+_logger = logging.getLogger(__name__)
+
+class MailMail(models.Model):
+    """ Model holding RFC2822 email messages to send. This model also provides
+        facilities to queue and send new email messages.  """
+    _inherit = 'mail.mail'
+
+    @api.model
+    def process_email_queue(self, ids=None):
+        """Send immediately queued messages, committing after each
+           message is sent - this is not transactional and should
+           not be called during another transaction!
+
+           :param list ids: optional list of emails ids to send. If passed
+                            no search is performed, and these ids are used
+                            instead.
+           :param dict context: if a 'filters' key is present in context,
+                                this value will be used as an additional
+                                filter to further restrict the outgoing
+                                messages to send (by default all 'outgoing'
+                                messages are sent).
+        """
+        if not self.ids:
+            filters = ['&',
+                       ('state', '=', 'outgoing'),
+                       '|',
+                       ('scheduled_date', '<', datetime.datetime.now()),
+                       ('scheduled_date', '=', False)]
+
+            if 'filters' in self._context:
+                filters.extend(self._context['filters'])
+            _logger.info("Enviando con filtro: {}".format(filters))
+            ids = self.search(filters).ids
+            _logger.info("Enviando los ids: {}".format(ids))
+        res = None
+        try:
+            # auto-commit except in testing mode
+            auto_commit = not getattr(threading.currentThread(), 'testing', False)
+            for id in ids:
+                mesg = self.browse(id)
+                print("Enviando {} con autocommit {}".format(mesg.display_name, auto_commit))
+                res = mesg.send(auto_commit=auto_commit)
+                print("Envio OK")
+        except Exception:
+            _logger.exception("Failed processing mail queue")
+        return res
 
 class ProjectTaskType(models.Model):
     _inherit = 'project.task.type'
